@@ -538,7 +538,7 @@ void CGameControllerMOD::Snap(int SnappingClient)
 		int Medic = 0;
 		int Hero = 0;
 		int Support = 0;
-		int Sciogist = 0;
+		int Siegrid = 0;
 		int Reviver = 0;
 
 		CPlayerIterator<PLAYERITER_INGAME> Iter(GameServer()->m_apPlayers);
@@ -567,8 +567,8 @@ void CGameControllerMOD::Snap(int SnappingClient)
 				case PLAYERCLASS_LOOPER:
 					Defender++;
 					break;
-				case PLAYERCLASS_SCIOGIST:
-					Sciogist++;
+				case PLAYERCLASS_SIEGRID:
+					Siegrid++;
 					break;
 				case PLAYERCLASS_REVIVER:
 					Reviver++;
@@ -584,10 +584,10 @@ void CGameControllerMOD::Snap(int SnappingClient)
 			ClassMask |= CMapConverter::MASK_HERO;
 		if(Support < g_Config.m_InfSupportLimit)
 			ClassMask |= CMapConverter::MASK_SUPPORT;
-		if(Sciogist < g_Config.m_InfSciogistLimit)
-			ClassMask |= CMapConverter::MASK_SCIOGIST;
 		if(Reviver < g_Config.m_InfReviverLimit)
 			ClassMask |= CMapConverter::MASK_REVIVER;
+		if(!Siegrid)
+			ClassMask |= CMapConverter::MASK_SIEGRID;
 	}
 
 	if(SnappingClient != -1)
@@ -911,7 +911,7 @@ int CGameControllerMOD::ChooseHumanClass(const CPlayer *pPlayer) const
 	int nbHero = 0;
 	int nbMedic = 0;
 	int nbDefender = 0;
-	int nbSciogist = 0;
+	int nbSiegrid = 0;
 	int nbReviver = 0;
 	CPlayerIterator<PLAYERITER_INGAME> Iter(GameServer()->m_apPlayers);
 
@@ -940,8 +940,8 @@ int CGameControllerMOD::ChooseHumanClass(const CPlayer *pPlayer) const
 			case PLAYERCLASS_LOOPER:
 				nbDefender++;
 				break;
-			case PLAYERCLASS_SCIOGIST:
-				nbSciogist++;
+			case PLAYERCLASS_SIEGRID:
+				nbSiegrid++;
 				break;
 			case PLAYERCLASS_REVIVER:
 				nbReviver++;
@@ -972,8 +972,8 @@ int CGameControllerMOD::ChooseHumanClass(const CPlayer *pPlayer) const
 		(nbDefender < g_Config.m_InfDefenderLimit && g_Config.m_InfEnableCatapult) ?
 			1.0f :
 			0.0f;
-	Probability[PLAYERCLASS_SCIOGIST - START_HUMANCLASS - 1] =
-		(nbSciogist < g_Config.m_InfSciogistLimit && g_Config.m_InfEnableSciogist) ?
+	Probability[PLAYERCLASS_SIEGRID - START_HUMANCLASS - 1] =
+		(!nbSiegrid && g_Config.m_InfEnableSiegrid) ?
 			1.0f :
 			0.0f;
 
@@ -1121,8 +1121,8 @@ bool CGameControllerMOD::IsEnabledClass(int PlayerClass)
 			return g_Config.m_InfEnableBiologist;
 		case PLAYERCLASS_CATAPULT:
 			return g_Config.m_InfEnableCatapult;
-		case PLAYERCLASS_SCIOGIST:
-			return g_Config.m_InfEnableSciogist;
+		case PLAYERCLASS_SIEGRID:
+			return g_Config.m_InfEnableSiegrid;
 		case PLAYERCLASS_MEDIC:
 			return g_Config.m_InfEnableMedic;
 		case PLAYERCLASS_HERO:
@@ -1148,7 +1148,7 @@ bool CGameControllerMOD::IsChoosableClass(int PlayerClass)
 		return false;
 
 	int nbDefender = 0;
-	int nbSciogist = 0;
+	int nbSiegrid = 0;
 	int nbMedic = 0;
 	int nbHero = 0;
 	int nbSupport = 0;
@@ -1180,8 +1180,8 @@ bool CGameControllerMOD::IsChoosableClass(int PlayerClass)
 			case PLAYERCLASS_LOOPER:
 				nbDefender++;
 				break;
-			case PLAYERCLASS_SCIOGIST:
-				nbSciogist++;
+			case PLAYERCLASS_SIEGRID:
+				nbSiegrid++;
 				break;
 			case PLAYERCLASS_REVIVER:
 				nbReviver++;
@@ -1207,8 +1207,8 @@ bool CGameControllerMOD::IsChoosableClass(int PlayerClass)
 			return (nbSupport < g_Config.m_InfSupportLimit);
 		case PLAYERCLASS_LOOPER:
 			return (nbDefender < g_Config.m_InfDefenderLimit);
-		case PLAYERCLASS_SCIOGIST:
-			return (nbSciogist < g_Config.m_InfSciogistLimit);
+		case PLAYERCLASS_SIEGRID:
+			return (!nbSiegrid);
 		case PLAYERCLASS_REVIVER:
 			return (nbReviver < g_Config.m_InfReviverLimit);
 	}

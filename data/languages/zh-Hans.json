@@ -160,8 +160,8 @@
 		"value": "生物学"
 	},
 	{
-		"key": "Sciogist",
-		"value": "融合学"
+		"key": "Siegrid",
+		"value": "西丽德"
 	},
 	{
 		"key": "Looper",
@@ -372,16 +372,20 @@
 		"value": "\u4e5f\u53ef\u4ee5\u7528\u69b4\u5f39\u67aa\u77ac\u79fb\u3002"
 	},
 	{
-		"key": "The Sciogist can pose floating mines with his hammer.",
-		"value": "融合学家可以使用他的锤子安置地雷"
+		"key": "Siegrid is one of guardian nuns.",
+		"value": "西丽德是守护者修女之一"
 	},
 	{
-		"key":"He has also fire 3 time grenades . And he has a shotgun with bouncing bullets",
-		"value": "他也拥有3重榴弹 . 他可以使用猎枪击退感染者"
+		"key": "She fights for humans, if there's no any human else alive, she will be gone.",
+		"value": "她为人类而战斗, 如果场上没有人类存活她便会消失."
 	},
 	{
-		"key": "Additionally he can place elastic holes with the grenades.\n that explode will damage anything.",
-		"value": "他还可以通过榴弹放置弹射洞.\n爆炸会对所有人造成伤害."
+		"key": "Her hammer could through the wall to damage the infecteds.",
+		"value": "她的链球能够穿透墙壁攻击感染者."
+	},
+	{
+		"key": "Double-tap the move key could let her to sprint.",
+		"value": "双击移动键可以让她进行冲刺."
 	},
 	{
 		"key": "The Biologist has a shotgun with bouncing bullets and can create a flower-like-laser-trap by shooting with his rifle.",

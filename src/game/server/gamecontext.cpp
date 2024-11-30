@@ -149,7 +149,7 @@ const char *CGameContext::GetClassName(int Class)
 		case PLAYERCLASS_SCIENTIST: return ("Scientist"); break;
 		case PLAYERCLASS_BIOLOGIST: return ("Biologist"); break;
 		case PLAYERCLASS_LOOPER: return ("Looper"); break;
-		case PLAYERCLASS_SCIOGIST: return ("Sciogist"); break;
+		case PLAYERCLASS_SIEGRID: return ("Siegrid"); break;
 		case PLAYERCLASS_CATAPULT: return ("Catapult"); break;
 		case PLAYERCLASS_REVIVER: return ("Reviver"); break;
 		// Zombies
@@ -784,8 +784,8 @@ void CGameContext::SendBroadcast_ClassIntro(int ClientID, int Class)
 		case PLAYERCLASS_BIOLOGIST:
 			pClassName = Server()->Localization()->Localize(m_apPlayers[ClientID]->GetLanguage(), _("Biologist"));
 			break;
-		case PLAYERCLASS_SCIOGIST:
-			pClassName = Server()->Localization()->Localize(m_apPlayers[ClientID]->GetLanguage(), _("Sciogist"));
+		case PLAYERCLASS_SIEGRID:
+			pClassName = Server()->Localization()->Localize(m_apPlayers[ClientID]->GetLanguage(), _("Siegrid"));
 			break;
 		case PLAYERCLASS_REVIVER:
 			pClassName = Server()->Localization()->Localize(m_apPlayers[ClientID]->GetLanguage(), _("Reviver"));
@@ -2846,8 +2846,8 @@ bool CGameContext::ConSetClass(IConsole::IResult *pResult, void *pUserData)
 		pPlayer->SetClass(PLAYERCLASS_BIOLOGIST);
 	else if(str_comp(pClassName, "catapult") == 0)
 		pPlayer->SetClass(PLAYERCLASS_CATAPULT);
-	else if(str_comp(pClassName, "sciogist") == 0)
-		pPlayer->SetClass(PLAYERCLASS_SCIOGIST);
+	else if(str_comp(pClassName, "siegrid") == 0)
+		pPlayer->SetClass(PLAYERCLASS_SIEGRID);
 	else if(str_comp(pClassName, "reviver") == 0)
 		pPlayer->SetClass(PLAYERCLASS_REVIVER);
 	else if(str_comp(pClassName, "looper") == 0)
@@ -3048,10 +3048,10 @@ bool CGameContext::PrivateMessage(const char *pStr, int ClientID, bool TeamChat)
 				CheckClass = PLAYERCLASS_BIOLOGIST;
 				str_copy(aChatTitle, "biologist", sizeof(aChatTitle));
 			}
-			else if(str_comp(aNameFound, "!sciogist") == 0 && m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
+			else if(str_comp(aNameFound, "!siegrid") == 0 && m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
 			{
-				CheckClass = PLAYERCLASS_SCIOGIST;
-				str_copy(aChatTitle, "sciogist", sizeof(aChatTitle));
+				CheckClass = PLAYERCLASS_SIEGRID;
+				str_copy(aChatTitle, "siegrid", sizeof(aChatTitle));
 			}
 			else if(str_comp(aNameFound, "!reviver") == 0 && m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
 			{
@@ -3360,8 +3360,8 @@ bool CGameContext::ConTop10(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_SCIENTIST_SCORE);
 		else if(str_comp_nocase(pArg, "biologist") == 0)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_BIOLOGIST_SCORE);
-		else if(str_comp_nocase(pArg, "sciogist") == 0)
-			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_SCIOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "siegrid") == 0)
+			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_SIEGRID_SCORE);
 		else if(str_comp_nocase(pArg, "reviver") == 0)
 			pSelf->Server()->ShowTop10(ClientID, SQL_SCORETYPE_REVIVER_SCORE);
 		else if(str_comp_nocase(pArg, "catapult") == 0)
@@ -3424,8 +3424,8 @@ bool CGameContext::ConRank(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_SCIENTIST_SCORE);
 		else if(str_comp_nocase(pArg, "biologist") == 0)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_BIOLOGIST_SCORE);
-		else if(str_comp_nocase(pArg, "sciogist") == 0)
-			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_SCIOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "siegrid") == 0)
+			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_SIEGRID_SCORE);
 		else if(str_comp_nocase(pArg, "reviver") == 0)
 			pSelf->Server()->ShowRank(ClientID, SQL_SCORETYPE_REVIVER_SCORE);
 		else if(str_comp_nocase(pArg, "catapult") == 0)
@@ -3488,8 +3488,8 @@ bool CGameContext::ConGoal(IConsole::IResult *pResult, void *pUserData)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_SCIENTIST_SCORE);
 		else if(str_comp_nocase(pArg, "biologist") == 0)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_BIOLOGIST_SCORE);
-		else if(str_comp_nocase(pArg, "sciogist") == 0)
-			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_SCIOGIST_SCORE);
+		else if(str_comp_nocase(pArg, "siegrid") == 0)
+			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_SIEGRID_SCORE);
 		else if(str_comp_nocase(pArg, "reviver") == 0)
 			pSelf->Server()->ShowGoal(ClientID, SQL_SCORETYPE_REVIVER_SCORE);
 		else if(str_comp_nocase(pArg, "catapult") == 0)
@@ -3634,22 +3634,18 @@ bool CGameContext::ConHelp(IConsole::IResult *pResult, void *pUserData)
 
 			pSelf->SendMOTD(ClientID, Buffer.buffer());
 		}
-		else if(str_comp_nocase(pHelpPage, "sciogist") == 0)
+		else if(str_comp_nocase(pHelpPage, "siegrid") == 0)
 		{
 			Buffer.append("~~ ");
-			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Sciogist"), NULL);
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Siegrid"), NULL);
 			Buffer.append(" ~~\n\n");
-			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("The Sciogist can pose floating mines with his hammer."), NULL);
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Siegrid is one of guardian nuns."), NULL);
 			Buffer.append("\n\n");
-			pSelf->Server()->Localization()->Format_LP(
-				Buffer, pLanguage, g_Config.m_InfMineLimit,
-				_P("Mines are limited to one per player at the same time.", "Mines are limited to {int:NumMines} per player at the same time."),
-				"NumMines", &g_Config.m_InfMineLimit,
-				NULL);
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("She fights for humans, if there's no any human else alive, she will be gone."), NULL);
 			Buffer.append("\n\n");
-			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("He has also fire 3 time grenades . And he has a shotgun with bouncing bullets"), NULL);
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Her hammer could through the wall to damage the infecteds."), NULL);
 			Buffer.append("\n\n");
-			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Additionally he can place elastic holes with the grenades.\n that explode will damage anything."), NULL);
+			pSelf->Server()->Localization()->Format_L(Buffer, pLanguage, _("Double-tap the move key could let her to sprint."), NULL);
 
 			pSelf->SendMOTD(ClientID, Buffer.buffer());
 		}
@@ -4043,7 +4039,7 @@ bool CGameContext::ConHelp(IConsole::IResult *pResult, void *pUserData)
 			NULL);
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "help", Buffer.buffer());
 
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "help", "engineer, soldier, scientist, sciogist , catapult, reviver ,medic, hero, ninja, mercenary, sniper, whiteHole");
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "help", "engineer, soldier, scientist, siegrid , catapult, reviver ,medic, hero, ninja, mercenary, sniper, whiteHole");
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "help", "smoker, hunter, bat, boomer, ghost, spider, slug, slime , ghoul, voodoo, undead, witch.");
 	}
 

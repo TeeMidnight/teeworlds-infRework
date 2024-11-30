@@ -19,7 +19,6 @@ MACRO_CONFIG_INT(InfShockwaveAffectHumans, inf_shock_wave_affect_humans, 1, 0, 1
 MACRO_CONFIG_INT(InfSpawnProtectionTime, inf_spawn_protection_time, 1, 0, 10000, CFGFLAG_SERVER, "Time zombies stay invincible while in spawn (in seconds)")
 
 MACRO_CONFIG_INT(InfDefenderLimit, inf_defender_limit, 40, 0, 64, CFGFLAG_SERVER, "Maximum number of defenders in game")
-MACRO_CONFIG_INT(InfSciogistLimit, inf_sciogist_limit, 1, 0, 64, CFGFLAG_SERVER, "Maximum number of sciogists in game")
 MACRO_CONFIG_INT(InfMedicLimit, inf_medic_limit, 20, 0, 64, CFGFLAG_SERVER, "Maximum number of medics in game")
 MACRO_CONFIG_INT(InfHeroLimit, inf_hero_limit, 1, 0, 64, CFGFLAG_SERVER, "Maximum number of heros in game")
 MACRO_CONFIG_INT(InfSupportLimit, inf_support_limit, 40, 0, 64, CFGFLAG_SERVER, "Maximum number of supports in game")
@@ -81,7 +80,7 @@ MACRO_CONFIG_INT(InfEnableSoldier, inf_enable_soldier, 1, 0, 1, CFGFLAG_SERVER, 
 MACRO_CONFIG_INT(InfEnableScientist, inf_enable_scientist, 1, 0, 1, CFGFLAG_SERVER, "Makes the scientist class available")
 MACRO_CONFIG_INT(InfEnableBiologist, inf_enable_biologist, 1, 0, 1, CFGFLAG_SERVER, "Makes the biologist class available")
 MACRO_CONFIG_INT(InfEnableLooper, inf_enable_looper, 1, 0, 1, CFGFLAG_SERVER, "Makes the looper class available")
-MACRO_CONFIG_INT(InfEnableSciogist, inf_enable_sciogist, 1, 0, 1, CFGFLAG_SERVER, "Makes the sciogist class available")
+MACRO_CONFIG_INT(InfEnableSiegrid, inf_enable_siegrid, 1, 0, 1, CFGFLAG_SERVER, "Makes the siegrid class available")
 MACRO_CONFIG_INT(InfEnableReviver, inf_enable_reviver, 1, 0, 1, CFGFLAG_SERVER, "Makes the reviver class available")
 MACRO_CONFIG_INT(InfEnableCatapult, inf_enable_catapult, 1, 0, 1, CFGFLAG_SERVER, "Makes the catapult class available")
 MACRO_CONFIG_INT(InfEnableMercenary, inf_enable_mercenary, 1, 0, 1, CFGFLAG_SERVER, "Makes the mercenary class available")
@@ -96,6 +95,9 @@ MACRO_CONFIG_INT(InfHeroFlagIndicator, inf_hero_flag_indicator, 1, 0, 1, CFGFLAG
 MACRO_CONFIG_INT(InfHeroFlagIndicatorTime, inf_hero_flag_indicator_time, 3, 0, 1000, CFGFLAG_SERVER, "How many seconds the hero has to stand still until the indicator is shown")
 // class config
 
+MACRO_CONFIG_INT(InfSiegridHammerLength, inf_siegrid_hammer_length, 280, 160, 1000, CFGFLAG_SERVER, "hammer length")
+MACRO_CONFIG_INT(InfSiegridSprintTimer, inf_siegrid_sprint_timer, 150, 100, 1000, CFGFLAG_SERVER, "sprint timer (in tick)")
+
 MACRO_CONFIG_INT(InfFreezerReslowlyTime, inf_freezer_reslowly_time, 200, 0, 1000, CFGFLAG_SERVER, "tick")
 
 // weapon config
@@ -106,11 +108,6 @@ MACRO_CONFIG_INT(InfElasticEntityDamage, inf_elastic_entity_damage, 15, 0, 100, 
 
 MACRO_CONFIG_INT(InfElasticGrenadeLifeSpan, inf_elastic_grenade_life_span, 2, 0, 100, CFGFLAG_SERVER, "Elastic grenade life span")
 MACRO_CONFIG_INT(InfElasticGrenadeCheckNum, inf_elastic_grenade_check_num, 3, 0, 10, CFGFLAG_SERVER, "Elastic grenade life span")
-
-MACRO_CONFIG_INT(InfAntiAirMineRadius, inf_anti_airmine_radius, 64, 0, 1024, CFGFLAG_SERVER, "Radius of anti-airmines")
-MACRO_CONFIG_INT(InfAntiAirMineSpeed, inf_anti_airmine_speed, 40, 0, 180, CFGFLAG_SERVER, "Rotation speed of anti-airmines")
-MACRO_CONFIG_INT(InfAntiAirMineLifeSpan, inf_anti_airmine_life_span, 20, 0, 100, CFGFLAG_SERVER, "Anti-Airmines life span")
-MACRO_CONFIG_INT(InfAntiAirMineDamage, inf_anti_airmine_damage, 12, 0, 100, CFGFLAG_SERVER, "Anti-Airmines damage")
 
 MACRO_CONFIG_INT(InfReviverGrenadeLifeSpan, inf_reviver_grenade_life_span, 5, 0, 100, CFGFLAG_SERVER, "Reviver grenade life span")
 MACRO_CONFIG_INT(InfReviverGrenadeSlowTime, inf_reviver_grenade_slow_time, 4, 0, 100, CFGFLAG_SERVER, "Reviver grenade slow time")

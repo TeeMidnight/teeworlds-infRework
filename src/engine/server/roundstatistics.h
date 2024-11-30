@@ -35,7 +35,7 @@ public:
 		int m_SoldierScore;
 		int m_ScientistScore;
 		int m_BiologistScore;
-		int m_SciogistScore;
+		int m_SiegridScore;
 		int m_LooperScore;
 		int m_MedicScore;
 		int m_HeroScore;

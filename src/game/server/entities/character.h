@@ -193,6 +193,31 @@ private:
 	int m_CursorID;
 	int m_AntiFireTick;
 
+	// Siegrid
+	enum
+	{
+		HAMMER_IDLE = 0,
+		HAMMER_SWING,
+		HAMMER_BACK
+	};
+	float m_StartAngle;
+	int m_LastHammerPhase;
+	int m_HammerPhase;
+	int m_LastHammerSwingTick;
+	int m_HammerIDs[2];
+	vec2 m_HammerPos;
+	vec2 m_HammerVel;
+	int m_LastSprintTick;
+	int m_LastTapMoveTick;
+	int m_LastMoveDirection;
+
+	struct CHitEntity
+	{
+		int m_LastHitTick;
+		CEntity *m_pEntity;
+	}m_HammerHitObjects[10];
+
+
 	bool m_IsFrozen;
 	int m_FrozenTime;
 	bool m_IsInSlowMotion; // LooperClass changes here
@@ -213,7 +238,6 @@ public:
 	int m_PositionLockTick;
 	bool m_PositionLocked;
 	bool m_PositionLockAvailable;
-	bool m_HasAntiAirMine;
 	bool m_HasWhiteHole;
 	bool m_HasElasticHole;
 	bool m_HasHealBoom;

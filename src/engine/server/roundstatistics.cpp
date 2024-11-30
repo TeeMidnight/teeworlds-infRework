@@ -68,8 +68,8 @@ int CRoundStatistics::CPlayer::OnScoreEvent(int EventType, int Class)
 		case PLAYERCLASS_BIOLOGIST:
 			m_BiologistScore += Points;
 			break;
-		case PLAYERCLASS_SCIOGIST:
-			m_SciogistScore += Points;
+		case PLAYERCLASS_SIEGRID:
+			m_SiegridScore += Points;
 			break;
 		case PLAYERCLASS_LOOPER:
 			m_LooperScore += Points;
