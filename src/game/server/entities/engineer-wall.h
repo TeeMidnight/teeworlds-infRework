@@ -10,7 +10,7 @@ class CEngineerWall : public CEntity
 public:
 	CEngineerWall(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, int Owner);
 	virtual ~CEngineerWall();
-	
+
 	virtual void Reset();
 	virtual void Tick();
 	virtual void TickPaused();

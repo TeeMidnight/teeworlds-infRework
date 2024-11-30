@@ -7,7 +7,7 @@ class CElasticGrenade : public CEntity
 {
 public:
 	int m_Owner;
-	
+
 public:
 	CElasticGrenade(CGameWorld *pGameWorld, int Owner, int Weapon, vec2 Pos, vec2 Dir);
 
@@ -19,9 +19,8 @@ public:
 	virtual void TickPaused();
 	virtual void Explode();
 	virtual void Snap(int SnappingClient);
-	
-	int GetTick() { return m_LifeSpan; }
 
+	int GetTick() { return m_LifeSpan; }
 
 private:
 	vec2 m_ActualPos;

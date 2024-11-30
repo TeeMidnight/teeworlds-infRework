@@ -7,7 +7,7 @@ class CScatterGrenade : public CEntity
 {
 public:
 	int m_Owner;
-	
+
 public:
 	CScatterGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir);
 

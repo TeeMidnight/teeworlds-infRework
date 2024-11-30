@@ -3,52 +3,51 @@
 
 #include <base/math.h>
 #include <base/vmath.h>
-#include <new>
-#include <engine/shared/config.h>
 #include <engine/server/mapconverter.h>
 #include <engine/server/roundstatistics.h>
-#include <game/server/gamecontext.h>
-#include <game/mapitems.h>
-#include <iostream>
+#include <engine/shared/config.h>
 #include <game/collision.h>
+#include <game/mapitems.h>
+#include <game/server/gamecontext.h>
+#include <iostream>
+#include <new>
 
 #include "character.h"
-#include "projectile.h"
 #include "laser.h"
+#include "projectile.h"
 
 #include "flyingpoint.h"
 
-#include "engineer-wall.h"
-#include "turret.h"
-#include "looper-wall.h"
-#include "soldier-bomb.h"
-#include "scientist-laser.h"
-#include "scientist-mine.h"
+#include "anti-airmine.h"
 #include "biologist-mine.h"
 #include "bouncing-bullet.h"
-#include "scatter-grenade.h"
-#include "sciogist-grenade.h"
-#include "merc-bomb.h"
-#include "slime-entity.h"
-#include "medic-grenade.h"
-#include "hero-flag.h"
-#include "slug-slime.h"
-#include "plasma.h"
-#include "plasma-plus.h"
-#include "freeze-mine.h"
-#include "growingexplosion.h"
-#include "white-hole.h"
-#include "elastic-hole.h"
 #include "elastic-entity.h"
 #include "elastic-grenade.h"
-#include "reviver-grenade.h"
+#include "elastic-hole.h"
+#include "engineer-wall.h"
+#include "freeze-mine.h"
+#include "growingexplosion.h"
 #include "heal-boom.h"
-#include "superweapon-indicator.h"
+#include "hero-flag.h"
 #include "laser-teleport.h"
-#include "police-shield.h"
-#include "anti-airmine.h"
+#include "looper-wall.h"
+#include "medic-grenade.h"
+#include "merc-bomb.h"
+#include "plasma-plus.h"
+#include "plasma.h"
+#include "reviver-grenade.h"
+#include "scatter-grenade.h"
+#include "scientist-laser.h"
+#include "scientist-mine.h"
+#include "sciogist-grenade.h"
+#include "slime-entity.h"
+#include "slug-slime.h"
+#include "soldier-bomb.h"
+#include "superweapon-indicator.h"
+#include "turret.h"
+#include "white-hole.h"
 
-//input count
+// input count
 struct CInputCount
 {
 	int m_Presses;
@@ -64,8 +63,8 @@ CInputCount CountInput(int Prev, int Cur)
 
 	while(i != Cur)
 	{
-		i = (i+1)&INPUT_STATE_MASK;
-		if(i&1)
+		i = (i + 1) & INPUT_STATE_MASK;
+		if(i & 1)
 			c.m_Presses++;
 		else
 			c.m_Releases++;
@@ -74,28 +73,27 @@ CInputCount CountInput(int Prev, int Cur)
 	return c;
 }
 
-
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
 // Character, "physical" player's part
-CCharacter::CCharacter(CGameWorld *pWorld, IConsole *pConsole)
-: CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER),
-m_pConsole(pConsole)
+CCharacter::CCharacter(CGameWorld *pWorld, IConsole *pConsole) :
+	CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER),
+	m_pConsole(pConsole)
 {
 	m_ProximityRadius = ms_PhysSize;
 	m_Health = 0;
 	m_Armor = 0;
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	m_AirJumpCounter = 0;
 	m_FirstShot = true;
-	
+
 	m_FlagID = Server()->SnapNewID();
 	m_HeartID = Server()->SnapNewID();
 	m_CursorID = Server()->SnapNewID();
 	m_BarrierHintID = Server()->SnapNewID();
 	m_BarrierHintIDs.set_size(2);
-	for(int i=0; i<2; i++)
+	for(int i = 0; i < 2; i++)
 	{
 		m_BarrierHintIDs[i] = Server()->SnapNewID();
 	}
@@ -106,7 +104,7 @@ m_pConsole(pConsole)
 	m_DartLifeSpan = -1;
 	m_IsInvisible = false;
 	m_InvisibleTick = 0;
-	m_PositionLockTick = -Server()->TickSpeed()*10;
+	m_PositionLockTick = -Server()->TickSpeed() * 10;
 	m_PositionLocked = false;
 	m_PositionLockAvailable = false;
 	m_PoisonTick = 0;
@@ -131,68 +129,68 @@ m_pConsole(pConsole)
 	m_ShieldExplode = false;
 	m_TurretCount = 0;
 	m_HasStunGrenade = false;
-	m_VoodooTimeAlive = Server()->TickSpeed()*g_Config.m_InfVoodooAliveTime;
+	m_VoodooTimeAlive = Server()->TickSpeed() * g_Config.m_InfVoodooAliveTime;
 	m_VoodooAboutToDie = false;
 	m_BroadcastWhiteHoleReady = -100;
 	m_BroadcastElasticHoleReady = -100;
-	m_BroadcastHealBoomReady= -100;
+	m_BroadcastHealBoomReady = -100;
 	m_pHeroFlag = nullptr;
 	m_ResetKillsTime = 0;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 }
 
 bool CCharacter::
-FindWitchSpawnPosition(vec2& Pos)
+	FindWitchSpawnPosition(vec2 &Pos)
 {
-	float Angle = atan2f(m_Input.m_TargetY, m_Input.m_TargetX);//atan2f instead of atan2
-	
-	for(int i=0; i<32; i++)
+	float Angle = atan2f(m_Input.m_TargetY, m_Input.m_TargetX); // atan2f instead of atan2
+
+	for(int i = 0; i < 32; i++)
 	{
 		float TestAngle;
-		
+
 		TestAngle = Angle + i * (pi / 32.0f);
 		Pos = m_Pos + vec2(cos(TestAngle), sin(TestAngle)) * 84.0f;
-		
+
 		if(GameServer()->m_pController->IsSpawnable(Pos, ZONE_TELE_NOWITCH))
 			return true;
-		
+
 		TestAngle = Angle - i * (pi / 32.0f);
 		Pos = m_Pos + vec2(cos(TestAngle), sin(TestAngle)) * 84.0f;
-		
+
 		if(GameServer()->m_pController->IsSpawnable(Pos, ZONE_TELE_NOWITCH))
 			return true;
 	}
-	
+
 	return false;
 }
 
-bool CCharacter::FindPortalPosition(vec2 Pos, vec2& Res)
+bool CCharacter::FindPortalPosition(vec2 Pos, vec2 &Res)
 {
 	vec2 PortalShift = Pos - m_Pos;
 	vec2 PortalDir = normalize(PortalShift);
 	if(length(PortalShift) > 500.0f)
 		PortalShift = PortalDir * 500.0f;
-	
+
 	float Iterator = length(PortalShift);
 	while(Iterator > 0.0f)
 	{
 		PortalShift = PortalDir * Iterator;
 		vec2 PortalPos = m_Pos + PortalShift;
-	
+
 		if(GameServer()->m_pController->IsSpawnable(PortalPos, ZONE_TELE_NOSCIENTIST))
 		{
 			Res = PortalPos;
 			return true;
 		}
-		
+
 		Iterator -= 4.0f;
 	}
-	
+
 	return false;
 }
 
 void CCharacter::Reset()
-{	
+{
 	Destroy();
 }
 
@@ -222,7 +220,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	GameServer()->m_pController->OnCharacterSpawn(this);
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	m_AntiFireTick = Server()->Tick();
 	m_IsFrozen = false;
 	m_IsInSlowMotion = false;
@@ -231,15 +229,15 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_SlowMotionTick = -1;
 	m_HallucinationTick = -1;
 	m_SlipperyTick = -1;
-	m_PositionLockTick = -Server()->TickSpeed()*10;
+	m_PositionLockTick = -Server()->TickSpeed() * 10;
 	m_PositionLocked = false;
 	m_PositionLockAvailable = false;
 	m_Poison = 0;
-  
+
 	m_VoodooAboutToDie = false;
-	m_VoodooTimeAlive = Server()->TickSpeed()*g_Config.m_InfVoodooAliveTime;
+	m_VoodooTimeAlive = Server()->TickSpeed() * g_Config.m_InfVoodooAliveTime;
 	m_pPlayer->SetToSpirit(false);
-  
+
 	ClassSpawnAttributes();
 	DestroyChildEntities();
 	GiveArmorIfLonely();
@@ -247,18 +245,18 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	{
 		OpenClassChooser();
 	}
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	return true;
 }
 
 void CCharacter::Destroy()
-{	
-/* INFECTION MODIFICATION START ***************************************/
+{
+	/* INFECTION MODIFICATION START ***************************************/
 	DestroyChildEntities();
-	
+
 	m_pPlayer->ResetNumberKills();
-	
+
 	if(m_FlagID >= 0)
 	{
 		Server()->SnapFreeID(m_FlagID);
@@ -274,24 +272,23 @@ void CCharacter::Destroy()
 		Server()->SnapFreeID(m_CursorID);
 		m_CursorID = -1;
 	}
-	
+
 	if(m_BarrierHintID >= 0)
 	{
 		Server()->SnapFreeID(m_BarrierHintID);
 		m_BarrierHintID = -1;
 	}
-	
+
 	if(m_BarrierHintIDs[0] >= 0)
 	{
-		for(int i=0; i<2; i++) 
+		for(int i = 0; i < 2; i++)
 		{
 			Server()->SnapFreeID(m_BarrierHintIDs[i]);
 			m_BarrierHintIDs[i] = -1;
 		}
-
 	}
-	
-/* INFECTION MODIFICATION END *****************************************/
+
+	/* INFECTION MODIFICATION END *****************************************/
 
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
 	m_Alive = false;
@@ -313,9 +310,9 @@ void CCharacter::SetWeapon(int W)
 
 bool CCharacter::IsGrounded()
 {
-	if(GameServer()->Collision()->CheckPoint(m_Pos.x+m_ProximityRadius/2, m_Pos.y+m_ProximityRadius/2+5))
+	if(GameServer()->Collision()->CheckPoint(m_Pos.x + m_ProximityRadius / 2, m_Pos.y + m_ProximityRadius / 2 + 5))
 		return true;
-	if(GameServer()->Collision()->CheckPoint(m_Pos.x-m_ProximityRadius/2, m_Pos.y+m_ProximityRadius/2+5))
+	if(GameServer()->Collision()->CheckPoint(m_Pos.x - m_ProximityRadius / 2, m_Pos.y + m_ProximityRadius / 2 + 5))
 		return true;
 	return false;
 }
@@ -328,55 +325,55 @@ void CCharacter::HandleWaterJump()
 		m_Core.m_TriggeredEvents &= ~COREEVENT_GROUND_JUMP;
 		m_Core.m_TriggeredEvents &= ~COREEVENT_AIR_JUMP;
 
-		if(m_Input.m_Jump && m_DartLifeSpan <= 0 && m_WaterJumpLifeSpan <=0)
+		if(m_Input.m_Jump && m_DartLifeSpan <= 0 && m_WaterJumpLifeSpan <= 0)
 		{
-			m_WaterJumpLifeSpan = Server()->TickSpeed()/2;
-			m_DartLifeSpan =  g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
+			m_WaterJumpLifeSpan = Server()->TickSpeed() / 2;
+			m_DartLifeSpan = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
 			vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 			m_DartDir = Direction;
 			m_DartOldVelAmount = length(m_Core.m_Vel);
-			
+
 			m_Core.m_TriggeredEvents |= COREEVENT_AIR_JUMP;
 		}
 	}
-	
+
 	m_WaterJumpLifeSpan--;
-	
+
 	m_DartLifeSpan--;
-	
+
 	if(m_DartLifeSpan == 0)
 	{
 		//~ m_Core.m_Vel = m_DartDir * 5.0f;
-		m_Core.m_Vel = m_DartDir*m_DartOldVelAmount;
+		m_Core.m_Vel = m_DartDir * m_DartOldVelAmount;
 	}
-	
+
 	if(m_DartLifeSpan > 0)
 	{
 		m_Core.m_Vel = m_DartDir * 15.0f;
 		GameServer()->Collision()->MoveBox(&m_Core.m_Pos, &m_Core.m_Vel, vec2(m_ProximityRadius, m_ProximityRadius), 0.f);
 		m_Core.m_Vel = vec2(0.f, 0.f);
-	}	
+	}
 }
 
 void CCharacter::HandleNinja()
 {
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(GetInfWeaponID(m_ActiveWeapon) != INFWEAPON_NINJA_HAMMER)
 		return;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	m_DartLifeSpan--;
 
-	if (m_DartLifeSpan == 0)
+	if(m_DartLifeSpan == 0)
 	{
 		// reset velocity
-		m_Core.m_Vel = m_DartDir*m_DartOldVelAmount;
+		m_Core.m_Vel = m_DartDir * m_DartOldVelAmount;
 	}
 
-	if (m_DartLifeSpan > 0)
+	if(m_DartLifeSpan > 0)
 	{
 		// Set velocity
-		float VelocityBuff = min(1.0f + static_cast<float>(m_NinjaVelocityBuff)/10.0f, 2.0f);
+		float VelocityBuff = min(1.0f + static_cast<float>(m_NinjaVelocityBuff) / 10.0f, 2.0f);
 		m_Core.m_Vel = m_DartDir * g_pData->m_Weapons.m_Ninja.m_Velocity * VelocityBuff;
 		vec2 OldPos = m_Pos;
 		GameServer()->Collision()->MoveBox(&m_Core.m_Pos, &m_Core.m_Vel, vec2(m_ProximityRadius, m_ProximityRadius), 0.f);
@@ -390,25 +387,25 @@ void CCharacter::HandleNinja()
 			vec2 Dir = m_Pos - OldPos;
 			float Radius = m_ProximityRadius * 2.0f;
 			vec2 Center = OldPos + Dir * 0.5f;
-			int Num = GameServer()->m_World.FindEntities(Center, Radius, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+			int Num = GameServer()->m_World.FindEntities(Center, Radius, (CEntity **) aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
-			for (int i = 0; i < Num; ++i)
+			for(int i = 0; i < Num; ++i)
 			{
-				if (aEnts[i] == this)
+				if(aEnts[i] == this)
 					continue;
 
 				// make sure we haven't Hit this object before
 				bool bAlreadyHit = false;
-				for (int j = 0; j < m_NumObjectsHit; j++)
+				for(int j = 0; j < m_NumObjectsHit; j++)
 				{
-					if (m_apHitObjects[j] == aEnts[i])
+					if(m_apHitObjects[j] == aEnts[i])
 						bAlreadyHit = true;
 				}
-				if (bAlreadyHit)
+				if(bAlreadyHit)
 					continue;
 
 				// check so we are sufficiently close
-				if (distance(aEnts[i]->m_Pos, m_Pos) > (m_ProximityRadius * 2.0f))
+				if(distance(aEnts[i]->m_Pos, m_Pos) > (m_ProximityRadius * 2.0f))
 					continue;
 
 				// Hit a player, give him damage and stuffs...
@@ -423,19 +420,12 @@ void CCharacter::HandleNinja()
 	}
 }
 
-
 void CCharacter::DoWeaponSwitch()
 {
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(m_ReloadTimer != 0 || m_QueuedWeapon == -1)
 		return;
-/* INFECTION MODIFICATION END *****************************************/
-
-	if(m_QueuedWeapon == WEAPON_HAMMER && GetClass() == PLAYERCLASS_POLICE)
-	{
-		GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(),
-			BROADCAST_PRIORITY_WEAPONSTATE, 100, "Use hammer to switch shield mode", NULL);
-	}
+	/* INFECTION MODIFICATION END *****************************************/
 
 	// switch Weapon
 	SetWeapon(m_QueuedWeapon);
@@ -454,12 +444,12 @@ void CCharacter::HandleWeaponSwitch()
 	if(GetClass() == PLAYERCLASS_SPIDER)
 	{
 		int WantedHookMode = m_HookMode;
-		
+
 		if(Next < 128) // make sure we only try sane stuff
 		{
 			while(Next) // Next Weapon selection
 			{
-				WantedHookMode = (WantedHookMode+1)%2;
+				WantedHookMode = (WantedHookMode + 1) % 2;
 				Next--;
 			}
 		}
@@ -468,14 +458,14 @@ void CCharacter::HandleWeaponSwitch()
 		{
 			while(Prev) // Prev Weapon selection
 			{
-				WantedHookMode = (WantedHookMode+2-1)%2;
+				WantedHookMode = (WantedHookMode + 2 - 1) % 2;
 				Prev--;
 			}
 		}
 
 		// Direct Weapon selection
 		if(m_LatestInput.m_WantedWeapon)
-			WantedHookMode = m_Input.m_WantedWeapon-1;
+			WantedHookMode = m_Input.m_WantedWeapon - 1;
 
 		if(WantedHookMode >= 0 && WantedHookMode < 2)
 			m_HookMode = WantedHookMode;
@@ -485,12 +475,12 @@ void CCharacter::HandleWeaponSwitch()
 		int WantedWeapon = m_ActiveWeapon;
 		if(m_QueuedWeapon != -1)
 			WantedWeapon = m_QueuedWeapon;
-		
+
 		if(Next < 128) // make sure we only try sane stuff
 		{
 			while(Next) // Next Weapon selection
 			{
-				WantedWeapon = (WantedWeapon+1)%NUM_WEAPONS;
+				WantedWeapon = (WantedWeapon + 1) % NUM_WEAPONS;
 				if(m_aWeapons[WantedWeapon].m_Got)
 					Next--;
 			}
@@ -500,7 +490,7 @@ void CCharacter::HandleWeaponSwitch()
 		{
 			while(Prev) // Prev Weapon selection
 			{
-				WantedWeapon = (WantedWeapon-1)<0?NUM_WEAPONS-1:WantedWeapon-1;
+				WantedWeapon = (WantedWeapon - 1) < 0 ? NUM_WEAPONS - 1 : WantedWeapon - 1;
 				if(m_aWeapons[WantedWeapon].m_Got)
 					Prev--;
 			}
@@ -508,7 +498,7 @@ void CCharacter::HandleWeaponSwitch()
 
 		// Direct Weapon selection
 		if(m_LatestInput.m_WantedWeapon)
-			WantedWeapon = m_Input.m_WantedWeapon-1;
+			WantedWeapon = m_Input.m_WantedWeapon - 1;
 
 		// check for insane values
 		if(WantedWeapon >= 0 && WantedWeapon < NUM_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
@@ -520,11 +510,11 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::UpdateTuningParam()
 {
-	CTuningParams* pTuningParams = &m_pPlayer->m_NextTuningParams;
-	
+	CTuningParams *pTuningParams = &m_pPlayer->m_NextTuningParams;
+
 	bool NoActions = false;
 	bool FixedPosition = false;
-	
+
 	if(m_PositionLocked)
 	{
 		NoActions = true;
@@ -534,29 +524,30 @@ void CCharacter::UpdateTuningParam()
 	{
 		NoActions = true;
 	}
-	
+
 	if(m_SlowMotionTick > 0)
 	{
-		float Factor = 1.0f - ((float)g_Config.m_InfSlowMotionPercent / 100);
-		float FactorSpeed = 1.0f - ((float)g_Config.m_InfSlowMotionHookSpeed / 100);
-		float FactorAccel = 1.0f - ((float)g_Config.m_InfSlowMotionHookAccel / 100);
+		float Factor = 1.0f - ((float) g_Config.m_InfSlowMotionPercent / 100);
+		float FactorSpeed = 1.0f - ((float) g_Config.m_InfSlowMotionHookSpeed / 100);
+		float FactorAccel = 1.0f - ((float) g_Config.m_InfSlowMotionHookAccel / 100);
 		pTuningParams->m_GroundControlSpeed = pTuningParams->m_GroundControlSpeed * Factor;
 		pTuningParams->m_HookFireSpeed = pTuningParams->m_HookFireSpeed * FactorSpeed;
-		//pTuningParams->m_GroundJumpImpulse = pTuningParams->m_GroundJumpImpulse * Factor;
-		//pTuningParams->m_AirJumpImpulse = pTuningParams->m_AirJumpImpulse * Factor;
+		// pTuningParams->m_GroundJumpImpulse = pTuningParams->m_GroundJumpImpulse * Factor;
+		// pTuningParams->m_AirJumpImpulse = pTuningParams->m_AirJumpImpulse * Factor;
 		pTuningParams->m_AirControlSpeed = pTuningParams->m_AirControlSpeed * Factor;
 		pTuningParams->m_HookDragAccel = pTuningParams->m_HookDragAccel * FactorAccel;
 		pTuningParams->m_HookDragSpeed = pTuningParams->m_HookDragSpeed * FactorSpeed;
 		pTuningParams->m_Gravity = g_Config.m_InfSlowMotionGravity * 0.01f;
 
-		if (g_Config.m_InfSlowMotionMaxSpeed > 0) 
+		if(g_Config.m_InfSlowMotionMaxSpeed > 0)
 		{
 			float MaxSpeed = g_Config.m_InfSlowMotionMaxSpeed * 0.1f;
 			float diff = MaxSpeed / length(m_Core.m_Vel);
-			if (diff < 1.0f) m_Core.m_Vel *= diff;
+			if(diff < 1.0f)
+				m_Core.m_Vel *= diff;
 		}
 	}
-	
+
 	if(m_HookMode == 1)
 	{
 		pTuningParams->m_HookDragSpeed = 0.0f;
@@ -578,7 +569,7 @@ void CCharacter::UpdateTuningParam()
 	{
 		pTuningParams->m_GroundFriction = 1.0f;
 	}
-	
+
 	if(NoActions)
 	{
 		pTuningParams->m_GroundControlAccel = 0.0f;
@@ -591,64 +582,63 @@ void CCharacter::UpdateTuningParam()
 	{
 		pTuningParams->m_Gravity = 0.0f;
 	}
-	
+
 	pTuningParams->m_PlayerHooking = 0;
 	if(m_Core.m_HookedPlayer > -1)
 	{
 		pTuningParams->m_PlayerHooking = 1;
 	}
-	
+
 	if(GetClass() == PLAYERCLASS_GHOUL)
 	{
 		float Factor = m_pPlayer->GetGhoulPercent();
-		pTuningParams->m_GroundControlSpeed = pTuningParams->m_GroundControlSpeed * (1.0f + 0.5f*Factor);
-		pTuningParams->m_GroundControlAccel = pTuningParams->m_GroundControlAccel * (1.0f + 0.5f*Factor);
-		pTuningParams->m_GroundJumpImpulse = pTuningParams->m_GroundJumpImpulse * (1.0f + 0.35f*Factor);
-		pTuningParams->m_AirJumpImpulse = pTuningParams->m_AirJumpImpulse * (1.0f + 0.35f*Factor);
-		pTuningParams->m_AirControlSpeed = pTuningParams->m_AirControlSpeed * (1.0f + 0.5f*Factor);
-		pTuningParams->m_AirControlAccel = pTuningParams->m_AirControlAccel * (1.0f + 0.5f*Factor);
-		pTuningParams->m_HookDragAccel = pTuningParams->m_HookDragAccel * (1.0f + 0.5f*Factor);
-		pTuningParams->m_HookDragSpeed = pTuningParams->m_HookDragSpeed * (1.0f + 0.5f*Factor);
+		pTuningParams->m_GroundControlSpeed = pTuningParams->m_GroundControlSpeed * (1.0f + 0.5f * Factor);
+		pTuningParams->m_GroundControlAccel = pTuningParams->m_GroundControlAccel * (1.0f + 0.5f * Factor);
+		pTuningParams->m_GroundJumpImpulse = pTuningParams->m_GroundJumpImpulse * (1.0f + 0.35f * Factor);
+		pTuningParams->m_AirJumpImpulse = pTuningParams->m_AirJumpImpulse * (1.0f + 0.35f * Factor);
+		pTuningParams->m_AirControlSpeed = pTuningParams->m_AirControlSpeed * (1.0f + 0.5f * Factor);
+		pTuningParams->m_AirControlAccel = pTuningParams->m_AirControlAccel * (1.0f + 0.5f * Factor);
+		pTuningParams->m_HookDragAccel = pTuningParams->m_HookDragAccel * (1.0f + 0.5f * Factor);
+		pTuningParams->m_HookDragSpeed = pTuningParams->m_HookDragSpeed * (1.0f + 0.5f * Factor);
 	}
 }
 
 void CCharacter::FireWeapon()
 {
-/* INFECTION MODIFICATION START ***************************************/
-	//Wait 1 second after spawning
+	/* INFECTION MODIFICATION START ***************************************/
+	// Wait 1 second after spawning
 	if(Server()->Tick() - m_AntiFireTick < Server()->TickSpeed())
 		return;
-	
+
 	if(IsFrozen())
 		return;
-/* INFECTION MODIFICATION END *****************************************/
-	
+	/* INFECTION MODIFICATION END *****************************************/
+
 	if(m_ReloadTimer != 0)
 		return;
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(GetClass() == PLAYERCLASS_NONE)
 		return;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
 	bool AutoFire = false;
 	bool FullAuto = false;
-	
+
 	if(m_ActiveWeapon == WEAPON_GUN || m_ActiveWeapon == WEAPON_GRENADE || m_ActiveWeapon == WEAPON_SHOTGUN || m_ActiveWeapon == WEAPON_RIFLE)
 		FullAuto = true;
 
 	if(GetClass() == PLAYERCLASS_SLUG && m_ActiveWeapon == WEAPON_HAMMER)
 		FullAuto = true;
-	
+
 	// check if we gonna fire
 	bool WillFire = false;
 	if(CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
 		WillFire = true;
-	else if(FullAuto && (m_LatestInput.m_Fire&1) && (m_aWeapons[m_ActiveWeapon].m_Ammo || (GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_MERCENARY_GRENADE)
-																					   || (GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_MEDIC_GRENADE)))
+	else if(FullAuto && (m_LatestInput.m_Fire & 1) && (m_aWeapons[m_ActiveWeapon].m_Ammo || (GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_MERCENARY_GRENADE) || (GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_MEDIC_GRENADE)))
 	{
 		AutoFire = true;
 		WillFire = true;
@@ -658,12 +648,11 @@ void CCharacter::FireWeapon()
 		return;
 
 	// check for ammo
-	if(!m_aWeapons[m_ActiveWeapon].m_Ammo && (GetInfWeaponID(m_ActiveWeapon) != INFWEAPON_MERCENARY_GRENADE)
-										  && (GetInfWeaponID(m_ActiveWeapon) != INFWEAPON_MEDIC_GRENADE))
+	if(!m_aWeapons[m_ActiveWeapon].m_Ammo && (GetInfWeaponID(m_ActiveWeapon) != INFWEAPON_MERCENARY_GRENADE) && (GetInfWeaponID(m_ActiveWeapon) != INFWEAPON_MEDIC_GRENADE))
 	{
 		// 125ms is a magical limit of how fast a human can click
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-		if(m_LastNoAmmoSound+Server()->TickSpeed() <= Server()->Tick())
+		if(m_LastNoAmmoSound + Server()->TickSpeed() <= Server()->Tick())
 		{
 			GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
 			m_LastNoAmmoSound = Server()->Tick();
@@ -674,7 +663,7 @@ void CCharacter::FireWeapon()
 	{
 		// 125ms is a magical limit of how fast a human can click
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-		if(m_LastNoAmmoSound+Server()->TickSpeed() <= Server()->Tick())
+		if(m_LastNoAmmoSound + Server()->TickSpeed() <= Server()->Tick())
 		{
 			GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
 			m_LastNoAmmoSound = Server()->Tick();
@@ -686,7 +675,7 @@ void CCharacter::FireWeapon()
 	{
 		// 125ms is a magical limit of how fast a human can click
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-		if(m_LastNoAmmoSound+Server()->TickSpeed() <= Server()->Tick())
+		if(m_LastNoAmmoSound + Server()->TickSpeed() <= Server()->Tick())
 		{
 			GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
 			m_LastNoAmmoSound = Server()->Tick();
@@ -694,49 +683,21 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	if(GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_POLICE_HAMMER)
-	{
-		m_ShieldExplode = !m_ShieldExplode;
-
-		const char *Mode = 0;
-
-		if(m_ShieldExplode)
-			Mode = Server()->Localization()->Localize(m_pPlayer->GetLanguage(), _("Explode"));
-		else 
-			Mode = Server()->Localization()->Localize(m_pPlayer->GetLanguage(), _("Defend"));
-
-		GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(),
-			BROADCAST_PRIORITY_WEAPONSTATE, 100, "Your shield mode is: {str:Mode}", "Mode", Mode, NULL);
-		return;
-	}
-
-	if(GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_POLICE_RIFLE && m_aWeapons[m_ActiveWeapon].m_Ammo < 5)
-	{
-		// 125ms is a magical limit of how fast a human can click
-		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-		if(m_LastNoAmmoSound+Server()->TickSpeed() <= Server()->Tick())
-		{
-			GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
-			m_LastNoAmmoSound = Server()->Tick();
-		}
-		return;
-	}
-
-	vec2 ProjStartPos = m_Pos+Direction*m_ProximityRadius*0.75f;
+	vec2 ProjStartPos = m_Pos + Direction * m_ProximityRadius * 0.75f;
 
 	switch(m_ActiveWeapon)
 	{
 		case WEAPON_HAMMER:
 		{
-/* INFECTION MODIFICATION START ***************************************/
+			/* INFECTION MODIFICATION START ***************************************/
 			if(GetClass() == PLAYERCLASS_ENGINEER)
 			{
-				for(CEngineerWall *pWall = (CEngineerWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall*) pWall->TypeNext())
+				for(CEngineerWall *pWall = (CEngineerWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall *) pWall->TypeNext())
 				{
 					if(pWall->m_Owner == m_pPlayer->GetCID())
 						GameServer()->m_World.DestroyEntity(pWall);
 				}
-					
+
 				if(m_FirstShot)
 				{
 					m_FirstShot = false;
@@ -744,36 +705,36 @@ void CCharacter::FireWeapon()
 				}
 				else if(distance(m_FirstShotCoord, m_Pos) > 10.0)
 				{
-					//Check if the barrier is in toxic gases
+					// Check if the barrier is in toxic gases
 					bool isAccepted = true;
-					for(int i=0; i<15; i++)
+					for(int i = 0; i < 15; i++)
 					{
-						vec2 TestPos = m_FirstShotCoord + (m_Pos - m_FirstShotCoord)*(static_cast<float>(i)/14.0f);
+						vec2 TestPos = m_FirstShotCoord + (m_Pos - m_FirstShotCoord) * (static_cast<float>(i) / 14.0f);
 						if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Damage, TestPos) == ZONE_DAMAGE_INFECTION)
 						{
 							isAccepted = false;
 						}
 					}
-					
+
 					if(isAccepted)
 					{
 						m_FirstShot = true;
-						
+
 						new CEngineerWall(GameWorld(), m_FirstShotCoord, m_Pos, m_pPlayer->GetCID());
-						
+
 						GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 					}
 				}
 			}
 			else if(GetClass() == PLAYERCLASS_LOOPER)
 			{
-				//Potential variable name conflicts with engineers wall (for example *pWall is used twice for both Looper and Engineer)
-				for(CLooperWall *pWall = (CLooperWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall*) pWall->TypeNext())
+				// Potential variable name conflicts with engineers wall (for example *pWall is used twice for both Looper and Engineer)
+				for(CLooperWall *pWall = (CLooperWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall *) pWall->TypeNext())
 				{
 					if(pWall->m_Owner == m_pPlayer->GetCID())
 						GameServer()->m_World.DestroyEntity(pWall);
 				}
-					
+
 				if(m_FirstShot)
 				{
 					m_FirstShot = false;
@@ -781,23 +742,23 @@ void CCharacter::FireWeapon()
 				}
 				else if(distance(m_FirstShotCoord, m_Pos) > 10.0)
 				{
-					//Check if the barrier is in toxic gases
+					// Check if the barrier is in toxic gases
 					bool isAccepted = true;
-					for(int i=0; i<15; i++)
+					for(int i = 0; i < 15; i++)
 					{
-						vec2 TestPos = m_FirstShotCoord + (m_Pos - m_FirstShotCoord)*(static_cast<float>(i)/14.0f);
+						vec2 TestPos = m_FirstShotCoord + (m_Pos - m_FirstShotCoord) * (static_cast<float>(i) / 14.0f);
 						if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Damage, TestPos) == ZONE_DAMAGE_INFECTION)
 						{
 							isAccepted = false;
 						}
 					}
-					
+
 					if(isAccepted)
 					{
 						m_FirstShot = true;
-						
+
 						new CLooperWall(GameWorld(), m_FirstShotCoord, m_Pos, m_pPlayer->GetCID());
-						
+
 						GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 					}
 				}
@@ -805,7 +766,7 @@ void CCharacter::FireWeapon()
 			else if(GetClass() == PLAYERCLASS_SOLDIER)
 			{
 				bool BombFound = false;
-				for(CSoldierBomb *pBomb = (CSoldierBomb*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SOLDIER_BOMB); pBomb; pBomb = (CSoldierBomb*) pBomb->TypeNext())
+				for(CSoldierBomb *pBomb = (CSoldierBomb *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SOLDIER_BOMB); pBomb; pBomb = (CSoldierBomb *) pBomb->TypeNext())
 				{
 					if(pBomb->m_Owner == m_pPlayer->GetCID())
 					{
@@ -814,7 +775,7 @@ void CCharacter::FireWeapon()
 							GameServer()->m_World.DestroyEntity(pBomb);
 					}
 				}
-				
+
 				if(!BombFound)
 				{
 					new CSoldierBomb(GameWorld(), ProjStartPos, m_pPlayer->GetCID());
@@ -827,7 +788,7 @@ void CCharacter::FireWeapon()
 				{
 					if(m_PositionLockTick <= 0 && m_PositionLockAvailable)
 					{
-						m_PositionLockTick = Server()->TickSpeed()*15;
+						m_PositionLockTick = Server()->TickSpeed() * 15;
 						m_PositionLocked = true;
 						m_PositionLockAvailable = false;
 					}
@@ -838,10 +799,10 @@ void CCharacter::FireWeapon()
 					}
 				}
 			}
-			else if(GetClass() == PLAYERCLASS_MERCENARY && g_Config.m_InfMercLove && !GameServer()->m_FunRound)
+			else if(GetClass() == PLAYERCLASS_MERCENARY && g_Config.m_InfMercLove)
 			{
-				CMercenaryBomb* pCurrentBomb = NULL;
-				for(CMercenaryBomb *pBomb = (CMercenaryBomb*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MERCENARY_BOMB); pBomb; pBomb = (CMercenaryBomb*) pBomb->TypeNext())
+				CMercenaryBomb *pCurrentBomb = NULL;
+				for(CMercenaryBomb *pBomb = (CMercenaryBomb *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MERCENARY_BOMB); pBomb; pBomb = (CMercenaryBomb *) pBomb->TypeNext())
 				{
 					if(pBomb->m_Owner == m_pPlayer->GetCID())
 					{
@@ -849,7 +810,7 @@ void CCharacter::FireWeapon()
 						break;
 					}
 				}
-				
+
 				if(pCurrentBomb)
 				{
 					if(pCurrentBomb->ReadyToExplode() || distance(pCurrentBomb->m_Pos, m_Pos) > 80.0f)
@@ -865,23 +826,23 @@ void CCharacter::FireWeapon()
 					new CMercenaryBomb(GameWorld(), m_Pos, m_pPlayer->GetCID());
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);
 				}
-				
-				m_ReloadTimer = Server()->TickSpeed()/4;
+
+				m_ReloadTimer = Server()->TickSpeed() / 4;
 			}
 			else if(GetClass() == PLAYERCLASS_SCIENTIST)
 			{
 				bool FreeSpace = true;
 				int NbMine = 0;
-				
-				int OlderMineTick = Server()->Tick()+1;
-				CScientistMine* pOlderMine = 0;
-				CScientistMine* pIntersectMine = 0;
-				
-				CScientistMine* p = (CScientistMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIENTIST_MINE);
+
+				int OlderMineTick = Server()->Tick() + 1;
+				CScientistMine *pOlderMine = 0;
+				CScientistMine *pIntersectMine = 0;
+
+				CScientistMine *p = (CScientistMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIENTIST_MINE);
 				while(p)
 				{
 					float d = distance(p->m_Pos, ProjStartPos);
-					
+
 					if(p->GetOwner() == m_pPlayer->GetCID())
 					{
 						if(OlderMineTick > p->m_StartTick)
@@ -890,8 +851,8 @@ void CCharacter::FireWeapon()
 							pOlderMine = p;
 						}
 						NbMine++;
-						
-						if(d < 2.0f*g_Config.m_InfMineRadius)
+
+						if(d < 2.0f * g_Config.m_InfMineRadius)
 						{
 							if(pIntersectMine)
 								FreeSpace = false;
@@ -899,30 +860,30 @@ void CCharacter::FireWeapon()
 								pIntersectMine = p;
 						}
 					}
-					else if(d < 2.0f*g_Config.m_InfMineRadius)
+					else if(d < 2.0f * g_Config.m_InfMineRadius)
 						FreeSpace = false;
-					
-					p = (CScientistMine *)p->TypeNext();
+
+					p = (CScientistMine *) p->TypeNext();
 				}
-				
+
 				if(FreeSpace)
 				{
-					if(pIntersectMine) //Move the mine
+					if(pIntersectMine) // Move the mine
 						GameServer()->m_World.DestroyEntity(pIntersectMine);
 					else if(NbMine >= g_Config.m_InfMineLimit && pOlderMine)
 						GameServer()->m_World.DestroyEntity(pOlderMine);
-					
+
 					new CScientistMine(GameWorld(), ProjStartPos, m_pPlayer->GetCID());
-					
-					m_ReloadTimer = Server()->TickSpeed()/2;
+
+					m_ReloadTimer = Server()->TickSpeed() / 2;
 				}
 			}
-			else if(GetClass() == PLAYERCLASS_SCIOGIST && !GameServer()->m_FunRound)
+			else if(GetClass() == PLAYERCLASS_SCIOGIST)
 			{
 				bool NoSkip = true;
 				if(m_HasAntiAirMine)
 				{
-					for(CAntiAirMine* pMine = (CAntiAirMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ANTI_AIRMINE); pMine; pMine = (CAntiAirMine*) pMine->TypeNext())
+					for(CAntiAirMine *pMine = (CAntiAirMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ANTI_AIRMINE); pMine; pMine = (CAntiAirMine *) pMine->TypeNext())
 					{
 						if(pMine->GetOwner() == m_pPlayer->GetCID())
 						{
@@ -936,7 +897,7 @@ void CCharacter::FireWeapon()
 						}
 					}
 				}
-				
+
 				if(NoSkip)
 				{
 					new CAntiAirMine(GameWorld(), m_Pos, m_pPlayer->GetCID());
@@ -949,7 +910,7 @@ void CCharacter::FireWeapon()
 				{
 					if(!m_InWater)
 						m_DartLeft--;
-					
+
 					// reset Hit objects
 					m_NumObjectsHit = 0;
 
@@ -975,17 +936,17 @@ void CCharacter::FireWeapon()
 			}
 			else if(GetClass() == PLAYERCLASS_HERO)
 			{
-				if (g_Config.m_InfTurretEnable && !AutoFire)
+				if(g_Config.m_InfTurretEnable && !AutoFire)
 				{
 					if(m_TurretCount)
 					{
-						if (g_Config.m_InfTurretEnableLaser) 
+						if(g_Config.m_InfTurretEnableLaser)
 						{
-							new CTurret(GameWorld(), m_Pos, m_pPlayer->GetCID(), Direction, GameServer()->Tuning()->m_LaserReach,INFAMMO_LASER);
+							new CTurret(GameWorld(), m_Pos, m_pPlayer->GetCID(), Direction, GameServer()->Tuning()->m_LaserReach, INFAMMO_LASER);
 						}
-						else if (g_Config.m_InfTurretEnablePlasma) 
+						else if(g_Config.m_InfTurretEnablePlasma)
 						{
-							new CTurret(GameWorld(), m_Pos, m_pPlayer->GetCID(), Direction, GameServer()->Tuning()->m_LaserReach,INFAMMO_PLASMA);
+							new CTurret(GameWorld(), m_Pos, m_pPlayer->GetCID(), Direction, GameServer()->Tuning()->m_LaserReach, INFAMMO_PLASMA);
 						}
 
 						GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
@@ -993,7 +954,7 @@ void CCharacter::FireWeapon()
 						char aBuf[256];
 						str_format(aBuf, sizeof(aBuf), "placed turret, %i left", m_TurretCount);
 						GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, aBuf, NULL);
-						if (m_TurretCount == 0)
+						if(m_TurretCount == 0)
 						{
 							m_aWeapons[WEAPON_HAMMER].m_Got = false;
 							HandleWeaponSwitch();
@@ -1004,28 +965,30 @@ void CCharacter::FireWeapon()
 			}
 			else
 			{
-/* INFECTION MODIFICATION END *****************************************/
+				/* INFECTION MODIFICATION END *****************************************/
 
 				if(GetClass() == PLAYERCLASS_FREEZER && m_HasFreezeMine)
 				{
 					CFreezeMine *pOldMine = 0;
-					for(CFreezeMine* pMine = (CFreezeMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_FREEZE_MINE); pMine; pMine = (CFreezeMine*) pMine->TypeNext())
+					for(CFreezeMine *pMine = (CFreezeMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_FREEZE_MINE); pMine; pMine = (CFreezeMine *) pMine->TypeNext())
 					{
-						if(pMine->GetOwner() == m_pPlayer->GetCID()) pOldMine = pMine; 
+						if(pMine->GetOwner() == m_pPlayer->GetCID())
+							pOldMine = pMine;
 					}
-					if(pOldMine)GameServer()->m_World.DestroyEntity(pOldMine);
+					if(pOldMine)
+						GameServer()->m_World.DestroyEntity(pOldMine);
 
 					new CFreezeMine(GameWorld(), m_Pos, m_pPlayer->GetCID());
 				}
 				// reset objects Hit
 				int Hits = 0;
 				bool ShowAttackAnimation = false;
-				
+
 				// make sure that the slug will not auto-fire to attack
 				if(!AutoFire)
 				{
 					ShowAttackAnimation = true;
-					
+
 					m_NumObjectsHit = 0;
 					GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE);
 
@@ -1034,32 +997,31 @@ void CCharacter::FireWeapon()
 						m_IsInvisible = false;
 						m_InvisibleTick = Server()->Tick();
 					}
-					
-					
-					CCharacter *apEnts[MAX_CLIENTS];
-					int Num = GameServer()->m_World.FindEntities(ProjStartPos, m_ProximityRadius*0.5f, (CEntity**)apEnts,
-																MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
-					for (int i = 0; i < Num; ++i)
+					CCharacter *apEnts[MAX_CLIENTS];
+					int Num = GameServer()->m_World.FindEntities(ProjStartPos, m_ProximityRadius * 0.5f, (CEntity **) apEnts,
+						MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+
+					for(int i = 0; i < Num; ++i)
 					{
 						CCharacter *pTarget = apEnts[i];
 
-						if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
+						if((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
 							continue;
 
 						// set his velocity to fast upward (for now)
-						if(length(pTarget->m_Pos-ProjStartPos) > 0.0f)
-							GameServer()->CreateHammerHit(pTarget->m_Pos-normalize(pTarget->m_Pos-ProjStartPos)*m_ProximityRadius*0.5f);
+						if(length(pTarget->m_Pos - ProjStartPos) > 0.0f)
+							GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * m_ProximityRadius * 0.5f);
 						else
 							GameServer()->CreateHammerHit(ProjStartPos);
 
 						vec2 Dir;
-						if (length(pTarget->m_Pos - m_Pos) > 0.0f)
+						if(length(pTarget->m_Pos - m_Pos) > 0.0f)
 							Dir = normalize(pTarget->m_Pos - m_Pos);
 						else
 							Dir = vec2(0.f, -1.f);
-						
-	/* INFECTION MODIFICATION START ***************************************/
+
+						/* INFECTION MODIFICATION START ***************************************/
 						if(IsZombie())
 						{
 							if(pTarget->IsZombie())
@@ -1078,16 +1040,18 @@ void CCharacter::FireWeapon()
 										pTarget->m_EmoteType = EMOTE_HAPPY;
 										pTarget->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
 									}
-									
+
 									if(!pTarget->GetPlayer()->HookProtectionEnabled())
 										pTarget->m_Core.m_Vel += vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
 								}
 							}
-							else if(GetClass() == PLAYERCLASS_BAT) {
+							else if(GetClass() == PLAYERCLASS_BAT)
+							{
 								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_Config.m_InfBatDamage,
 									m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
 							}
-							else if(GetClass() == PLAYERCLASS_SPIDER) {
+							else if(GetClass() == PLAYERCLASS_SPIDER)
+							{
 								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_Config.m_InfSpiderDamage,
 									m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
 							}
@@ -1102,27 +1066,26 @@ void CCharacter::FireWeapon()
 									m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_INFECTION);
 							}
 						}
-						else if(GetClass() == PLAYERCLASS_BIOLOGIST || GetClass() == PLAYERCLASS_MERCENARY ||  GetClass() == PLAYERCLASS_SCIOGIST)
+						else if(GetClass() == PLAYERCLASS_BIOLOGIST || GetClass() == PLAYERCLASS_MERCENARY || GetClass() == PLAYERCLASS_SCIOGIST)
 						{
 							/* affects mercenary only if love bombs are disabled. */
-							if (pTarget->IsZombie())
+							if(pTarget->IsZombie())
 							{
-								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, 20, 
-										m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
-							}else if(pTarget->IsFrozen())
+								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, 20,
+									m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
+							}
+							else if(pTarget->IsFrozen())
 							{
 								pTarget->Unfreeze();
 								GameServer()->ClearBroadcast(pTarget->GetPlayer()->GetCID(), BROADCAST_PRIORITY_EFFECTSTATE);
 							}
-							
-							
 						}
 						else if(GetClass() == PLAYERCLASS_MEDIC)
 						{
-							if (pTarget->IsZombie())
+							if(pTarget->IsZombie())
 							{
-								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, 20, 
-										m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
+								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, 20,
+									m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
 							}
 							else
 							{
@@ -1131,7 +1094,7 @@ void CCharacter::FireWeapon()
 									pTarget->Unfreeze();
 									GameServer()->ClearBroadcast(pTarget->GetPlayer()->GetCID(), BROADCAST_PRIORITY_EFFECTSTATE);
 								}
-								if(pTarget->GetClass() != PLAYERCLASS_HERO && pTarget->GetClass() != PLAYERCLASS_POLICE)
+								if(pTarget->GetClass() != PLAYERCLASS_HERO)
 								{
 									pTarget->IncreaseArmor(4);
 									if(pTarget->m_Armor == 10 && pTarget->m_NeedFullHeal)
@@ -1148,10 +1111,10 @@ void CCharacter::FireWeapon()
 						}
 						else if(GetClass() == PLAYERCLASS_REVIVER)
 						{
-							if (pTarget->IsZombie())
+							if(pTarget->IsZombie())
 							{
-								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, 20, 
-										m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
+								pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, 20,
+									m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
 								GameServer()->CreateExplosion(pTarget->m_Pos, m_pPlayer->GetCID(), WEAPON_HAMMER, false, TAKEDAMAGEMODE_NOINFECTION);
 							}
 							else
@@ -1186,15 +1149,15 @@ void CCharacter::FireWeapon()
 							pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
 								m_pPlayer->GetCID(), m_ActiveWeapon, TAKEDAMAGEMODE_NOINFECTION);
 						}
-	/* INFECTION MODIFICATION END *****************************************/
+						/* INFECTION MODIFICATION END *****************************************/
 						Hits++;
 					}
 				}
-				
+
 				// if we Hit anything, we have to wait for the reload
 				if(Hits && GetClass() != PLAYERCLASS_SLIME)
 				{
-					m_ReloadTimer = Server()->TickSpeed()/3;
+					m_ReloadTimer = Server()->TickSpeed() / 3;
 				}
 				else if(GetClass() == PLAYERCLASS_SLUG)
 				{
@@ -1202,14 +1165,14 @@ void CCharacter::FireWeapon()
 					if(GameServer()->Collision()->IntersectLine(m_Pos, CheckPos, 0x0, &CheckPos))
 					{
 						float Distance = 99999999.0f;
-						for(CSlugSlime* pSlime = (CSlugSlime*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SLUG_SLIME); pSlime; pSlime = (CSlugSlime*) pSlime->TypeNext())
+						for(CSlugSlime *pSlime = (CSlugSlime *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SLUG_SLIME); pSlime; pSlime = (CSlugSlime *) pSlime->TypeNext())
 						{
 							if(distance(pSlime->m_Pos, m_Pos) < Distance)
 							{
 								Distance = distance(pSlime->m_Pos, m_Pos);
 							}
 						}
-						
+
 						if(Distance > 84.0f)
 						{
 							ShowAttackAnimation = true;
@@ -1218,46 +1181,35 @@ void CCharacter::FireWeapon()
 						}
 					}
 				}
-				
+
 				if(!ShowAttackAnimation)
 					return;
-					
-/* INFECTION MODIFICATION START ***************************************/
-			}
-/* INFECTION MODIFICATION END *****************************************/
 
-		} break;
+				/* INFECTION MODIFICATION START ***************************************/
+			}
+			/* INFECTION MODIFICATION END *****************************************/
+		}
+		break;
 
 		case WEAPON_GUN:
 		{
 			if(GetClass() == PLAYERCLASS_SCIENTIST)
 			{
-				CPlasmaPlus *pPlus = new CPlasmaPlus(GameWorld(), m_Pos, m_pPlayer->GetCID(),
+				new CPlasmaPlus(GameWorld(), m_Pos, m_pPlayer->GetCID(),
 					Direction, false, true);
 				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 			}
 			else if(GetClass() == PLAYERCLASS_MERCENARY)
 			{
-				CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_GUN,
+				new CProjectile(GameWorld(), WEAPON_GUN,
 					m_pPlayer->GetCID(),
 					ProjStartPos,
 					Direction,
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime),
+					(int) (Server()->TickSpeed() * GameServer()->Tuning()->m_GunLifetime),
 					1, 0, 0, -1, WEAPON_GUN);
 
-				// pack the Projectile and send it to the client Directly
-				CNetObj_Projectile p;
-				pProj->FillInfo(&p);
-
-				CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-				Msg.AddInt(1);
-				for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-					Msg.AddInt(((int *)&p)[i]);
-
-				Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-				
-				float MaxSpeed = GameServer()->Tuning()->m_GroundControlSpeed*1.7f;
-				vec2 Recoil = Direction*(-MaxSpeed/5.0f);
+				float MaxSpeed = GameServer()->Tuning()->m_GroundControlSpeed * 1.7f;
+				vec2 Recoil = Direction * (-MaxSpeed / 5.0f);
 				SaturateVelocity(Recoil, MaxSpeed);
 
 				GameServer()->CreateSound(m_Pos, SOUND_HOOK_LOOP);
@@ -1267,184 +1219,112 @@ void CCharacter::FireWeapon()
 				new CLaser(GameWorld(), m_Pos, Direction, 400.0f, m_pPlayer->GetCID(), 2);
 				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 			}
-			else if(GetClass() == PLAYERCLASS_POLICE)
-			{
-				CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_GUN,
-					m_pPlayer->GetCID(),
-					ProjStartPos,
-					Direction, 
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime),
-					12, 0, 0, -1, WEAPON_GUN);
-
-				// pack the Projectile and send it to the client Directly
-				CNetObj_Projectile p;
-				pProj->FillInfo(&p);
-
-				CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-				Msg.AddInt(1);
-				for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-					Msg.AddInt(((int *)&p)[i]);
-
-				Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-
-				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
-			}
 			else
 			{
-				CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_GUN,
+				new CProjectile(GameWorld(), WEAPON_GUN,
 					m_pPlayer->GetCID(),
 					ProjStartPos,
 					Direction,
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime),
+					(int) (Server()->TickSpeed() * GameServer()->Tuning()->m_GunLifetime),
 					1, 0, 0, -1, WEAPON_GUN);
-
-				// pack the Projectile and send it to the client Directly
-				CNetObj_Projectile p;
-				pProj->FillInfo(&p);
-
-				CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-				Msg.AddInt(1);
-				for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-					Msg.AddInt(((int *)&p)[i]);
-
-				Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
 
 				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 			}
-		} break;
+		}
+		break;
 
 		case WEAPON_SHOTGUN:
 		{
 			int ShotSpread = 3;
 			if(GetClass() == PLAYERCLASS_BIOLOGIST)
 				ShotSpread = 1;
-			
-			CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-			Msg.AddInt(ShotSpread*2+1);
 
 			float Force = 2.0f;
 			if(GetClass() == PLAYERCLASS_MEDIC || GetClass() == PLAYERCLASS_SCIOGIST)
 				Force = 10.0f;
-				
+
 			for(int i = -ShotSpread; i <= ShotSpread; ++i)
 			{
 				float Spreading[] = {-0.21f, -0.14f, -0.070f, 0, 0.070f, 0.14f, 0.21f};
 				float a = GetAngle(Direction);
-				a += Spreading[i+3] * 2.0f*(0.25f + 0.75f*static_cast<float>(10-m_aWeapons[WEAPON_SHOTGUN].m_Ammo)/10.0f);
-				float v = 1-(absolute(i)/(float)ShotSpread);
-				float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-				
-				float LifeTime = GameServer()->Tuning()->m_ShotgunLifetime + 0.1f*static_cast<float>(m_aWeapons[WEAPON_SHOTGUN].m_Ammo)/10.0f;
-				
+				a += Spreading[i + 3] * 2.0f * (0.25f + 0.75f * static_cast<float>(10 - m_aWeapons[WEAPON_SHOTGUN].m_Ammo) / 10.0f);
+				float v = 1 - (absolute(i) / (float) ShotSpread);
+				float Speed = mix((float) GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
+
+				float LifeTime = GameServer()->Tuning()->m_ShotgunLifetime + 0.1f * static_cast<float>(m_aWeapons[WEAPON_SHOTGUN].m_Ammo) / 10.0f;
+
 				if(GetClass() == PLAYERCLASS_BIOLOGIST)
 				{
-					CBouncingBullet *pProj = new CBouncingBullet(GameWorld(), m_pPlayer->GetCID(), ProjStartPos, vec2(cosf(a), sinf(a))*Speed);
-
-					// pack the Projectile and send it to the client Directly
-					CNetObj_Projectile p;
-					pProj->FillInfo(&p);
-					for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-						Msg.AddInt(((int *)&p)[i]);
+					new CBouncingBullet(GameWorld(), m_pPlayer->GetCID(), ProjStartPos, vec2(cosf(a), sinf(a)) * Speed);
 				}
 				else
 				{
-					CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
+					new CProjectile(GameWorld(), WEAPON_SHOTGUN,
 						m_pPlayer->GetCID(),
 						ProjStartPos,
-						vec2(cosf(a), sinf(a))*Speed,
-						(int)(Server()->TickSpeed()*LifeTime),
+						vec2(cosf(a), sinf(a)) * Speed,
+						(int) (Server()->TickSpeed() * LifeTime),
 						1, 0, Force, -1, WEAPON_SHOTGUN);
-
-					// pack the Projectile and send it to the client Directly
-					CNetObj_Projectile p;
-					pProj->FillInfo(&p);
-					for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-						Msg.AddInt(((int *)&p)[i]);
 				}
-				
 			}
 
-			Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-
 			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
-		} break;
+		}
+		break;
 
 		case WEAPON_GRENADE:
 		{
 			if(GetClass() == PLAYERCLASS_MERCENARY)
-			{				
-				//Find bomb
+			{
+				// Find bomb
 				bool BombFound = false;
-				for(CScatterGrenade *pGrenade = (CScatterGrenade*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCATTER_GRENADE); pGrenade; pGrenade = (CScatterGrenade*) pGrenade->TypeNext())
+				for(CScatterGrenade *pGrenade = (CScatterGrenade *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCATTER_GRENADE); pGrenade; pGrenade = (CScatterGrenade *) pGrenade->TypeNext())
 				{
-					if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
+					if(pGrenade->m_Owner != m_pPlayer->GetCID())
+						continue;
 					pGrenade->Explode();
 					BombFound = true;
 				}
-				
+
 				if(!BombFound && m_aWeapons[m_ActiveWeapon].m_Ammo)
 				{
 					int ShotSpread = 1;
-					
-					CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-					Msg.AddInt(ShotSpread*2+1);
-					
 					for(int i = -ShotSpread; i <= ShotSpread; ++i)
 					{
-						float a = GetAngle(Direction) + random_float()/3.0f;
-						
-						CScatterGrenade *pProj = new CScatterGrenade(GameWorld(), m_pPlayer->GetCID(), m_Pos, vec2(cosf(a), sinf(a)));
-						
-						// pack the Projectile and send it to the client Directly
-						CNetObj_Projectile p;
-						pProj->FillInfo(&p);
-						
-						for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-							Msg.AddInt(((int *)&p)[i]);
-						Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+						float a = GetAngle(Direction) + random_float() / 3.0f;
+						new CScatterGrenade(GameWorld(), m_pPlayer->GetCID(), m_Pos, vec2(cosf(a), sinf(a)));
 					}
-					
+
 					GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
-					
-					m_ReloadTimer = Server()->TickSpeed()/4;
+
+					m_ReloadTimer = Server()->TickSpeed() / 4;
 				}
 			}
 			else if(GetClass() == PLAYERCLASS_MEDIC)
 			{
-				//Find bomb
+				// Find bomb
 				bool BombFound = false;
-				for(CMedicGrenade *pGrenade = (CMedicGrenade*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MEDIC_GRENADE); pGrenade; pGrenade = (CMedicGrenade*) pGrenade->TypeNext())
+				for(CMedicGrenade *pGrenade = (CMedicGrenade *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MEDIC_GRENADE); pGrenade; pGrenade = (CMedicGrenade *) pGrenade->TypeNext())
 				{
-					if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
+					if(pGrenade->m_Owner != m_pPlayer->GetCID())
+						continue;
 					pGrenade->Explode();
 					BombFound = true;
 				}
-				
+
 				if(!BombFound && m_aWeapons[m_ActiveWeapon].m_Ammo)
 				{
 					int ShotSpread = 0;
-					
-					CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-					Msg.AddInt(ShotSpread*2+1);
-					
+
 					for(int i = -ShotSpread; i <= ShotSpread; ++i)
 					{
-						float a = GetAngle(Direction) + random_float()/5.0f;
-						
-						CMedicGrenade *pProj = new CMedicGrenade(GameWorld(), m_pPlayer->GetCID(), m_Pos, vec2(cosf(a), sinf(a)));
-
-						// pack the Projectile and send it to the client Directly
-						CNetObj_Projectile p;
-						pProj->FillInfo(&p);
-
-						for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-							Msg.AddInt(((int *)&p)[i]);
-						Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+						float a = GetAngle(Direction) + random_float() / 5.0f;
+						new CMedicGrenade(GameWorld(), m_pPlayer->GetCID(), m_Pos, vec2(cosf(a), sinf(a)));
 					}
 
 					GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
-					
-					m_ReloadTimer = Server()->TickSpeed()/4;
+
+					m_ReloadTimer = Server()->TickSpeed() / 4;
 				}
 				else
 				{
@@ -1463,7 +1343,7 @@ void CCharacter::FireWeapon()
 				if(length(PortalShift) > 500.0f)
 					PortalShift = PortalDir * 500.0f;
 				vec2 PortalPos;
-				
+
 				if(FindPortalPosition(m_Pos + PortalShift, PortalPos))
 				{
 					vec2 OldPos = m_Core.m_Pos;
@@ -1471,12 +1351,13 @@ void CCharacter::FireWeapon()
 					m_Core.m_HookedPlayer = -1;
 					m_Core.m_HookState = HOOK_RETRACTED;
 					m_Core.m_HookPos = m_Core.m_Pos;
-					if(g_Config.m_InfScientistTpSelfharm > 0) {
+					if(g_Config.m_InfScientistTpSelfharm > 0)
+					{
 						auto pScientist = GetPlayer()->GetCharacter();
 						pScientist->TakeDamage(vec2(0.0f, 0.0f), g_Config.m_InfScientistTpSelfharm * 2, GetPlayer()->GetCID(), WEAPON_HAMMER, TAKEDAMAGEMODE_SELFHARM);
 					}
 					CCharacterCore *p = m_Core.m_Passenger;
-					while (p != nullptr)
+					while(p != nullptr)
 					{
 						p->m_HookState = HOOK_RETRACTED;
 						p = p->m_Passenger;
@@ -1494,93 +1375,72 @@ void CCharacter::FireWeapon()
 			}
 			else if(GetClass() == PLAYERCLASS_SCIOGIST)
 			{
-				for(int i = 1;i <= 3;i++)
+				for(int i = 1; i <= 3; i++)
 				{
 					float Spreading[] = {-0.210f, -0.105f, 0.105f};
 					float angle = GetAngle(Direction);
-					angle += Spreading[i] * 2.0f*(0.25f + 0.75f*static_cast<float>(10-3)/10.0f);
-					CSciogistGrenade *pSciGre = new CSciogistGrenade(GameWorld(), m_pPlayer->GetCID(), ProjStartPos, vec2(cosf(angle), sinf(angle)));
+					angle += Spreading[i] * 2.0f * (0.25f + 0.75f * static_cast<float>(10 - 3) / 10.0f);
+					new CSciogistGrenade(GameWorld(), m_pPlayer->GetCID(), ProjStartPos, vec2(cosf(angle), sinf(angle)));
 				}
 				GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
 			}
 			else
 			{
-				if(m_HasStunGrenade) 
+				if(m_HasStunGrenade)
 				{
 					int ShotSpread = 2;
-					
-					CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-					Msg.AddInt(ShotSpread*2+1);
-					
+
 					for(int i = -ShotSpread; i <= ShotSpread; ++i)
 					{
-						float a = GetAngle(Direction) + random_float()/3.0f;
-						
+						float a = GetAngle(Direction) + random_float() / 3.0f;
+
 						CScatterGrenade *pProj = new CScatterGrenade(GameWorld(), m_pPlayer->GetCID(), m_Pos, vec2(cosf(a), sinf(a)));
-						
-						if (m_HasStunGrenade)
+
+						if(m_HasStunGrenade)
 						{
-							//Make them flash grenades
+							// Make them flash grenades
 							pProj->FlashGrenade();
 						}
-						
-						
-						// pack the Projectile and send it to the client Directly
-						CNetObj_Projectile p;
-						pProj->FillInfo(&p);
-						
-						for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-							Msg.AddInt(((int *)&p)[i]);
-						Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
 					}
-					
+
 					GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
-					
-					m_HasStunGrenade=false;
+
+					m_HasStunGrenade = false;
 					GetPlayer()->ResetNumberKills();
 					return;
 				}
-				else 
+				else
 				{
 					CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_GRENADE,
-														 m_pPlayer->GetCID(),
-														 ProjStartPos,
-										  Direction,
-										  (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime),
-														 1, true, 0, SOUND_GRENADE_EXPLODE, WEAPON_GRENADE,0);
-					
+						m_pPlayer->GetCID(),
+						ProjStartPos,
+						Direction,
+						(int) (Server()->TickSpeed() * GameServer()->Tuning()->m_GrenadeLifetime),
+						1, true, 0, SOUND_GRENADE_EXPLODE, WEAPON_GRENADE, 0);
+
 					if(GetClass() == PLAYERCLASS_NINJA)
 					{
 						pProj->FlashGrenade();
 					}
-					
-					// pack the Projectile and send it to the client Directly
-					CNetObj_Projectile p;
-					pProj->FillInfo(&p);
-					
-					CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-					Msg.AddInt(1);
-					for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-						Msg.AddInt(((int *)&p)[i]);
-					Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-					
+
 					GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
-					
 				}
 			}
-		} break;
+		}
+		break;
 
 		case WEAPON_RIFLE:
 		{
 			if(GetClass() == PLAYERCLASS_BIOLOGIST)
 			{
-				for(CBiologistMine* pMine = (CBiologistMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_BIOLOGIST_MINE); pMine; pMine = (CBiologistMine*) pMine->TypeNext())
+				for(CBiologistMine *pMine = (CBiologistMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_BIOLOGIST_MINE); pMine; pMine = (CBiologistMine *) pMine->TypeNext())
 				{
-					if(pMine->m_Owner != m_pPlayer->GetCID()) continue;
-						GameServer()->m_World.DestroyEntity(pMine);
+					if(pMine->m_Owner != m_pPlayer->GetCID())
+						continue;
+					GameServer()->m_World.DestroyEntity(pMine);
 				}
-				
-				vec2 To = m_Pos + Direction*400.0f;
+
+				vec2 To = m_Pos + Direction * 400.0f;
 				if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
 				{
 					new CBiologistMine(GameWorld(), m_Pos, To, m_pPlayer->GetCID());
@@ -1590,7 +1450,7 @@ void CCharacter::FireWeapon()
 				else
 					return;
 			}
-			else if(GetClass() == PLAYERCLASS_CATAPULT && !GameServer()->m_FunRound)
+			else if(GetClass() == PLAYERCLASS_CATAPULT)
 			{
 				new CElasticEntity(GameWorld(), m_Pos, Direction, m_pPlayer->GetCID());
 				GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
@@ -1599,7 +1459,7 @@ void CCharacter::FireWeapon()
 			else
 			{
 				int Damage = GameServer()->Tuning()->m_LaserDamage;
-				
+
 				if(GetClass() == PLAYERCLASS_SNIPER)
 				{
 					if(m_PositionLocked)
@@ -1609,27 +1469,23 @@ void CCharacter::FireWeapon()
 					new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), Damage);
 					GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 				}
-				else if(GetClass() == PLAYERCLASS_POLICE)
-				{
-					new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), 2);
-					GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
-					m_aWeapons[WEAPON_RIFLE].m_Ammo = 0;
-				}
 				else if(GetClass() == PLAYERCLASS_SCIENTIST)
 				{
-					//white hole activation in scientist-laser
-					
-					new CScientistLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach*0.6f, m_pPlayer->GetCID(), Damage);
+					// white hole activation in scientist-laser
+
+					new CScientistLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach * 0.6f, m_pPlayer->GetCID(), Damage);
 					GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 				}
-				else if (GetClass() == PLAYERCLASS_LOOPER) {
+				else if(GetClass() == PLAYERCLASS_LOOPER)
+				{
 					Damage = 5;
-					new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach*0.7f, m_pPlayer->GetCID(), Damage);
+					new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach * 0.7f, m_pPlayer->GetCID(), Damage);
 					GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 				}
-				else if (GetClass() == PLAYERCLASS_SCIOGIST) {
+				else if(GetClass() == PLAYERCLASS_SCIOGIST)
+				{
 					Damage = 5;
-					new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach*0.7f, m_pPlayer->GetCID(), Damage);
+					new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach * 0.7f, m_pPlayer->GetCID(), Damage);
 					GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 				}
 				else
@@ -1637,10 +1493,9 @@ void CCharacter::FireWeapon()
 					new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), Damage);
 					GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 				}
-				
-				
 			}
-		} break;
+		}
+		break;
 	}
 
 	m_AttackTick = Server()->Tick();
@@ -1652,98 +1507,97 @@ void CCharacter::FireWeapon()
 	{
 		m_ReloadTimer = Server()->GetFireDelay(GetInfWeaponID(m_ActiveWeapon)) * Server()->TickSpeed() / 1000;
 	}
-
 }
 
 void CCharacter::CheckSuperWeaponAccess()
 {
 	// check kills of player
 	int kills = m_pPlayer->GetNumberKills();
-	
-	//Only scientists can receive white holes
+
+	// Only scientists can receive white holes
 	if(GetClass() == PLAYERCLASS_SCIENTIST)
 	{
-		
-		if (!m_HasWhiteHole) // Can't receive a white hole while having one available
+		if(!m_HasWhiteHole) // Can't receive a white hole while having one available
 		{
 			// enable white hole probabilities
-			if (kills > g_Config.m_InfWhiteHoleMinimalKills) 
+			if(kills > g_Config.m_InfWhiteHoleMinimalKills)
 			{
-				if (random_int(0,100) < g_Config.m_InfWhiteHoleProbability) 
+				if(random_int(0, 100) < g_Config.m_InfWhiteHoleProbability)
 				{
-					//Scientist-laser.cpp will make it unavailable after usage and reset player kills
-					
-					//create an indicator object
-					if (m_HasIndicator == false) {
+					// Scientist-laser.cpp will make it unavailable after usage and reset player kills
+
+					// create an indicator object
+					if(m_HasIndicator == false)
+					{
 						m_HasIndicator = true;
 						GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("white hole found, adjusting scientific parameters..."), NULL);
 						new CSuperWeaponIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID());
 					}
-				} 
-			} 
+				}
+			}
 		}
 	}
 
 	if(GetClass() == PLAYERCLASS_SCIOGIST)
 	{
-		
-		if (!m_HasElasticHole) // Can't receive a elastic hole while having one available
+		if(!m_HasElasticHole) // Can't receive a elastic hole while having one available
 		{
 			// enable elastic hole probabilities
-			if (kills > g_Config.m_InfElasticHoleMinimalKills) 
+			if(kills > g_Config.m_InfElasticHoleMinimalKills)
 			{
-				if (random_int(0,100) < g_Config.m_InfElasticHoleProbability) 
+				if(random_int(0, 100) < g_Config.m_InfElasticHoleProbability)
 				{
-					//create an indicator object
-					if (m_HasIndicator == false) {
+					// create an indicator object
+					if(m_HasIndicator == false)
+					{
 						m_HasIndicator = true;
 						GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("elastic hole found, finding the exit passageway!"), NULL);
 						new CSuperWeaponIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID());
 					}
 				}
-			} 
+			}
 		}
 	}
-	
+
 	if(GetClass() == PLAYERCLASS_REVIVER)
 	{
-		
-		if (!m_HasHealBoom) // Can't receive a white hole while having one available
+		if(!m_HasHealBoom) // Can't receive a white hole while having one available
 		{
 			// enable white hole probabilities
-			if (kills > g_Config.m_InfHealBoomMinimalKills) 
+			if(kills > g_Config.m_InfHealBoomMinimalKills)
 			{
-				if (random_int(0,100) < g_Config.m_InfHealBoomProbability) 
+				if(random_int(0, 100) < g_Config.m_InfHealBoomProbability)
 				{
-					//Scientist-laser.cpp will make it unavailable after usage and reset player kills
-					
-					//create an indicator object
-					if (m_HasIndicator == false) {
+					// Scientist-laser.cpp will make it unavailable after usage and reset player kills
+
+					// create an indicator object
+					if(m_HasIndicator == false)
+					{
 						m_HasIndicator = true;
 						GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("heal boom found, heal them..."), NULL);
 						new CSuperWeaponIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID());
 					}
 				}
-			} 
+			}
 		}
 	}
 
-	//Only looper and soldier can receive stun grenades
+	// Only looper and soldier can receive stun grenades
 	if(GetClass() == PLAYERCLASS_LOOPER || GetClass() == PLAYERCLASS_SOLDIER)
 	{
-		if (!m_HasStunGrenade)
+		if(!m_HasStunGrenade)
 		{
 			// enable white hole probabilities
-			if (kills > g_Config.m_InfStunGrenadeMinimalKills) 
+			if(kills > g_Config.m_InfStunGrenadeMinimalKills)
 			{
-				if (random_int(0,100) < g_Config.m_InfStunGrenadeProbability) 
+				if(random_int(0, 100) < g_Config.m_InfStunGrenadeProbability)
 				{
-						//grenade launcher usage will make it unavailable and reset player kills
-					
-						m_HasStunGrenade = true;
-						GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("stun grenades found..."), NULL);
-				} 
-			} 
+					// grenade launcher usage will make it unavailable and reset player kills
+
+					m_HasStunGrenade = true;
+					GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("stun grenades found..."), NULL);
+				}
+			}
 		}
 	}
 
@@ -1751,7 +1605,7 @@ void CCharacter::CheckSuperWeaponAccess()
 	{
 		if(!m_HasFreezeMine)
 		{
-			if (kills >= g_Config.m_InfFreezeMineMinimalKills)
+			if(kills >= g_Config.m_InfFreezeMineMinimalKills)
 			{
 				m_HasFreezeMine = true;
 				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("you had a freeze mine..."), NULL);
@@ -1761,12 +1615,11 @@ void CCharacter::CheckSuperWeaponAccess()
 	}
 }
 
-
 void CCharacter::SaturateVelocity(vec2 Force, float MaxSpeed)
 {
 	if(length(Force) < 0.00001)
 		return;
-	
+
 	float Speed = length(m_Core.m_Vel);
 	vec2 VelDir = normalize(m_Core.m_Vel);
 	if(Speed < 0.00001)
@@ -1776,23 +1629,23 @@ void CCharacter::SaturateVelocity(vec2 Force, float MaxSpeed)
 	vec2 OrthoVelDir = vec2(-VelDir.y, VelDir.x);
 	float VelDirFactor = dot(Force, VelDir);
 	float OrthoVelDirFactor = dot(Force, OrthoVelDir);
-	
+
 	vec2 NewVel = m_Core.m_Vel;
 	if(Speed < MaxSpeed || VelDirFactor < 0.0f)
 	{
-		NewVel += VelDir*VelDirFactor;
+		NewVel += VelDir * VelDirFactor;
 		float NewSpeed = length(NewVel);
 		if(NewSpeed > MaxSpeed)
 		{
 			if(VelDirFactor > 0.f)
-				NewVel = VelDir*MaxSpeed;
+				NewVel = VelDir * MaxSpeed;
 			else
-				NewVel = -VelDir*MaxSpeed;
+				NewVel = -VelDir * MaxSpeed;
 		}
 	}
-	
+
 	NewVel += OrthoVelDir * OrthoVelDirFactor;
-	
+
 	m_Core.m_Vel = NewVel;
 }
 
@@ -1800,21 +1653,20 @@ void CCharacter::HandleWeapons()
 {
 	if(IsFrozen())
 		return;
-		
-	//ninja
+
+	// ninja
 	HandleNinja();
-	
-	//slime
+
+	// slime
 	if(m_ReloadSlimeTick)
 	{
 		m_ReloadSlimeTick--;
-		if(m_ReloadSlimeTick-1 == 0)
+		if(m_ReloadSlimeTick - 1 == 0)
 		{
 			GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(),
-			BROADCAST_PRIORITY_WEAPONSTATE, 100, "Slime entity is ready!");
+				BROADCAST_PRIORITY_WEAPONSTATE, 100, "Slime entity is ready!");
 		}
 	}
-
 
 	// check reload timer
 	if(m_ReloadTimer)
@@ -1826,32 +1678,32 @@ void CCharacter::HandleWeapons()
 	FireWeapon();
 
 	// ammo regen
-/* INFECTION MODIFICATION START ***************************************/
-	for(int i=WEAPON_GUN; i<=WEAPON_RIFLE; i++)
+	/* INFECTION MODIFICATION START ***************************************/
+	for(int i = WEAPON_GUN; i <= WEAPON_RIFLE; i++)
 	{
 		int InfWID = GetInfWeaponID(i);
 		int AmmoRegenTime = Server()->GetAmmoRegenTime(InfWID);
 		int MaxAmmo = Server()->GetMaxAmmo(GetInfWeaponID(i));
-		
+
 		if(InfWID == INFWEAPON_NINJA_GRENADE)
 			MaxAmmo = min(MaxAmmo + m_NinjaAmmoBuff, 10);
-		
+
 		if(InfWID == INFWEAPON_MERCENARY_GUN)
 		{
-			if(m_InAirTick > Server()->TickSpeed()*4)
+			if(m_InAirTick > Server()->TickSpeed() * 4)
 			{
 				AmmoRegenTime = 0;
 			}
 		}
-		
+
 		if(AmmoRegenTime)
 		{
 			if(m_ReloadTimer <= 0)
 			{
-				if (m_aWeapons[i].m_AmmoRegenStart < 0)
+				if(m_aWeapons[i].m_AmmoRegenStart < 0)
 					m_aWeapons[i].m_AmmoRegenStart = Server()->Tick();
 
-				if ((Server()->Tick() - m_aWeapons[i].m_AmmoRegenStart) >= AmmoRegenTime * Server()->TickSpeed() / 1000)
+				if((Server()->Tick() - m_aWeapons[i].m_AmmoRegenStart) >= AmmoRegenTime * Server()->TickSpeed() / 1000)
 				{
 					// Add some ammo
 					m_aWeapons[i].m_Ammo = min(m_aWeapons[i].m_Ammo + 1, MaxAmmo);
@@ -1860,7 +1712,7 @@ void CCharacter::HandleWeapons()
 			}
 		}
 	}
-	
+
 	if(IsZombie())
 	{
 		if(m_Core.m_HookedPlayer >= 0)
@@ -1870,15 +1722,11 @@ void CCharacter::HandleWeapons()
 			{
 				float Rate = 1.0f;
 				int Damage = 1;
-				
+
 				if(GetClass() == PLAYERCLASS_SMOKER)
 				{
 					Rate = 0.5f;
-					if(VictimChar->GetClass() == PLAYERCLASS_POLICE && VictimChar->m_ActiveWeapon == WEAPON_HAMMER && !VictimChar->m_ShieldExplode)
-					{
-						Damage = 2 * g_Config.m_InfSmokerHookDamage;
-					}
-					else Damage = g_Config.m_InfSmokerHookDamage;
+					Damage = g_Config.m_InfSmokerHookDamage;
 				}
 				else if(GetClass() == PLAYERCLASS_FREEZER && VictimChar->IsHuman())
 				{
@@ -1889,13 +1737,14 @@ void CCharacter::HandleWeapons()
 							VictimChar->SlowMotionEffect(30);
 							m_ReslowlyTick = g_Config.m_InfFreezerReslowlyTime;
 						}
-						
+
 						m_Core.m_HookedPlayer = -1;
 						m_Core.m_HookProtected = false;
 						m_Core.m_HookState = HOOK_RETRACTED;
 
 						return;
-					}else
+					}
+					else
 					{
 						Damage = g_Config.m_InfFreezerHookDamage;
 					}
@@ -1906,20 +1755,20 @@ void CCharacter::HandleWeapons()
 				}
 				else if(GetClass() == PLAYERCLASS_GHOUL)
 				{
-					Rate = 0.33f + 0.66f * (1.0f-m_pPlayer->GetGhoulPercent());
+					Rate = 0.33f + 0.66f * (1.0f - m_pPlayer->GetGhoulPercent());
 				}
-				
-				if(m_HookDmgTick + Server()->TickSpeed()*Rate < Server()->Tick())
+
+				if(m_HookDmgTick + Server()->TickSpeed() * Rate < Server()->Tick())
 				{
 					m_HookDmgTick = Server()->Tick();
-					VictimChar->TakeDamage(vec2(0.0f,0.0f), Damage, m_pPlayer->GetCID(), WEAPON_NINJA, TAKEDAMAGEMODE_NOINFECTION);
+					VictimChar->TakeDamage(vec2(0.0f, 0.0f), Damage, m_pPlayer->GetCID(), WEAPON_NINJA, TAKEDAMAGEMODE_NOINFECTION);
 					if((GetClass() == PLAYERCLASS_SMOKER || GetClass() == PLAYERCLASS_BAT) && VictimChar->IsHuman())
 						IncreaseOverallHp(2);
 				}
 			}
 		}
 	}
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	return;
 }
@@ -1942,13 +1791,13 @@ bool CCharacter::GiveWeapon(int Weapon, int Ammo)
 {
 	int InfWID = GetInfWeaponID(Weapon);
 	int MaxAmmo = Server()->GetMaxAmmo(InfWID);
-	
+
 	if(InfWID == INFWEAPON_NINJA_GRENADE)
 		MaxAmmo = min(MaxAmmo + m_NinjaAmmoBuff, 10);
-	
+
 	if(Ammo < 0)
 		Ammo = MaxAmmo;
-	
+
 	if(m_aWeapons[Weapon].m_Ammo < MaxAmmo || !m_aWeapons[Weapon].m_Got)
 	{
 		m_aWeapons[Weapon].m_Got = true;
@@ -2002,7 +1851,7 @@ void CCharacter::ResetInput()
 	m_Input.m_Direction = 0;
 	m_Input.m_Hook = 0;
 	// simulate releasing the fire button
-	if((m_Input.m_Fire&1) != 0)
+	if((m_Input.m_Fire & 1) != 0)
 		m_Input.m_Fire++;
 	m_Input.m_Fire &= INPUT_STATE_MASK;
 	m_Input.m_Jump = 0;
@@ -2011,22 +1860,22 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	//~ if(GameServer()->Collision()->CheckPhysicsFlag(m_Core.m_Pos, CCollision::COLFLAG_WATER))
 	//~ {
-		//~ if(m_InWater == 0)
-		//~ {
-			//~ m_InWater = 1;
-			//~ m_Core.m_Vel /= 2.0f;
-			//~ m_WaterJumpLifeSpan = 0;
-		//~ }
+	//~ if(m_InWater == 0)
+	//~ {
+	//~ m_InWater = 1;
+	//~ m_Core.m_Vel /= 2.0f;
+	//~ m_WaterJumpLifeSpan = 0;
+	//~ }
 	//~ }
 	//~ else
-		//~ m_InWater = 0;
+	//~ m_InWater = 0;
 	// Delayed Death
 	if(GetClass() == PLAYERCLASS_VOODOO && m_VoodooAboutToDie && m_VoodooTimeAlive > 0)
 	{
-		m_VoodooTimeAlive-=1000;
+		m_VoodooTimeAlive -= 1000;
 	}
 	else if(GetClass() == PLAYERCLASS_VOODOO && m_VoodooAboutToDie && m_VoodooTimeAlive <= 0)
 	{
@@ -2036,14 +1885,12 @@ void CCharacter::Tick()
 	// Display time left to live
 	if(GetClass() == PLAYERCLASS_VOODOO && m_VoodooAboutToDie)
 	{
-		int Time = m_VoodooTimeAlive/Server()->TickSpeed();
+		int Time = m_VoodooTimeAlive / Server()->TickSpeed();
 		GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
-		_("Staying alive for: {int:RemainingTime}"),
-		"RemainingTime", &Time,
-		NULL
-		);
+			_("Staying alive for: {int:RemainingTime}"),
+			"RemainingTime", &Time,
+			NULL);
 	}
-
 
 	if(GetClass() == PLAYERCLASS_SNIPER && m_PositionLocked)
 	{
@@ -2052,22 +1899,22 @@ void CCharacter::Tick()
 			m_PositionLocked = false;
 		}
 	}
-	
+
 	if(IsHuman() && IsAlive() && GameServer()->m_pController->IsInfectionStarted())
 	{
 		int Index = GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Bonus, m_Pos.x, m_Pos.y);
 		if(Index == ZONE_BONUS_BONUS)
 		{
 			m_BonusTick++;
-			if(m_BonusTick > Server()->TickSpeed()*60)
+			if(m_BonusTick > Server()->TickSpeed() * 60)
 			{
 				m_BonusTick = 0;
-				
+
 				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("You have held a bonus area for one minute, +5 points"), NULL);
 				GameServer()->SendEmoticon(m_pPlayer->GetCID(), EMOTICON_MUSIC);
 				SetEmote(EMOTE_HAPPY, Server()->Tick() + Server()->TickSpeed());
 				GiveGift(GIFT_HEROFLAG);
-				
+
 				Server()->RoundStatistics()->OnScoreEvent(m_pPlayer->GetCID(), SCOREEVENT_BONUS, GetClass(), Server()->ClientName(m_pPlayer->GetCID()), Console());
 				GameServer()->SendScoreSound(m_pPlayer->GetCID());
 			}
@@ -2075,10 +1922,10 @@ void CCharacter::Tick()
 	}
 	else
 		m_BonusTick = 0;
-	
+
 	{
-		int Index0 = GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Damage, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f);
-		
+		int Index0 = GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Damage, m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f);
+
 		if(Index0 == ZONE_DAMAGE_DEATH)
 		{
 			Die(m_pPlayer->GetCID(), WEAPON_WORLD);
@@ -2095,12 +1942,13 @@ void CCharacter::Tick()
 		{
 			if(IsZombie())
 			{
-				if(Server()->Tick() >= m_HealTick + (Server()->TickSpeed()/g_Config.m_InfInfzoneHealRate))
+				if(Server()->Tick() >= m_HealTick + (Server()->TickSpeed() / g_Config.m_InfInfzoneHealRate))
 				{
 					m_HealTick = Server()->Tick();
 					IncreaseHealth(1);
 				}
-				if (m_InfZoneTick < 0) {
+				if(m_InfZoneTick < 0)
+				{
 					m_InfZoneTick = Server()->Tick(); // Save Tick when zombie enters infection zone
 					GrantSpawnProtection();
 				}
@@ -2113,17 +1961,17 @@ void CCharacter::Tick()
 		}
 		if(m_Alive && (Index0 != ZONE_DAMAGE_INFECTION))
 		{
-			m_InfZoneTick = -1;// Reset Tick when zombie is not in infection zone
+			m_InfZoneTick = -1; // Reset Tick when zombie is not in infection zone
 		}
 	}
-	
+
 	if(m_PositionLockTick > 0)
 	{
 		--m_PositionLockTick;
 		if(m_PositionLockTick <= 0)
 			m_PositionLocked = false;
 	}
-	
+
 	--m_FrozenTime;
 	if(m_IsFrozen)
 	{
@@ -2133,60 +1981,60 @@ void CCharacter::Tick()
 		}
 		else
 		{
-			int FreezeSec = 1+(m_FrozenTime/Server()->TickSpeed());
+			int FreezeSec = 1 + (m_FrozenTime / Server()->TickSpeed());
 			GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_EFFECTSTATE, BROADCAST_DURATION_REALTIME, _("You are frozen: {sec:EffectDuration}"), "EffectDuration", &FreezeSec, NULL);
 		}
 	}
-	
+
 	if(m_ReslowlyTick)
 	{
 		m_ReslowlyTick--;
 	}
-	
+
 	if(m_SlowMotionTick > 0)
 	{
 		--m_SlowMotionTick;
-		
+
 		if(m_SlowMotionTick <= 0)
 		{
 			m_IsInSlowMotion = false;
 		}
 		else
 		{
-			int SloMoSec = 1+(m_SlowMotionTick/Server()->TickSpeed());
+			int SloMoSec = 1 + (m_SlowMotionTick / Server()->TickSpeed());
 			GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_EFFECTSTATE, BROADCAST_DURATION_REALTIME, _("You are slowed: {sec:EffectDuration}"), "EffectDuration", &SloMoSec, NULL);
 		}
 	}
-	
-	
+
 	if(m_HallucinationTick > 0)
 		--m_HallucinationTick;
-	
+
 	if(m_LoveTick > 0)
 		--m_LoveTick;
-	
+
 	if(m_SlipperyTick > 0)
 		--m_SlipperyTick;
 
-	if(m_ProtectionTick > 0) {
+	if(m_ProtectionTick > 0)
+	{
 		--m_ProtectionTick;
 
 		// Indicate time left being protected via armor
 		int maxProtectionTick = Server()->TickSpeed() * g_Config.m_InfSpawnProtectionTime;
-		float timeLeft = 10 * (m_ProtectionTick / (float)maxProtectionTick);
-		m_Armor = (int)timeLeft;
-	
+		float timeLeft = 10 * (m_ProtectionTick / (float) maxProtectionTick);
+		m_Armor = (int) timeLeft;
+
 		// Player left spawn before protection ran out: remove all remaining armor
 		if(m_InfZoneTick == -1)
 		{
 			int maxProtectionTick = Server()->TickSpeed() * g_Config.m_InfSpawnProtectionTime;
-			float timeLeft = 10 * (m_ProtectionTick / (float)maxProtectionTick);
-			IncreaseArmor(-(int)timeLeft);
+			float timeLeft = 10 * (m_ProtectionTick / (float) maxProtectionTick);
+			IncreaseArmor(-(int) timeLeft);
 
 			m_ProtectionTick = 0;
 		}
 	}
-	
+
 	if(m_Poison > 0)
 	{
 		if(m_PoisonTick == 0)
@@ -2195,7 +2043,7 @@ void CCharacter::Tick()
 			TakeDamage(vec2(0.0f, 0.0f), 1, m_PoisonFrom, WEAPON_HAMMER, TAKEDAMAGEMODE_NOINFECTION);
 			if(m_Poison > 0)
 			{
-				m_PoisonTick = Server()->TickSpeed()/2;
+				m_PoisonTick = Server()->TickSpeed() / 2;
 			}
 		}
 		else
@@ -2203,12 +2051,11 @@ void CCharacter::Tick()
 			m_PoisonTick--;
 		}
 	}
-	
-	
-	//NeedHeal
+
+	// NeedHeal
 	if(m_Armor >= 10)
 		m_NeedFullHeal = false;
-	
+
 	if(!m_InWater && !IsGrounded() && (m_Core.m_HookState != HOOK_GRABBED || m_Core.m_HookedPlayer != -1))
 	{
 		m_InAirTick++;
@@ -2217,49 +2064,50 @@ void CCharacter::Tick()
 	{
 		m_InAirTick = 0;
 	}
-	
-	//Ghost
+
+	// Ghost
 	if(GetClass() == PLAYERCLASS_GHOST)
 	{
-		if(Server()->Tick() < m_InvisibleTick + 3*Server()->TickSpeed() || IsFrozen() || IsInSlowMotion())
+		if(Server()->Tick() < m_InvisibleTick + 3 * Server()->TickSpeed() || IsFrozen() || IsInSlowMotion())
 		{
 			m_IsInvisible = false;
 		}
 		else
 		{
-			//Search nearest human
-			int cellGhostX = static_cast<int>(round(m_Pos.x))/32;
-			int cellGhostY = static_cast<int>(round(m_Pos.y))/32;
-			
+			// Search nearest human
+			int cellGhostX = static_cast<int>(round(m_Pos.x)) / 32;
+			int cellGhostY = static_cast<int>(round(m_Pos.y)) / 32;
+
 			vec2 SeedPos = vec2(16.0f, 16.0f) + vec2(
-				static_cast<float>(static_cast<int>(round(m_Pos.x))/32)*32.0,
-				static_cast<float>(static_cast<int>(round(m_Pos.y))/32)*32.0);
-			
-			for(int y=0; y<GHOST_SEARCHMAP_SIZE; y++)
+								    static_cast<float>(static_cast<int>(round(m_Pos.x)) / 32) * 32.0,
+								    static_cast<float>(static_cast<int>(round(m_Pos.y)) / 32) * 32.0);
+
+			for(int y = 0; y < GHOST_SEARCHMAP_SIZE; y++)
 			{
-				for(int x=0; x<GHOST_SEARCHMAP_SIZE; x++)
+				for(int x = 0; x < GHOST_SEARCHMAP_SIZE; x++)
 				{
-					vec2 Tile = SeedPos + vec2(32.0f*(x-GHOST_RADIUS), 32.0f*(y-GHOST_RADIUS));
+					vec2 Tile = SeedPos + vec2(32.0f * (x - GHOST_RADIUS), 32.0f * (y - GHOST_RADIUS));
 					if(GameServer()->Collision()->CheckPoint(Tile))
 					{
-						m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] = 0x8;
+						m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] = 0x8;
 					}
 					else
 					{
-						m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] = 0x0;
+						m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] = 0x0;
 					}
 				}
 			}
-			for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
+			for(CCharacter *p = (CCharacter *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *) p->TypeNext())
 			{
-				if(p->IsZombie()) continue;
-				
-				int cellHumanX = static_cast<int>(round(p->m_Pos.x))/32;
-				int cellHumanY = static_cast<int>(round(p->m_Pos.y))/32;
-				
+				if(p->IsZombie())
+					continue;
+
+				int cellHumanX = static_cast<int>(round(p->m_Pos.x)) / 32;
+				int cellHumanY = static_cast<int>(round(p->m_Pos.y)) / 32;
+
 				int cellX = cellHumanX - cellGhostX + GHOST_RADIUS;
 				int cellY = cellHumanY - cellGhostY + GHOST_RADIUS;
-				
+
 				if(cellX >= 0 && cellX < GHOST_SEARCHMAP_SIZE && cellY >= 0 && cellY < GHOST_SEARCHMAP_SIZE)
 				{
 					m_GhostSearchMap[cellY * GHOST_SEARCHMAP_SIZE + cellX] |= 0x2;
@@ -2267,40 +2115,34 @@ void CCharacter::Tick()
 			}
 			m_GhostSearchMap[GHOST_RADIUS * GHOST_SEARCHMAP_SIZE + GHOST_RADIUS] |= 0x1;
 			bool HumanFound = false;
-			for(int i=0; i<GHOST_RADIUS; i++)
+			for(int i = 0; i < GHOST_RADIUS; i++)
 			{
-				for(int y=0; y<GHOST_SEARCHMAP_SIZE; y++)
+				for(int y = 0; y < GHOST_SEARCHMAP_SIZE; y++)
 				{
-					for(int x=0; x<GHOST_SEARCHMAP_SIZE; x++)
+					for(int x = 0; x < GHOST_SEARCHMAP_SIZE; x++)
 					{
-						if(!((m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] & 0x1) || (m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] & 0x8)))
+						if(!((m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] & 0x1) || (m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] & 0x8)))
 						{
 							if(
 								(
-									(x > 0 && (m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x-1] & 0x1)) ||
-									(x < GHOST_SEARCHMAP_SIZE-1 && (m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x+1] & 0x1)) ||
-									(y > 0 && (m_GhostSearchMap[(y-1)*GHOST_SEARCHMAP_SIZE+x] & 0x1)) ||
-									(y < GHOST_SEARCHMAP_SIZE-1 && (m_GhostSearchMap[(y+1)*GHOST_SEARCHMAP_SIZE+x] & 0x1))
-								) ||
-								(
-									(random_prob(0.25f)) && (
-										(x > 0 && y > 0 && (m_GhostSearchMap[(y-1)*GHOST_SEARCHMAP_SIZE+x-1] & 0x1)) ||
-										(x > 0 && y < GHOST_SEARCHMAP_SIZE-1 && (m_GhostSearchMap[(y+1)*GHOST_SEARCHMAP_SIZE+x-1] & 0x1)) ||
-										(x < GHOST_SEARCHMAP_SIZE-1 && y > 0 && (m_GhostSearchMap[(y-1)*GHOST_SEARCHMAP_SIZE+x+1] & 0x1)) ||
-										(x < GHOST_SEARCHMAP_SIZE-1 && y < GHOST_SEARCHMAP_SIZE-1 && (m_GhostSearchMap[(y+1)*GHOST_SEARCHMAP_SIZE+x+1] & 0x1))
-									)
-								)
-							)
+									(x > 0 && (m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x - 1] & 0x1)) ||
+									(x < GHOST_SEARCHMAP_SIZE - 1 && (m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x + 1] & 0x1)) ||
+									(y > 0 && (m_GhostSearchMap[(y - 1) * GHOST_SEARCHMAP_SIZE + x] & 0x1)) ||
+									(y < GHOST_SEARCHMAP_SIZE - 1 && (m_GhostSearchMap[(y + 1) * GHOST_SEARCHMAP_SIZE + x] & 0x1))) ||
+								((random_prob(0.25f)) && ((x > 0 && y > 0 && (m_GhostSearchMap[(y - 1) * GHOST_SEARCHMAP_SIZE + x - 1] & 0x1)) ||
+												 (x > 0 && y < GHOST_SEARCHMAP_SIZE - 1 && (m_GhostSearchMap[(y + 1) * GHOST_SEARCHMAP_SIZE + x - 1] & 0x1)) ||
+												 (x < GHOST_SEARCHMAP_SIZE - 1 && y > 0 && (m_GhostSearchMap[(y - 1) * GHOST_SEARCHMAP_SIZE + x + 1] & 0x1)) ||
+												 (x < GHOST_SEARCHMAP_SIZE - 1 && y < GHOST_SEARCHMAP_SIZE - 1 && (m_GhostSearchMap[(y + 1) * GHOST_SEARCHMAP_SIZE + x + 1] & 0x1)))))
 							{
-								m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] |= 0x4;
+								m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] |= 0x4;
 								//~ if((Server()->Tick()%5 == 0) && i == (Server()->Tick()/5)%GHOST_RADIUS)
 								//~ {
-									//~ vec2 HintPos = vec2(
-										//~ 32.0f*(cellGhostX + (x - GHOST_RADIUS))+16.0f,
-										//~ 32.0f*(cellGhostY + (y - GHOST_RADIUS))+16.0f);
-									//~ GameServer()->CreateHammerHit(HintPos);
+								//~ vec2 HintPos = vec2(
+								//~ 32.0f*(cellGhostX + (x - GHOST_RADIUS))+16.0f,
+								//~ 32.0f*(cellGhostY + (y - GHOST_RADIUS))+16.0f);
+								//~ GameServer()->CreateHammerHit(HintPos);
 								//~ }
-								if(m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] & 0x2)
+								if(m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] & 0x2)
 								{
 									HumanFound = true;
 								}
@@ -2308,26 +2150,26 @@ void CCharacter::Tick()
 						}
 					}
 				}
-				for(int y=0; y<GHOST_SEARCHMAP_SIZE; y++)
+				for(int y = 0; y < GHOST_SEARCHMAP_SIZE; y++)
 				{
-					for(int x=0; x<GHOST_SEARCHMAP_SIZE; x++)
+					for(int x = 0; x < GHOST_SEARCHMAP_SIZE; x++)
 					{
-						if(m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] & 0x4)
+						if(m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] & 0x4)
 						{
-							m_GhostSearchMap[y*GHOST_SEARCHMAP_SIZE+x] |= 0x1;
+							m_GhostSearchMap[y * GHOST_SEARCHMAP_SIZE + x] |= 0x1;
 						}
 					}
 				}
 			}
-			
+
 			if(HumanFound)
-			{				
+			{
 				if(m_IsInvisible)
 				{
 					GameServer()->CreatePlayerSpawn(m_Pos);
 					m_IsInvisible = false;
 				}
-				
+
 				m_InvisibleTick = Server()->Tick();
 			}
 			else
@@ -2336,37 +2178,37 @@ void CCharacter::Tick()
 			}
 		}
 	}
-	
+
 	if(GetClass() == PLAYERCLASS_SPIDER)
 	{
 		if(
 			(m_HookMode == 1 || g_Config.m_InfSpiderCatchHumans) &&
 			m_Core.m_HookState == HOOK_GRABBED &&
 			distance(m_Core.m_Pos, m_Core.m_HookPos) > 48.0f &&
-			m_Core.m_HookedPlayer < 0
-		)
+			m_Core.m_HookedPlayer < 0)
 		{
 			// Find other players
-			for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
+			for(CCharacter *p = (CCharacter *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *) p->TypeNext())
 			{
-				if(p->IsZombie()) continue;
+				if(p->IsZombie())
+					continue;
 
 				vec2 IntersectPos = closest_point_on_line(m_Core.m_Pos, m_Core.m_HookPos, p->m_Pos);
 				float Len = distance(p->m_Pos, IntersectPos);
 				if(Len < p->m_ProximityRadius)
-				{				
+				{
 					m_Core.m_HookState = HOOK_GRABBED;
 					m_Core.m_HookPos = p->m_Pos;
 					m_Core.m_HookedPlayer = p->m_pPlayer->GetCID();
 					m_Core.m_HookTick = 0;
 					m_HookMode = 0;
-					
+
 					break;
 				}
 			}
 		}
 	}
-	
+
 	if(GetClass() == PLAYERCLASS_NINJA && IsGrounded() && m_DartLifeSpan <= 0)
 	{
 		m_DartLeft = g_Config.m_InfNinjaJump;
@@ -2375,7 +2217,7 @@ void CCharacter::Tick()
 	{
 		m_PositionLockAvailable = true;
 	}
-	
+
 	if(m_IsFrozen)
 	{
 		m_Input.m_Jump = 0;
@@ -2388,47 +2230,48 @@ void CCharacter::Tick()
 		m_Input.m_Direction = 0;
 		m_Input.m_Hook = 0;
 	}
-	
+
 	UpdateTuningParam();
 
 	m_Core.m_Input = m_Input;
-	
+
 	CCharacterCore::CParams CoreTickParams(&m_pPlayer->m_NextTuningParams);
 	//~ CCharacterCore::CParams CoreTickParams(&GameWorld()->m_Core.m_Tuning);
-	
+
 	if(GetClass() == PLAYERCLASS_SPIDER)
 	{
-		CoreTickParams.m_HookGrabTime = g_Config.m_InfSpiderHookTime*SERVER_TICK_SPEED;
+		CoreTickParams.m_HookGrabTime = g_Config.m_InfSpiderHookTime * SERVER_TICK_SPEED;
 	}
 	if(GetClass() == PLAYERCLASS_BAT)
 	{
-		CoreTickParams.m_HookGrabTime = g_Config.m_InfBatHookTime*SERVER_TICK_SPEED;
+		CoreTickParams.m_HookGrabTime = g_Config.m_InfBatHookTime * SERVER_TICK_SPEED;
 	}
 
 	// tarzan-mode
-	CPlayer* pHookedPlayer = GameServer()->m_apPlayers[m_Core.m_HookedPlayer];
-	if(m_Core.m_HookedPlayer > -1 && pHookedPlayer) {
+	CPlayer *pHookedPlayer = GameServer()->m_apPlayers[m_Core.m_HookedPlayer];
+	if(m_Core.m_HookedPlayer > -1 && pHookedPlayer)
+	{
 		bool BothZombies = IsZombie() && pHookedPlayer->IsZombie();
 		bool BothHumans = IsHuman() && pHookedPlayer->IsHuman();
 		if(m_Core.m_HookProtected && !pHookedPlayer->HookProtectionEnabled() && (BothZombies || BothHumans))
 		{
-			CoreTickParams.m_HookGrabTime = 999*SERVER_TICK_SPEED;
+			CoreTickParams.m_HookGrabTime = 999 * SERVER_TICK_SPEED;
 		}
 	}
-	//tarzan-mode end
+	// tarzan-mode end
 
 	CoreTickParams.m_HookMode = m_HookMode;
-	
+
 	vec2 PrevPos = m_Core.m_Pos;
 	m_Core.Tick(true, &CoreTickParams);
-	
+
 	if(GetClass() == PLAYERCLASS_SNIPER && m_PositionLocked)
 	{
 		m_Core.m_Vel = vec2(0.0f, 0.0f);
 		m_Core.m_Pos = PrevPos;
 	}
-	
-	//Hook protection
+
+	// Hook protection
 	if(m_Core.m_HookedPlayer >= 0)
 	{
 		if(GameServer()->m_apPlayers[m_Core.m_HookedPlayer])
@@ -2441,28 +2284,32 @@ void CCharacter::Tick()
 			}
 		}
 	}
-	
+
 	HandleWaterJump();
 	HandleWeapons();
 
-	if(GetClass() == PLAYERCLASS_HUNTER || GetClass() == PLAYERCLASS_SNIPER ||GetClass() == PLAYERCLASS_LOOPER)
+	if(GetClass() == PLAYERCLASS_HUNTER || GetClass() == PLAYERCLASS_SNIPER || GetClass() == PLAYERCLASS_LOOPER)
 	{
-		if(IsGrounded()) m_AirJumpCounter = 0;
-		if(m_Core.m_TriggeredEvents&COREEVENT_AIR_JUMP && m_AirJumpCounter < 1)
+		if(IsGrounded())
+			m_AirJumpCounter = 0;
+		if(m_Core.m_TriggeredEvents & COREEVENT_AIR_JUMP && m_AirJumpCounter < 1)
 		{
 			m_Core.m_Jumped &= ~2;
 			m_AirJumpCounter++;
 		}
 	}
 
-	if(GetClass() == PLAYERCLASS_BAT) {
-		if(IsGrounded() || g_Config.m_InfBatAirjumpLimit == 0) m_AirJumpCounter = 0;
-		else if(m_Core.m_TriggeredEvents&COREEVENT_AIR_JUMP && m_AirJumpCounter < g_Config.m_InfBatAirjumpLimit) {
+	if(GetClass() == PLAYERCLASS_BAT)
+	{
+		if(IsGrounded() || g_Config.m_InfBatAirjumpLimit == 0)
+			m_AirJumpCounter = 0;
+		else if(m_Core.m_TriggeredEvents & COREEVENT_AIR_JUMP && m_AirJumpCounter < g_Config.m_InfBatAirjumpLimit)
+		{
 			m_Core.m_Jumped &= ~2;
 			m_AirJumpCounter++;
 		}
 	}
-	
+
 	if(m_pPlayer->MapMenu() == 1)
 	{
 		if(GetClass() != PLAYERCLASS_NONE)
@@ -2473,15 +2320,15 @@ void CCharacter::Tick()
 		else
 		{
 			vec2 CursorPos = vec2(m_Input.m_TargetX, m_Input.m_TargetY);
-			
+
 			bool Broadcast = false;
 
 			if(length(CursorPos) > 100.0f)
 			{
-				float Angle = 2.0f*pi+atan2(CursorPos.x, -CursorPos.y);
-				float AngleStep = 2.0f*pi/static_cast<float>(CMapConverter::NUM_MENUCLASS);
-				m_pPlayer->m_MapMenuItem = ((int)((Angle+AngleStep/2.0f)/AngleStep))%CMapConverter::NUM_MENUCLASS;
-				
+				float Angle = 2.0f * pi + atan2(CursorPos.x, -CursorPos.y);
+				float AngleStep = 2.0f * pi / static_cast<float>(CMapConverter::NUM_MENUCLASS);
+				m_pPlayer->m_MapMenuItem = ((int) ((Angle + AngleStep / 2.0f) / AngleStep)) % CMapConverter::NUM_MENUCLASS;
+
 				switch(m_pPlayer->m_MapMenuItem)
 				{
 					case CMapConverter::MENUCLASS_RANDOM:
@@ -2498,10 +2345,9 @@ void CCharacter::Tick()
 							else
 							{
 								GameServer()->SendBroadcast_Localization_P(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME, g_Config.m_InfMinEngineerPlayer,
-								_P("Need one player", "Need {int:MinPlayers} players"),
-								"MinPlayers", &g_Config.m_InfMinEngineerPlayer,
-								NULL
-								);	
+									_P("Need one player", "Need {int:MinPlayers} players"),
+									"MinPlayers", &g_Config.m_InfMinEngineerPlayer,
+									NULL);
 							}
 							Broadcast = true;
 						}
@@ -2524,13 +2370,6 @@ void CCharacter::Tick()
 						if(GameServer()->m_pController->IsChoosableClass(PLAYERCLASS_CATAPULT))
 						{
 							GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_INTERFACE, BROADCAST_DURATION_REALTIME, _("Catapult"), NULL);
-							Broadcast = true;
-						}
-						break;
-					case CMapConverter::MENUCLASS_POLICE:
-						if(GameServer()->m_pController->IsChoosableClass(PLAYERCLASS_POLICE))
-						{
-							GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_INTERFACE, BROADCAST_DURATION_REALTIME, _("Police"), NULL);
 							Broadcast = true;
 						}
 						break;
@@ -2599,17 +2438,17 @@ void CCharacter::Tick()
 						break;
 				}
 			}
-			
+
 			if(!Broadcast)
 			{
 				m_pPlayer->m_MapMenuItem = -1;
 				GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_INTERFACE, BROADCAST_DURATION_REALTIME, _("Choose your class"), NULL);
 			}
-			
-			if(m_Input.m_Fire&1 && m_pPlayer->m_MapMenuItem >= 0)
+
+			if(m_Input.m_Fire & 1 && m_pPlayer->m_MapMenuItem >= 0)
 			{
 				bool Bonus = false;
-				
+
 				int NewClass = -1;
 				switch(m_pPlayer->m_MapMenuItem)
 				{
@@ -2633,7 +2472,8 @@ void CCharacter::Tick()
 						Bonus = true;
 						break;
 					case CMapConverter::MENUCLASS_ENGINEER:
-						if((GameServer()->GetActivePlayerCount() >= g_Config.m_InfMinEngineerPlayer))NewClass = PLAYERCLASS_ENGINEER;
+						if((GameServer()->GetActivePlayerCount() >= g_Config.m_InfMinEngineerPlayer))
+							NewClass = PLAYERCLASS_ENGINEER;
 						break;
 					case CMapConverter::MENUCLASS_SOLDIER:
 						NewClass = PLAYERCLASS_SOLDIER;
@@ -2653,32 +2493,29 @@ void CCharacter::Tick()
 					case CMapConverter::MENUCLASS_SCIOGIST:
 						NewClass = PLAYERCLASS_SCIOGIST;
 						break;
-					case CMapConverter::MENUCLASS_POLICE:
-						NewClass = PLAYERCLASS_POLICE;
-						break;
 					case CMapConverter::MENUCLASS_REVIVER:
 						NewClass = PLAYERCLASS_REVIVER;
 						break;
 				}
-				
+
 				if(NewClass >= 0 && GameServer()->m_pController->IsChoosableClass(NewClass))
 				{
 					m_AntiFireTick = Server()->Tick();
 					m_pPlayer->m_MapMenuItem = 0;
 					m_pPlayer->SetClass(NewClass);
 					m_pPlayer->SetOldClass(NewClass);
-					
+
 					if(Bonus)
 						IncreaseArmor(10);
 				}
 			}
 		}
 	}
-		
+
 	if(GetClass() == PLAYERCLASS_ENGINEER)
 	{
-		CEngineerWall* pCurrentWall = NULL;
-		for(CEngineerWall *pWall = (CEngineerWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall*) pWall->TypeNext())
+		CEngineerWall *pCurrentWall = NULL;
+		for(CEngineerWall *pWall = (CEngineerWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall *) pWall->TypeNext())
 		{
 			if(pWall->m_Owner == m_pPlayer->GetCID())
 			{
@@ -2686,22 +2523,21 @@ void CCharacter::Tick()
 				break;
 			}
 		}
-		
+
 		if(pCurrentWall)
 		{
-			int Seconds = 1+pCurrentWall->GetTick()/Server()->TickSpeed();
+			int Seconds = 1 + pCurrentWall->GetTick() / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Laser wall: {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_LOOPER)
 	{
-		//Potential variable name conflict with engineerwall with pCurrentWall
-		CLooperWall* pCurrentWall = NULL;
-		for(CLooperWall *pWall = (CLooperWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall*) pWall->TypeNext())
+		// Potential variable name conflict with engineerwall with pCurrentWall
+		CLooperWall *pCurrentWall = NULL;
+		for(CLooperWall *pWall = (CLooperWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall *) pWall->TypeNext())
 		{
 			if(pWall->m_Owner == m_pPlayer->GetCID())
 			{
@@ -2709,83 +2545,44 @@ void CCharacter::Tick()
 				break;
 			}
 		}
-		
+
 		if(pCurrentWall)
 		{
-			int Seconds = 1+pCurrentWall->GetTick()/Server()->TickSpeed();
+			int Seconds = 1 + pCurrentWall->GetTick() / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Looper laser wall: {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
-		}
-	}
-	else if(GetClass() == PLAYERCLASS_POLICE)
-	{
-		CPoliceShield* pCurrentShield = NULL;
-
-		for(CPoliceShield *pShield = (CPoliceShield*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_POLICE_SHIELD); pShield; pShield = (CPoliceShield*) pShield->TypeNext())
-		{
-			if(pShield->m_Owner == m_pPlayer->GetCID())
-			{
-				pCurrentShield = pShield;
-				break;
-			}
-		}
-		if(GetInfWeaponID(m_ActiveWeapon) != INFWEAPON_POLICE_HAMMER)
-		{
-			m_Armor = 0;
-			if(pCurrentShield)
-				GameServer()->m_World.DestroyEntity(pCurrentShield);
-		}else if(!pCurrentShield && m_Pos.y > -20 * 32)
-		{
-			new CPoliceShield(GameWorld(), m_pPlayer->GetCID());
-		}
-		else if(pCurrentShield)
-		{
-			if(m_Pos.y < -20 * 32)
-			{
-				GameServer()->m_World.DestroyEntity(pCurrentShield);
-			}
-			else if(!m_ShieldExplode)
-			{
-				m_Armor = 5;
-			}
-			else
-			{
-				m_Armor = 0;
-			}
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_SOLDIER)
 	{
 		int NumBombs = 0;
-		for(CSoldierBomb *pBomb = (CSoldierBomb*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SOLDIER_BOMB); pBomb; pBomb = (CSoldierBomb*) pBomb->TypeNext())
+		for(CSoldierBomb *pBomb = (CSoldierBomb *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SOLDIER_BOMB); pBomb; pBomb = (CSoldierBomb *) pBomb->TypeNext())
 		{
 			if(pBomb->m_Owner == m_pPlayer->GetCID())
 				NumBombs += pBomb->GetNbBombs();
 		}
-		
+
 		if(NumBombs)
 		{
 			GameServer()->SendBroadcast_Localization_P(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME, NumBombs,
 				_P("One bomb left", "{int:NumBombs} bombs left"),
 				"NumBombs", &NumBombs,
-				NULL
-			);
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_SCIENTIST)
 	{
 		int NumMines = 0;
-		for(CScientistMine *pMine = (CScientistMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIENTIST_MINE); pMine; pMine = (CScientistMine*) pMine->TypeNext())
+		for(CScientistMine *pMine = (CScientistMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIENTIST_MINE); pMine; pMine = (CScientistMine *) pMine->TypeNext())
 		{
 			if(pMine->m_Owner == m_pPlayer->GetCID())
 				NumMines++;
 		}
 
-		CWhiteHole* pCurrentWhiteHole = NULL;
-		for(CWhiteHole *pWhiteHole = (CWhiteHole*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_WHITE_HOLE); pWhiteHole; pWhiteHole = (CWhiteHole*) pWhiteHole->TypeNext())
+		CWhiteHole *pCurrentWhiteHole = NULL;
+		for(CWhiteHole *pWhiteHole = (CWhiteHole *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_WHITE_HOLE); pWhiteHole; pWhiteHole = (CWhiteHole *) pWhiteHole->TypeNext())
 		{
 			if(pWhiteHole->m_Owner == m_pPlayer->GetCID())
 			{
@@ -2793,78 +2590,69 @@ void CCharacter::Tick()
 				break;
 			}
 		}
-		
-		//Reset superweapon kill counter, two seconds after whiteHole explosion
-		if (pCurrentWhiteHole && 1+pCurrentWhiteHole->GetTick()/Server()->TickSpeed() == 1)
-			m_ResetKillsTime = Server()->TickSpeed()*3;
-		
-		if (m_ResetKillsTime)
+
+		// Reset superweapon kill counter, two seconds after whiteHole explosion
+		if(pCurrentWhiteHole && 1 + pCurrentWhiteHole->GetTick() / Server()->TickSpeed() == 1)
+			m_ResetKillsTime = Server()->TickSpeed() * 3;
+
+		if(m_ResetKillsTime)
 		{
 			m_ResetKillsTime--;
 			if(!m_ResetKillsTime)
 				GetPlayer()->ResetNumberKills();
 		}
 
-		
-		if(m_BroadcastWhiteHoleReady+(2*Server()->TickSpeed()) > Server()->Tick())
+		if(m_BroadcastWhiteHoleReady + (2 * Server()->TickSpeed()) > Server()->Tick())
 		{
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("WhiteHole ready !"),
-				NULL
-			);
+				NULL);
 		}
 		else if(NumMines > 0 && !pCurrentWhiteHole)
 		{
 			GameServer()->SendBroadcast_Localization_P(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME, NumMines,
 				_P("One mine is active", "{int:NumMines} mines are active"),
 				"NumMines", &NumMines,
-				NULL
-			);
+				NULL);
 		}
 		else if(NumMines <= 0 && pCurrentWhiteHole)
 		{
-			int Seconds = 1+pCurrentWhiteHole->GetTick()/Server()->TickSpeed();
+			int Seconds = 1 + pCurrentWhiteHole->GetTick() / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("White hole: {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
 		else if(NumMines > 0 && pCurrentWhiteHole)
 		{
-			int Seconds = 1+pCurrentWhiteHole->GetTick()/Server()->TickSpeed();
+			int Seconds = 1 + pCurrentWhiteHole->GetTick() / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("{int:NumMines} mines are active\nWhite hole: {sec:RemainingTime}"),
 				"NumMines", &NumMines,
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
-		
 	}
 	else if(GetClass() == PLAYERCLASS_BIOLOGIST)
 	{
 		int NumMines = 0;
-		for(CBiologistMine *pMine = (CBiologistMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_BIOLOGIST_MINE); pMine; pMine = (CBiologistMine*) pMine->TypeNext())
+		for(CBiologistMine *pMine = (CBiologistMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_BIOLOGIST_MINE); pMine; pMine = (CBiologistMine *) pMine->TypeNext())
 		{
 			if(pMine->m_Owner == m_pPlayer->GetCID())
 				NumMines++;
 		}
-		
+
 		if(NumMines > 0)
 		{
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Mine activated"),
-				NULL
-			);
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_SCIOGIST)
 	{
-		
-		
-		CElasticHole* pCurrentElasticHole = NULL;
-		for(CElasticHole *pElasticHole = (CElasticHole*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_HOLE); pElasticHole; pElasticHole = (CElasticHole*) pElasticHole->TypeNext())
+		CElasticHole *pCurrentElasticHole = NULL;
+		for(CElasticHole *pElasticHole = (CElasticHole *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_HOLE); pElasticHole; pElasticHole = (CElasticHole *) pElasticHole->TypeNext())
 		{
 			if(pElasticHole->m_Owner == m_pPlayer->GetCID())
 			{
@@ -2872,60 +2660,55 @@ void CCharacter::Tick()
 				break;
 			}
 		}
-		
-		//Reset superweapon kill counter, two seconds after whiteHole explosion
-		if (pCurrentElasticHole && 1+pCurrentElasticHole->GetTick()/Server()->TickSpeed() == 1)
-			m_ResetKillsTime = Server()->TickSpeed()*3;
-		
-		if (m_ResetKillsTime)
+
+		// Reset superweapon kill counter, two seconds after whiteHole explosion
+		if(pCurrentElasticHole && 1 + pCurrentElasticHole->GetTick() / Server()->TickSpeed() == 1)
+			m_ResetKillsTime = Server()->TickSpeed() * 3;
+
+		if(m_ResetKillsTime)
 		{
 			m_ResetKillsTime--;
 			if(!m_ResetKillsTime)
 				GetPlayer()->ResetNumberKills();
 		}
 
-		
-		if(m_BroadcastElasticHoleReady+(2*Server()->TickSpeed()) > Server()->Tick())
+		if(m_BroadcastElasticHoleReady + (2 * Server()->TickSpeed()) > Server()->Tick())
 		{
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("ElasticHole ready !"),
-				NULL
-			);
+				NULL);
 		}
-		
-		//else 
+
+		// else
 		if(m_HasAntiAirMine && !pCurrentElasticHole)
 		{
 			GameServer()->SendBroadcast_Localization(m_pPlayer->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Anti-AirMine is active"),
-				NULL
-			);
+				NULL);
 		}
-		
+
 		else if(!m_HasAntiAirMine && pCurrentElasticHole)
 		{
-			int Seconds = 1+pCurrentElasticHole->GetTick()/Server()->TickSpeed();
+			int Seconds = 1 + pCurrentElasticHole->GetTick() / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Elastic hole: {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
-		
+
 		else if(m_HasAntiAirMine && pCurrentElasticHole)
 		{
-			int Seconds = 1+pCurrentElasticHole->GetTick()/Server()->TickSpeed();
+			int Seconds = 1 + pCurrentElasticHole->GetTick() / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Anti-AirMine is active\nElastic hole: {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
-		
-	}else if(GetClass() == PLAYERCLASS_REVIVER)
+	}
+	else if(GetClass() == PLAYERCLASS_REVIVER)
 	{
-		CHealBoom* pCurrentHealBoom = NULL;
-		for(CHealBoom *pHealBoom = (CHealBoom*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_HEAL_BOOM); pHealBoom; pHealBoom = (CHealBoom*)pHealBoom->TypeNext())
+		CHealBoom *pCurrentHealBoom = NULL;
+		for(CHealBoom *pHealBoom = (CHealBoom *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_HEAL_BOOM); pHealBoom; pHealBoom = (CHealBoom *) pHealBoom->TypeNext())
 		{
 			if(pHealBoom->m_Owner == m_pPlayer->GetCID())
 			{
@@ -2933,78 +2716,71 @@ void CCharacter::Tick()
 				break;
 			}
 		}
-		
-		//Reset superweapon kill counter, two seconds after whiteHole explosion
-		if (pCurrentHealBoom && 1+pCurrentHealBoom->GetTick()/Server()->TickSpeed() == 1)
-			m_ResetKillsTime = Server()->TickSpeed()*3;
-		
-		if (m_ResetKillsTime)
+
+		// Reset superweapon kill counter, two seconds after whiteHole explosion
+		if(pCurrentHealBoom && 1 + pCurrentHealBoom->GetTick() / Server()->TickSpeed() == 1)
+			m_ResetKillsTime = Server()->TickSpeed() * 3;
+
+		if(m_ResetKillsTime)
 		{
 			m_ResetKillsTime--;
 			if(!m_ResetKillsTime)
 				GetPlayer()->ResetNumberKills();
 		}
 
-		
-		if(m_BroadcastHealBoomReady+(2*Server()->TickSpeed()) > Server()->Tick())
+		if(m_BroadcastHealBoomReady + (2 * Server()->TickSpeed()) > Server()->Tick())
 		{
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Heal boom ready !"),
-				NULL
-			);
+				NULL);
 		}
-		
-		//else 
+
+		// else
 		if(pCurrentHealBoom)
 		{
-			int Seconds = 1+pCurrentHealBoom->GetTick()/Server()->TickSpeed();
+			int Seconds = 1 + pCurrentHealBoom->GetTick() / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Heal Boom: {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
-		
 	}
 	else if(GetClass() == PLAYERCLASS_NINJA)
 	{
 		int TargetID = GameServer()->GetTargetToKill();
 		int CoolDown = GameServer()->GetTargetToKillCoolDown();
-		
+
 		if(CoolDown > 0)
 		{
-			int Seconds = 1+CoolDown/Server()->TickSpeed();
+			int Seconds = 1 + CoolDown / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Next target in {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
 		else if(TargetID >= 0)
 		{
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Target to eliminate: {str:PlayerName}"),
 				"PlayerName", Server()->ClientName(TargetID),
-				NULL
-			);
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_SNIPER)
 	{
 		if(m_PositionLocked)
 		{
-			int Seconds = 1+m_PositionLockTick/Server()->TickSpeed();
+			int Seconds = 1 + m_PositionLockTick / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Position lock: {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_MERCENARY)
 	{
-		CMercenaryBomb* pCurrentBomb = NULL;
-		for(CMercenaryBomb *pBomb = (CMercenaryBomb*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MERCENARY_BOMB); pBomb; pBomb = (CMercenaryBomb*) pBomb->TypeNext())
+		CMercenaryBomb *pCurrentBomb = NULL;
+		for(CMercenaryBomb *pBomb = (CMercenaryBomb *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MERCENARY_BOMB); pBomb; pBomb = (CMercenaryBomb *) pBomb->TypeNext())
 		{
 			if(pBomb->m_Owner == m_pPlayer->GetCID())
 			{
@@ -3012,33 +2788,31 @@ void CCharacter::Tick()
 				break;
 			}
 		}
-		
+
 		if(pCurrentBomb)
 		{
-			float BombLevel = pCurrentBomb->m_Damage/static_cast<float>(g_Config.m_InfMercBombs);
+			float BombLevel = pCurrentBomb->m_Damage / static_cast<float>(g_Config.m_InfMercBombs);
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Explosive yield: {percent:BombLevel}"),
 				"BombLevel", &BombLevel,
-				NULL
-			);
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_HERO)
 	{
-		if (!m_pHeroFlag)
+		if(!m_pHeroFlag)
 			m_pHeroFlag = new CHeroFlag(&GameServer()->m_World, m_pPlayer->GetCID());
 
-		//Search for flag
+		// Search for flag
 		int CoolDown = m_pHeroFlag->GetCoolDown();
-		
+
 		if(CoolDown > 0)
 		{
-			int Seconds = 1+CoolDown/Server()->TickSpeed();
+			int Seconds = 1 + CoolDown / Server()->TickSpeed();
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Next flag in {sec:RemainingTime}"),
 				"RemainingTime", &Seconds,
-				NULL
-			);
+				NULL);
 		}
 	}
 	else if(GetClass() == PLAYERCLASS_SPIDER)
@@ -3056,15 +2830,14 @@ void CCharacter::Tick()
 			GameServer()->SendBroadcast_Localization(GetPlayer()->GetCID(), BROADCAST_PRIORITY_WEAPONSTATE, BROADCAST_DURATION_REALTIME,
 				_("Stomach filled by {percent:FodderInStomach}"),
 				"FodderInStomach", &FodderInStomach,
-				NULL
-			);
+				NULL);
 		}
 	}
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	// Previnput
 	m_PrevInput = m_Input;
-	
+
 	return;
 }
 
@@ -3072,7 +2845,7 @@ void CCharacter::GiveGift(int GiftType)
 {
 	IncreaseHealth(1);
 	IncreaseArmor(4);
-	
+
 	switch(GetClass())
 	{
 		case PLAYERCLASS_ENGINEER:
@@ -3107,10 +2880,6 @@ void CCharacter::GiveGift(int GiftType)
 			GiveWeapon(WEAPON_RIFLE, -1);
 			GiveWeapon(WEAPON_GUN, -1);
 			GiveWeapon(WEAPON_SHOTGUN, -1);
-			break;
-		case PLAYERCLASS_POLICE:
-			GiveWeapon(WEAPON_GUN, -1);
-			GiveWeapon(WEAPON_RIFLE, -1);
 			break;
 		case PLAYERCLASS_MEDIC:
 			GiveWeapon(WEAPON_SHOTGUN, -1);
@@ -3149,8 +2918,8 @@ void CCharacter::TickDefered()
 	}
 
 	CCharacterCore::CParams CoreTickParams(&m_pPlayer->m_NextTuningParams);
-	
-	//lastsentcore
+
+	// lastsentcore
 	vec2 StartPos = m_Core.m_Pos;
 	vec2 StartVel = m_Core.m_Vel;
 	bool StuckBefore = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
@@ -3168,7 +2937,7 @@ void CCharacter::TickDefered()
 		{
 			float f;
 			unsigned u;
-		}StartPosX, StartPosY, StartVelX, StartVelY;
+		} StartPosX, StartPosY, StartVelX, StartVelY;
 
 		StartPosX.f = StartPos.x;
 		StartPosY.f = StartPos.y;
@@ -3190,15 +2959,17 @@ void CCharacter::TickDefered()
 	int Events = m_Core.m_TriggeredEvents;
 	int Mask = CmaskAllExceptOne(m_pPlayer->GetCID());
 
-
-	if(Events&COREEVENT_HOOK_ATTACH_PLAYER) GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_PLAYER, CmaskAll());
+	if(Events & COREEVENT_HOOK_ATTACH_PLAYER)
+		GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_PLAYER, CmaskAll());
 	if(GetClass() != PLAYERCLASS_GHOST || !m_IsInvisible)
 	{
-		if(Events&COREEVENT_GROUND_JUMP) GameServer()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, Mask);
-		if(Events&COREEVENT_HOOK_ATTACH_GROUND) GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_GROUND, Mask);
-		if(Events&COREEVENT_HOOK_HIT_NOHOOK) GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, Mask);
+		if(Events & COREEVENT_GROUND_JUMP)
+			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, Mask);
+		if(Events & COREEVENT_HOOK_ATTACH_GROUND)
+			GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_GROUND, Mask);
+		if(Events & COREEVENT_HOOK_HIT_NOHOOK)
+			GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, Mask);
 	}
-
 
 	if(m_pPlayer->GetTeam() == TEAM_SPECTATORS)
 	{
@@ -3216,7 +2987,7 @@ void CCharacter::TickDefered()
 		m_Core.Write(&Current);
 
 		// only allow dead reackoning for a top of 3 seconds
-		if(m_ReckoningTick+Server()->TickSpeed()*3 < Server()->Tick() || mem_comp(&Predicted, &Current, sizeof(CNetObj_Character)) != 0)
+		if(m_ReckoningTick + Server()->TickSpeed() * 3 < Server()->Tick() || mem_comp(&Predicted, &Current, sizeof(CNetObj_Character)) != 0)
 		{
 			m_ReckoningTick = Server()->Tick();
 			m_SendCore = m_Core;
@@ -3236,17 +3007,17 @@ void CCharacter::TickPaused()
 		++m_aWeapons[m_ActiveWeapon].m_AmmoRegenStart;
 	if(m_EmoteStop > -1)
 		++m_EmoteStop;
-		
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	++m_HookDmgTick;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 }
 
 bool CCharacter::IncreaseHealth(int Amount)
 {
 	if(m_Health >= 10)
 		return false;
-	m_Health = clamp(m_Health+Amount, 0, 10);
+	m_Health = clamp(m_Health + Amount, 0, 10);
 	return true;
 }
 
@@ -3254,7 +3025,7 @@ bool CCharacter::IncreaseArmor(int Amount)
 {
 	if(m_Armor >= 10)
 		return false;
-	m_Armor = clamp(m_Armor+Amount, 0, 10);
+	m_Armor = clamp(m_Armor + Amount, 0, 10);
 	return true;
 }
 
@@ -3263,14 +3034,14 @@ bool CCharacter::IncreaseOverallHp(int Amount)
 	bool success = false;
 	if(m_Health < 10)
 	{
-		int healthDiff = 10-m_Health;
+		int healthDiff = 10 - m_Health;
 		IncreaseHealth(Amount);
 		success = true;
 		Amount = Amount - healthDiff;
 	}
 	if(Amount > 0)
 	{
-		if (IncreaseArmor(Amount)) 
+		if(IncreaseArmor(Amount))
 			success = true;
 	}
 	return success;
@@ -3289,13 +3060,13 @@ int CCharacter::GetHealthArmorSum()
 
 void CCharacter::Die(int Killer, int Weapon)
 {
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(GetClass() == PLAYERCLASS_UNDEAD && Killer != m_pPlayer->GetCID())
 	{
 		Freeze(10.0, Killer, FREEZEREASON_UNDEAD);
 		return;
 	}
-	
+
 	// Start counting down, delay killer message for later
 	if(GetClass() == PLAYERCLASS_VOODOO && !m_VoodooAboutToDie)
 	{
@@ -3304,23 +3075,24 @@ void CCharacter::Die(int Killer, int Weapon)
 		m_VoodooWeapon = Weapon;
 		m_pPlayer->SetToSpirit(true);
 		return;
-	// If about to die, yet killed again, dont kill him either
-	} else if(GetClass() == PLAYERCLASS_VOODOO && m_VoodooAboutToDie && m_VoodooTimeAlive > 0)
+		// If about to die, yet killed again, dont kill him either
+	}
+	else if(GetClass() == PLAYERCLASS_VOODOO && m_VoodooAboutToDie && m_VoodooTimeAlive > 0)
 	{
 		return;
 	}
-  
-	
 
-	//Find the nearest ghoul
+	// Find the nearest ghoul
 	{
-		for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
+		for(CCharacter *p = (CCharacter *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *) p->TypeNext())
 		{
-			if(p->GetClass() != PLAYERCLASS_GHOUL || p == this) continue;
-			if(p->GetPlayer() && p->GetPlayer()->GetGhoulPercent() >= 1.0f) continue;
+			if(p->GetClass() != PLAYERCLASS_GHOUL || p == this)
+				continue;
+			if(p->GetPlayer() && p->GetPlayer()->GetGhoulPercent() >= 1.0f)
+				continue;
 
 			float Len = distance(p->m_Pos, m_Pos);
-			
+
 			if(p && Len < 800.0f)
 			{
 				int Points = (IsZombie() ? 8 : 14);
@@ -3332,13 +3104,12 @@ void CCharacter::Die(int Killer, int Weapon)
 	{
 		m_pPlayer->IncreaseGhoulLevel(-20);
 	}
-	
-	
+
 	DestroyChildEntities();
-/* INFECTION MODIFICATION END *****************************************/
-	
+	/* INFECTION MODIFICATION END *****************************************/
+
 	// we got to wait 0.5 secs before respawning
-	m_pPlayer->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
+	m_pPlayer->m_RespawnTick = Server()->Tick() + Server()->TickSpeed() / 2;
 	int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
 
 	char aBuf[256];
@@ -3365,12 +3136,12 @@ void CCharacter::Die(int Killer, int Weapon)
 	GameServer()->m_World.RemoveEntity(this);
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
 	GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID());
-	
-/* INFECTION MODIFICATION START ***************************************/
-	CPlayer* pKillerPlayer = GameServer()->m_apPlayers[Killer];
-	CCharacter* pKiller = GameServer()->m_apPlayers[Killer]->GetCharacter();
 
-	if(Killer >=0 && Killer < MAX_CLIENTS)
+	/* INFECTION MODIFICATION START ***************************************/
+	CPlayer *pKillerPlayer = GameServer()->m_apPlayers[Killer];
+	CCharacter *pKiller = GameServer()->m_apPlayers[Killer]->GetCharacter();
+
+	if(Killer >= 0 && Killer < MAX_CLIENTS)
 	{
 		if(pKillerPlayer && pKillerPlayer->GetClass() == PLAYERCLASS_SNIPER)
 		{
@@ -3383,12 +3154,12 @@ void CCharacter::Die(int Killer, int Weapon)
 		}
 	}
 
-	if(GetClass() == PLAYERCLASS_BOOMER && !IsFrozen() && Weapon != WEAPON_GAME && !(IsInLove() && Weapon == WEAPON_SELF) )
+	if(GetClass() == PLAYERCLASS_BOOMER && !IsFrozen() && Weapon != WEAPON_GAME && !(IsInLove() && Weapon == WEAPON_SELF))
 	{
 		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_EXPLODE);
 		GameServer()->CreateExplosionDisk(m_Pos, 80.0f, 107.5f, 14, 52.0f, m_pPlayer->GetCID(), WEAPON_HAMMER, TAKEDAMAGEMODE_INFECTION);
 	}
-	
+
 	if(GetClass() == PLAYERCLASS_WITCH)
 	{
 		m_pPlayer->StartInfection(true);
@@ -3414,37 +3185,37 @@ void CCharacter::Die(int Killer, int Weapon)
 	else if(GameServer()->m_pController->IsInfectionStarted())
 	{
 		m_pPlayer->StartInfection(false);
-	}	
+	}
 
-	if (m_Core.m_Passenger) {
+	if(m_Core.m_Passenger)
+	{
 		m_Core.m_Passenger->m_IsPassenger = false; // InfClassR taxi mode
 		m_Core.m_Passenger->m_ProbablyStucked = true;
 		m_Core.m_Passenger = nullptr;
 	}
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 }
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 {
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 
-	//KillerPlayer
-	CPlayer* pKillerPlayer = GameServer()->m_apPlayers[From]; // before using this variable check if it exists with "if (pKillerPlayer)"
+	// KillerPlayer
+	CPlayer *pKillerPlayer = GameServer()->m_apPlayers[From]; // before using this variable check if it exists with "if (pKillerPlayer)"
 	CCharacter *pKillerChar = 0; // before using this variable check if it exists with "if (pKillerChar)"
-	if (pKillerPlayer)
+	if(pKillerPlayer)
 		pKillerChar = pKillerPlayer->GetCharacter();
 
 	if(GetClass() == PLAYERCLASS_FREEZER)
 	{
-		Dmg = Dmg/2;
+		Dmg = Dmg / 2;
 	}
-
 
 	if(Mode == TAKEDAMAGEMODE_ALL)
 	{
 		if(pKillerChar->IsZombie() == IsZombie())
 		{
-			Dmg = max(1,Dmg/2);	
+			Dmg = max(1, Dmg / 2);
 		}
 
 		if(m_Armor)
@@ -3462,59 +3233,52 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		}
 
 		m_Health -= Dmg;
-	
+
 		if(From != m_pPlayer->GetCID() && pKillerPlayer)
 			m_NeedFullHeal = true;
-			
+
 		if(From >= 0 && From != m_pPlayer->GetCID())
 			GameServer()->SendHitSound(From);
-		
+
 		if(m_Health <= 0)
 		{
 			Die(From, Weapon);
 
 			// set attacker's face to happy (taunt!)
-			if (From >= 0 && From != m_pPlayer->GetCID() && pKillerPlayer)
+			if(From >= 0 && From != m_pPlayer->GetCID() && pKillerPlayer)
 			{
-				if (pKillerChar)
+				if(pKillerChar)
 				{
 					pKillerChar->m_EmoteType = EMOTE_HAPPY;
 					pKillerChar->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
 				}
 			}
-			
-			if (!(GetClass() == PLAYERCLASS_UNDEAD) || g_Config.m_InfUndeadIncNumKills)
+
+			if(!(GetClass() == PLAYERCLASS_UNDEAD) || g_Config.m_InfUndeadIncNumKills)
 			{
-				if (pKillerPlayer)
+				if(pKillerPlayer)
 					pKillerPlayer->IncreaseNumberKills();
-				if (pKillerChar)
+				if(pKillerChar)
 					pKillerChar->CheckSuperWeaponAccess();
 			}
-			
+
 			return false;
 		}
 	}
 
 	if(Mode == TAKEDAMAGEMODE_INFECTION)
 	{
-	        if (!pKillerPlayer || !pKillerPlayer->IsZombie() || !IsHuman())
+		if(!pKillerPlayer || !pKillerPlayer->IsZombie() || !IsHuman())
 		{
-		        // The infection is only possible if the killer is a zombie and the target is a human
-		        Mode = TAKEDAMAGEMODE_NOINFECTION;
+			// The infection is only possible if the killer is a zombie and the target is a human
+			Mode = TAKEDAMAGEMODE_NOINFECTION;
 		}
 	}
 
-	if(GetClass() == PLAYERCLASS_HERO  && Mode == TAKEDAMAGEMODE_INFECTION)
+	if(GetClass() == PLAYERCLASS_HERO && Mode == TAKEDAMAGEMODE_INFECTION)
 	{
 		Dmg = 12;
 		// A zombie can't infect a hero
-		Mode = TAKEDAMAGEMODE_NOINFECTION;
-	}
-	
-	if(GetClass() == PLAYERCLASS_POLICE && GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_POLICE_HAMMER && Mode == TAKEDAMAGEMODE_INFECTION)
-	{
-		Dmg = 10;
-		// A zombie can't infect a use shield police
 		Mode = TAKEDAMAGEMODE_NOINFECTION;
 	}
 
@@ -3523,18 +3287,18 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		Dmg = 0;
 		Mode = TAKEDAMAGEMODE_NOINFECTION;
 	}
-	
+
 	if(GetClass() != PLAYERCLASS_HUNTER || Weapon != WEAPON_SHOTGUN)
 	{
 		m_Core.m_Vel += Force;
 	}
-	
+
 	if(GetClass() == PLAYERCLASS_GHOUL)
 	{
 		int DamageAccepted = 0;
-		for(int i=0; i<Dmg; i++)
+		for(int i = 0; i < Dmg; i++)
 		{
-			if(random_prob(1.0f - m_pPlayer->GetGhoulPercent()/2.0f))
+			if(random_prob(1.0f - m_pPlayer->GetGhoulPercent() / 2.0f))
 				DamageAccepted++;
 		}
 		Dmg = DamageAccepted;
@@ -3545,19 +3309,19 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		Dmg = 0;
 	}
 
-	if(From != m_pPlayer->GetCID() && pKillerPlayer )
+	if(From != m_pPlayer->GetCID() && pKillerPlayer)
 	{
 		if(IsZombie())
 		{
 			if(pKillerPlayer->IsZombie())
 			{
-				//Heal and unfreeze
+				// Heal and unfreeze
 				if(pKillerPlayer->GetClass() == PLAYERCLASS_BOOMER && Weapon == WEAPON_HAMMER)
 				{
-					IncreaseOverallHp(8+random_int(0, 10));
+					IncreaseOverallHp(8 + random_int(0, 10));
 					if(IsFrozen())
 						Unfreeze();
-						
+
 					m_EmoteType = EMOTE_HAPPY;
 					m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
 				}
@@ -3566,35 +3330,38 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		}
 		else
 		{
-			//If the player is a new infected, don't infected other -> nobody knows that he is infected.
-			if(!pKillerPlayer->IsZombie() || (Server()->Tick() - pKillerPlayer->m_InfectionTick)*Server()->TickSpeed() < 0.5) return false;
+			// If the player is a new infected, don't infected other -> nobody knows that he is infected.
+			if(!pKillerPlayer->IsZombie() || (Server()->Tick() - pKillerPlayer->m_InfectionTick) * Server()->TickSpeed() < 0.5)
+				return false;
 		}
 	}
 
 	// slow down zombies that get hit by looper rifle
-	if(pKillerPlayer && pKillerPlayer->GetClass() == PLAYERCLASS_LOOPER && Weapon == WEAPON_RIFLE && IsZombie()) { 
+	if(pKillerPlayer && pKillerPlayer->GetClass() == PLAYERCLASS_LOOPER && Weapon == WEAPON_RIFLE && IsZombie())
+	{
 		SlowMotionEffect(g_Config.m_InfSlowMotionGunDuration);
-		if (g_Config.m_InfSlowMotionGunDuration != 0) GameServer()->SendEmoticon(GetPlayer()->GetCID(), EMOTICON_EXCLAMATION);	
+		if(g_Config.m_InfSlowMotionGunDuration != 0)
+			GameServer()->SendEmoticon(GetPlayer()->GetCID(), EMOTICON_EXCLAMATION);
 	}
-	
-/* INFECTION MODIFICATION END *****************************************/
+
+	/* INFECTION MODIFICATION END *****************************************/
 
 	// m_pPlayer only inflicts half damage on self
 	if(From == m_pPlayer->GetCID())
 	{
-		if (Mode == TAKEDAMAGEMODE_SELFHARM)
-			Dmg = max(1, Dmg/2);
-		else 
+		if(Mode == TAKEDAMAGEMODE_SELFHARM)
+			Dmg = max(1, Dmg / 2);
+		else
 			return false;
 	}
 
 	m_DamageTaken++;
 
 	// create healthmod indicator
-	if(Server()->Tick() < m_DamageTakenTick+25)
+	if(Server()->Tick() < m_DamageTakenTick + 25)
 	{
 		// make sure that the damage indicators doesn't group together
-		GameServer()->CreateDamageInd(m_Pos, m_DamageTaken*0.25f, Dmg);
+		GameServer()->CreateDamageInd(m_Pos, m_DamageTaken * 0.25f, Dmg);
 	}
 	else
 	{
@@ -3602,7 +3369,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		GameServer()->CreateDamageInd(m_Pos, 0, Dmg);
 	}
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(Dmg)
 	{
 		if(m_Armor)
@@ -3620,43 +3387,42 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		}
 
 		m_Health -= Dmg;
-	
+
 		if(From != m_pPlayer->GetCID() && pKillerPlayer)
 			m_NeedFullHeal = true;
-			
+
 		if(From >= 0 && From != m_pPlayer->GetCID())
 			GameServer()->SendHitSound(From);
 	}
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	m_DamageTakenTick = Server()->Tick();
 	m_InvisibleTick = Server()->Tick();
 
 	// do damage Hit sound
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	if(Mode == TAKEDAMAGEMODE_INFECTION)
 	{
 		m_pPlayer->StartInfection();
-		
+
 		GameServer()->SendChatTarget_Localization(From, CHATCATEGORY_SCORE, _("You have infected {str:VictimName}, +3 points"), "VictimName", Server()->ClientName(m_pPlayer->GetCID()), NULL);
 		Server()->RoundStatistics()->OnScoreEvent(From, SCOREEVENT_INFECTION, pKillerPlayer->GetClass(), Server()->ClientName(From), Console());
 		GameServer()->SendScoreSound(From);
-	
-		//Search for hook
-		for(CCharacter *pHook = (CCharacter*) GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER); pHook; pHook = (CCharacter *)pHook->TypeNext())
+
+		// Search for hook
+		for(CCharacter *pHook = (CCharacter *) GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER); pHook; pHook = (CCharacter *) pHook->TypeNext())
 		{
 			if(
 				pHook->GetPlayer() &&
 				pHook->m_Core.m_HookedPlayer == m_pPlayer->GetCID() &&
-				pHook->GetPlayer()->GetCID() != From
-			)
+				pHook->GetPlayer()->GetCID() != From)
 			{
 				Server()->RoundStatistics()->OnScoreEvent(pHook->GetPlayer()->GetCID(), SCOREEVENT_HELP_HOOK_INFECTION, pHook->GetClass(), Server()->ClientName(pHook->GetPlayer()->GetCID()), Console());
 				GameServer()->SendScoreSound(pHook->GetPlayer()->GetCID());
 			}
 		}
-		
+
 		char aBuf[256];
 		str_format(aBuf, sizeof(aBuf), "kill killer='%s' victim='%s' weapon=%d",
 			Server()->ClientName(From),
@@ -3670,13 +3436,12 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		Msg.m_ModeSpecial = 0;
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
 
-		
-		if (pKillerPlayer)
+		if(pKillerPlayer)
 			pKillerPlayer->IncreaseNumberKills();
-		if (pKillerChar)
+		if(pKillerChar)
 			pKillerChar->CheckSuperWeaponAccess();
 	}
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	// check for death
 	if(m_Health <= 0)
@@ -3684,27 +3449,27 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 		Die(From, Weapon);
 
 		// set attacker's face to happy (taunt!)
-		if (From >= 0 && From != m_pPlayer->GetCID() && pKillerPlayer)
+		if(From >= 0 && From != m_pPlayer->GetCID() && pKillerPlayer)
 		{
-			if (pKillerChar)
+			if(pKillerChar)
 			{
 				pKillerChar->m_EmoteType = EMOTE_HAPPY;
 				pKillerChar->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
 			}
 		}
-		
+
 		return false;
 
-		if (!(GetClass() == PLAYERCLASS_UNDEAD) || g_Config.m_InfUndeadIncNumKills)
+		if(!(GetClass() == PLAYERCLASS_UNDEAD) || g_Config.m_InfUndeadIncNumKills)
 		{
-			if (pKillerPlayer)
+			if(pKillerPlayer)
 				pKillerPlayer->IncreaseNumberKills();
-			if (pKillerChar)
+			if(pKillerChar)
 				pKillerChar->CheckSuperWeaponAccess();
 		}
 	}
 
-	if (Dmg > 2)
+	if(Dmg > 2)
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
 	else
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
@@ -3720,237 +3485,239 @@ void CCharacter::Snap(int SnappingClient)
 	int id = m_pPlayer->GetCID();
 
 	if(SnappingClient != -1)
-		if (!Server()->Translate(id, SnappingClient))
+		if(!Server()->Translate(id, SnappingClient))
 			return;
 
 	if(NetworkClipped(SnappingClient))
 		return;
-	
-		CPlayer* pClient = GameServer()->m_apPlayers[SnappingClient];
+
+	CPlayer *pClient = GameServer()->m_apPlayers[SnappingClient];
 
 	if(SnappingClient == -1)
 		pClient = nullptr;
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	if(GetClass() == PLAYERCLASS_WITCH)
 	{
-		CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, m_FlagID, sizeof(CNetObj_Flag));
+		CNetObj_Flag *pFlag = (CNetObj_Flag *) Server()->SnapNewItem(NETOBJTYPE_FLAG, m_FlagID, sizeof(CNetObj_Flag));
 		if(!pFlag)
 			return;
 
-		pFlag->m_X = (int)m_Pos.x;
-		pFlag->m_Y = (int)m_Pos.y;
+		pFlag->m_X = (int) m_Pos.x;
+		pFlag->m_Y = (int) m_Pos.y;
 		pFlag->m_Team = TEAM_RED;
 	}
 
 	if(SnappingClient != -1)
 	{
-	if(GetClass() == PLAYERCLASS_GHOST)
-	{
-		if(!pClient->IsZombie() && m_IsInvisible) return;
-	}
-	
-	if(m_Armor < 10 && SnappingClient != m_pPlayer->GetCID() && IsHuman() && GetClass() != PLAYERCLASS_HERO && GetClass() != PLAYERCLASS_POLICE)
-	{
-		if(pClient && pClient->GetClass() == PLAYERCLASS_MEDIC)
+		if(GetClass() == PLAYERCLASS_GHOST)
 		{
-			CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_HeartID, sizeof(CNetObj_Pickup)));
-			if(!pP)
+			if(!pClient->IsZombie() && m_IsInvisible)
 				return;
-
-			pP->m_X = (int)m_Pos.x;
-			pP->m_Y = (int)m_Pos.y - 60.0;
-			pP->m_Type = POWERUP_ARMOR;
-			pP->m_Subtype = 0;
 		}
-	}
-	else if(m_Health < 10 && SnappingClient != m_pPlayer->GetCID() && IsHuman() && GetClass() != PLAYERCLASS_HERO && GetClass() != PLAYERCLASS_MEDIC)
-	{
-		if(pClient && pClient->GetClass() == PLAYERCLASS_REVIVER)
+
+		if(m_Armor < 10 && SnappingClient != m_pPlayer->GetCID() && IsHuman() && GetClass() != PLAYERCLASS_HERO)
+		{
+			if(pClient && pClient->GetClass() == PLAYERCLASS_MEDIC)
+			{
+				CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_HeartID, sizeof(CNetObj_Pickup)));
+				if(!pP)
+					return;
+
+				pP->m_X = (int) m_Pos.x;
+				pP->m_Y = (int) m_Pos.y - 60.0;
+				pP->m_Type = POWERUP_ARMOR;
+				pP->m_Subtype = 0;
+			}
+		}
+		else if(m_Health < 10 && SnappingClient != m_pPlayer->GetCID() && IsHuman() && GetClass() != PLAYERCLASS_HERO && GetClass() != PLAYERCLASS_MEDIC)
+		{
+			if(pClient && pClient->GetClass() == PLAYERCLASS_REVIVER)
+			{
+				CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_HeartID, sizeof(CNetObj_Pickup)));
+				if(!pP)
+					return;
+
+				pP->m_X = (int) m_Pos.x;
+				pP->m_Y = (int) m_Pos.y - 60.0;
+				pP->m_Type = POWERUP_HEALTH;
+				pP->m_Subtype = 0;
+			}
+		}
+		else if((m_Armor + m_Health) < 10 && SnappingClient != m_pPlayer->GetCID() && IsZombie() && pClient->IsZombie())
 		{
 			CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_HeartID, sizeof(CNetObj_Pickup)));
 			if(!pP)
 				return;
 
-			pP->m_X = (int)m_Pos.x;
-			pP->m_Y = (int)m_Pos.y - 60.0;
+			pP->m_X = (int) m_Pos.x;
+			pP->m_Y = (int) m_Pos.y - 60.0;
 			pP->m_Type = POWERUP_HEALTH;
 			pP->m_Subtype = 0;
 		}
-	}
-	else if((m_Armor + m_Health) < 10 && SnappingClient != m_pPlayer->GetCID() && IsZombie() && pClient->IsZombie())
-	{
-		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_HeartID, sizeof(CNetObj_Pickup)));
-		if(!pP)
-			return;
 
-		pP->m_X = (int)m_Pos.x;
-		pP->m_Y = (int)m_Pos.y - 60.0;
-		pP->m_Type = POWERUP_HEALTH;
-		pP->m_Subtype = 0;
-	}
-	
-	if(pClient && pClient->IsHuman() && GetClass() == PLAYERCLASS_ENGINEER && !m_FirstShot)
-	{
-		CEngineerWall* pCurrentWall = NULL;
-		for(CEngineerWall *pWall = (CEngineerWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall*) pWall->TypeNext())
+		if(pClient && pClient->IsHuman() && GetClass() == PLAYERCLASS_ENGINEER && !m_FirstShot)
 		{
-			if(pWall->m_Owner == m_pPlayer->GetCID())
+			CEngineerWall *pCurrentWall = NULL;
+			for(CEngineerWall *pWall = (CEngineerWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall *) pWall->TypeNext())
 			{
-				pCurrentWall = pWall;
-				break;
-			}
-		}
-		
-		if(!pCurrentWall)
-		{
-			CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_BarrierHintID, sizeof(CNetObj_Laser)));
-			if(!pObj)
-				return;
-
-			pObj->m_X = (int)m_FirstShotCoord.x;
-			pObj->m_Y = (int)m_FirstShotCoord.y;
-			pObj->m_FromX = (int)m_FirstShotCoord.x;
-			pObj->m_FromY = (int)m_FirstShotCoord.y;
-			pObj->m_StartTick = Server()->Tick();
-			
-		}
-	}
-	if(pClient && pClient->IsHuman() && GetClass() == PLAYERCLASS_LOOPER && !m_FirstShot)
-	{
-		CLooperWall* pCurrentWall = NULL;
-		for(CLooperWall *pWall = (CLooperWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall*) pWall->TypeNext())
-		{
-			if(pWall->m_Owner == m_pPlayer->GetCID())
-			{
-				pCurrentWall = pWall;
-				break;
-			}
-		}
-		
-		if(!pCurrentWall)
-		{
-			for(int i=0; i<2; i++) 
-			{
-				
-				CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_BarrierHintIDs[i], sizeof(CNetObj_Laser)));
-				
-				if(!pObj)
-					return;
-				
-				pObj->m_X = (int)m_FirstShotCoord.x-CLooperWall::THICKNESS*i+(CLooperWall::THICKNESS*0.5);
-				pObj->m_Y = (int)m_FirstShotCoord.y;
-				pObj->m_FromX = (int)m_FirstShotCoord.x-CLooperWall::THICKNESS*i+(CLooperWall::THICKNESS*0.5);
-				pObj->m_FromY = (int)m_FirstShotCoord.y;
-				pObj->m_StartTick = Server()->Tick();
-			}
-
-		}
-	}
-	}
-	
-	if(SnappingClient != -1)
-	{
-	if(SnappingClient == m_pPlayer->GetCID())
-	{
-		if(GetClass() == PLAYERCLASS_SCIENTIST && m_ActiveWeapon == WEAPON_GRENADE)
-		{
-			vec2 PortalShift = vec2(m_Input.m_TargetX, m_Input.m_TargetY);
-			vec2 PortalDir = normalize(PortalShift);
-			if(length(PortalShift) > 500.0f)
-				PortalShift = PortalDir * 500.0f;
-			vec2 PortalPos;
-			
-			if(FindPortalPosition(m_Pos + PortalShift, PortalPos))
-			{
-				CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_CursorID, sizeof(CNetObj_Projectile)));
-				if(!pObj)
-					return;
-
-				pObj->m_X = (int)PortalPos.x;
-				pObj->m_Y = (int)PortalPos.y;
-				pObj->m_VelX = 0;
-				pObj->m_VelY = 0;
-				pObj->m_StartTick = Server()->Tick();
-				pObj->m_Type = WEAPON_HAMMER;
-			}
-		}
-		else if(GetClass() == PLAYERCLASS_WITCH)
-		{
-			vec2 SpawnPos;
-			if(FindWitchSpawnPosition(SpawnPos))
-			{
-				CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_CursorID, sizeof(CNetObj_Projectile)));
-				if(!pObj)
-					return;
-
-				pObj->m_X = (int)SpawnPos.x;
-				pObj->m_Y = (int)SpawnPos.y;
-				pObj->m_VelX = 0;
-				pObj->m_VelY = 0;
-				pObj->m_StartTick = Server()->Tick();
-				pObj->m_Type = WEAPON_HAMMER;
-			}
-		}
-		else if(GetClass() == PLAYERCLASS_HERO && g_Config.m_InfHeroFlagIndicator && m_pHeroFlag) 
-		{
-			CHeroFlag *pFlag = m_pHeroFlag;
-
-			long tickLimit = m_pPlayer->m_LastActionMoveTick+g_Config.m_InfHeroFlagIndicatorTime*Server()->TickSpeed();
-			
-			// Guide hero to flag
-			if(pFlag->GetCoolDown() <= 0 && Server()->Tick() > tickLimit)
-			{
-				CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_CursorID, sizeof(CNetObj_Laser)));
-				if(!pObj)
-					return;
-
-				float Angle = atan2f(pFlag->m_Pos.y-m_Pos.y, pFlag->m_Pos.x-m_Pos.x);
-				vec2 vecDir = vec2(cos(Angle), sin(Angle));
-				vec2 Indicator = m_Pos + vecDir * 84.0f; 
-				vec2 IndicatorM = m_Pos - vecDir * 84.0f; 
-
-				// display laser beam for 0.5 seconds
-				int tickShowBeamTime = Server()->TickSpeed()*0.5;
-				long ticksInactive = tickShowBeamTime - (Server()->Tick()-tickLimit);
-				if (g_Config.m_InfHeroFlagIndicatorTime > 0 && ticksInactive > 0) 
+				if(pWall->m_Owner == m_pPlayer->GetCID())
 				{
-					CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
+					pCurrentWall = pWall;
+					break;
+				}
+			}
+
+			if(!pCurrentWall)
+			{
+				CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_BarrierHintID, sizeof(CNetObj_Laser)));
+				if(!pObj)
+					return;
+
+				pObj->m_X = (int) m_FirstShotCoord.x;
+				pObj->m_Y = (int) m_FirstShotCoord.y;
+				pObj->m_FromX = (int) m_FirstShotCoord.x;
+				pObj->m_FromY = (int) m_FirstShotCoord.y;
+				pObj->m_StartTick = Server()->Tick();
+			}
+		}
+		if(pClient && pClient->IsHuman() && GetClass() == PLAYERCLASS_LOOPER && !m_FirstShot)
+		{
+			CLooperWall *pCurrentWall = NULL;
+			for(CLooperWall *pWall = (CLooperWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall *) pWall->TypeNext())
+			{
+				if(pWall->m_Owner == m_pPlayer->GetCID())
+				{
+					pCurrentWall = pWall;
+					break;
+				}
+			}
+
+			if(!pCurrentWall)
+			{
+				for(int i = 0; i < 2; i++)
+				{
+					CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_BarrierHintIDs[i], sizeof(CNetObj_Laser)));
+
 					if(!pObj)
 						return;
 
-					Indicator = IndicatorM + vecDir * 168.0f * (1.0f-(ticksInactive/(float)tickShowBeamTime)); 
-
-					pObj->m_X = (int)Indicator.x;
-					pObj->m_Y = (int)Indicator.y;
-					pObj->m_FromX = (int)IndicatorM.x;
-					pObj->m_FromY = (int)IndicatorM.y;
-					if (ticksInactive < 4)
-						pObj->m_StartTick = Server()->Tick()-(6-ticksInactive);
-					else 
-						pObj->m_StartTick = Server()->Tick()-3;
+					pObj->m_X = (int) m_FirstShotCoord.x - CLooperWall::THICKNESS * i + (CLooperWall::THICKNESS * 0.5);
+					pObj->m_Y = (int) m_FirstShotCoord.y;
+					pObj->m_FromX = (int) m_FirstShotCoord.x - CLooperWall::THICKNESS * i + (CLooperWall::THICKNESS * 0.5);
+					pObj->m_FromY = (int) m_FirstShotCoord.y;
+					pObj->m_StartTick = Server()->Tick();
 				}
-
-				pObj->m_X = (int)Indicator.x;
-				pObj->m_Y = (int)Indicator.y;
-				pObj->m_FromX = pObj->m_X;
-				pObj->m_FromY = pObj->m_Y;
-				pObj->m_StartTick = Server()->Tick();
 			}
 		}
 	}
+
+	if(SnappingClient != -1)
+	{
+		if(SnappingClient == m_pPlayer->GetCID())
+		{
+			if(GetClass() == PLAYERCLASS_SCIENTIST && m_ActiveWeapon == WEAPON_GRENADE)
+			{
+				vec2 PortalShift = vec2(m_Input.m_TargetX, m_Input.m_TargetY);
+				vec2 PortalDir = normalize(PortalShift);
+				if(length(PortalShift) > 500.0f)
+					PortalShift = PortalDir * 500.0f;
+				vec2 PortalPos;
+
+				if(FindPortalPosition(m_Pos + PortalShift, PortalPos))
+				{
+					CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_CursorID, sizeof(CNetObj_Projectile)));
+					if(!pObj)
+						return;
+
+					pObj->m_X = (int) PortalPos.x;
+					pObj->m_Y = (int) PortalPos.y;
+					pObj->m_VelX = 0;
+					pObj->m_VelY = 0;
+					pObj->m_StartTick = Server()->Tick();
+					pObj->m_Type = WEAPON_HAMMER;
+				}
+			}
+			else if(GetClass() == PLAYERCLASS_WITCH)
+			{
+				vec2 SpawnPos;
+				if(FindWitchSpawnPosition(SpawnPos))
+				{
+					CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_CursorID, sizeof(CNetObj_Projectile)));
+					if(!pObj)
+						return;
+
+					pObj->m_X = (int) SpawnPos.x;
+					pObj->m_Y = (int) SpawnPos.y;
+					pObj->m_VelX = 0;
+					pObj->m_VelY = 0;
+					pObj->m_StartTick = Server()->Tick();
+					pObj->m_Type = WEAPON_HAMMER;
+				}
+			}
+			else if(GetClass() == PLAYERCLASS_HERO && g_Config.m_InfHeroFlagIndicator && m_pHeroFlag)
+			{
+				CHeroFlag *pFlag = m_pHeroFlag;
+
+				long tickLimit = m_pPlayer->m_LastActionMoveTick + g_Config.m_InfHeroFlagIndicatorTime * Server()->TickSpeed();
+
+				// Guide hero to flag
+				if(pFlag->GetCoolDown() <= 0 && Server()->Tick() > tickLimit)
+				{
+					CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_CursorID, sizeof(CNetObj_Laser)));
+					if(!pObj)
+						return;
+
+					float Angle = atan2f(pFlag->m_Pos.y - m_Pos.y, pFlag->m_Pos.x - m_Pos.x);
+					vec2 vecDir = vec2(cos(Angle), sin(Angle));
+					vec2 Indicator = m_Pos + vecDir * 84.0f;
+					vec2 IndicatorM = m_Pos - vecDir * 84.0f;
+
+					// display laser beam for 0.5 seconds
+					int tickShowBeamTime = Server()->TickSpeed() * 0.5;
+					long ticksInactive = tickShowBeamTime - (Server()->Tick() - tickLimit);
+					if(g_Config.m_InfHeroFlagIndicatorTime > 0 && ticksInactive > 0)
+					{
+						CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
+						if(!pObj)
+							return;
+
+						Indicator = IndicatorM + vecDir * 168.0f * (1.0f - (ticksInactive / (float) tickShowBeamTime));
+
+						pObj->m_X = (int) Indicator.x;
+						pObj->m_Y = (int) Indicator.y;
+						pObj->m_FromX = (int) IndicatorM.x;
+						pObj->m_FromY = (int) IndicatorM.y;
+						if(ticksInactive < 4)
+							pObj->m_StartTick = Server()->Tick() - (6 - ticksInactive);
+						else
+							pObj->m_StartTick = Server()->Tick() - 3;
+					}
+
+					pObj->m_X = (int) Indicator.x;
+					pObj->m_Y = (int) Indicator.y;
+					pObj->m_FromX = pObj->m_X;
+					pObj->m_FromY = pObj->m_Y;
+					pObj->m_StartTick = Server()->Tick();
+				}
+			}
+		}
 	}
-/* INFECTION MODIFICATION END ***************************************/
+	/* INFECTION MODIFICATION END ***************************************/
 
 	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, id, sizeof(CNetObj_Character)));
 	if(!pCharacter)
 		return;
 	int EmoteNormal = EMOTE_NORMAL;
-	if(IsZombie()) EmoteNormal = EMOTE_ANGRY;
-	if(m_IsInvisible) EmoteNormal = EMOTE_BLINK;
-	if(m_LoveTick > 0 || m_HallucinationTick > 0 || m_SlowMotionTick > 0) EmoteNormal = EMOTE_SURPRISE;
-	if(IsFrozen()) EmoteNormal = EMOTE_PAIN;
-	
+	if(IsZombie())
+		EmoteNormal = EMOTE_ANGRY;
+	if(m_IsInvisible)
+		EmoteNormal = EMOTE_BLINK;
+	if(m_LoveTick > 0 || m_HallucinationTick > 0 || m_SlowMotionTick > 0)
+		EmoteNormal = EMOTE_SURPRISE;
+	if(IsFrozen())
+		EmoteNormal = EMOTE_PAIN;
+
 	// write down the m_Core
 	if(!m_ReckoningTick || GameServer()->m_World.m_Paused)
 	{
@@ -3966,16 +3733,16 @@ void CCharacter::Snap(int SnappingClient)
 	}
 
 	// set emote
-	if (m_EmoteStop < Server()->Tick())
+	if(m_EmoteStop < Server()->Tick())
 	{
 		m_EmoteType = EmoteNormal;
 		m_EmoteStop = -1;
 	}
 
-	if (pCharacter->m_HookedPlayer != -1)
+	if(pCharacter->m_HookedPlayer != -1)
 	{
-		if (SnappingClient != -1)
-			if (!Server()->Translate(pCharacter->m_HookedPlayer, SnappingClient))
+		if(SnappingClient != -1)
+			if(!Server()->Translate(pCharacter->m_HookedPlayer, SnappingClient))
 				pCharacter->m_HookedPlayer = -1;
 	}
 	pCharacter->m_Emote = m_EmoteType;
@@ -3984,7 +3751,7 @@ void CCharacter::Snap(int SnappingClient)
 	pCharacter->m_Health = 0;
 	pCharacter->m_Armor = 0;
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_NINJA_HAMMER)
 	{
 		pCharacter->m_Weapon = WEAPON_NINJA;
@@ -3993,35 +3760,36 @@ void CCharacter::Snap(int SnappingClient)
 	{
 		pCharacter->m_Weapon = m_ActiveWeapon;
 	}
-	
+
 	if(GetClass() == PLAYERCLASS_SPIDER)
 	{
-		pCharacter->m_HookTick -= (g_Config.m_InfSpiderHookTime - 1) * SERVER_TICK_SPEED-SERVER_TICK_SPEED/5;
+		pCharacter->m_HookTick -= (g_Config.m_InfSpiderHookTime - 1) * SERVER_TICK_SPEED - SERVER_TICK_SPEED / 5;
 		if(pCharacter->m_HookTick < 0)
 			pCharacter->m_HookTick = 0;
 	}
 	if(GetClass() == PLAYERCLASS_BAT)
 	{
-		pCharacter->m_HookTick -= (g_Config.m_InfBatHookTime - 1) * SERVER_TICK_SPEED - SERVER_TICK_SPEED/5;
+		pCharacter->m_HookTick -= (g_Config.m_InfBatHookTime - 1) * SERVER_TICK_SPEED - SERVER_TICK_SPEED / 5;
 		if(pCharacter->m_HookTick < 0)
 			pCharacter->m_HookTick = 0;
 	}
-	
+
 	// tarzan-mode
-	CPlayer* pHookedPlayer = GameServer()->m_apPlayers[m_Core.m_HookedPlayer];
-	if(m_Core.m_HookedPlayer > -1 && pHookedPlayer) {
+	CPlayer *pHookedPlayer = GameServer()->m_apPlayers[m_Core.m_HookedPlayer];
+	if(m_Core.m_HookedPlayer > -1 && pHookedPlayer)
+	{
 		bool BothZombies = IsZombie() && pHookedPlayer->IsZombie();
 		bool BothHumans = IsHuman() && pHookedPlayer->IsHuman();
 		if(m_Core.m_HookProtected && !pHookedPlayer->HookProtectionEnabled() && (BothZombies || BothHumans))
 		{
-			pCharacter->m_HookTick -= (999 - 1) * SERVER_TICK_SPEED - SERVER_TICK_SPEED/5;
+			pCharacter->m_HookTick -= (999 - 1) * SERVER_TICK_SPEED - SERVER_TICK_SPEED / 5;
 			if(pCharacter->m_HookTick < 0)
 				pCharacter->m_HookTick = 0;
 		}
 	}
 	// tarzan-mode end
 
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 	pCharacter->m_AttackTick = m_AttackTick;
 
 	pCharacter->m_Direction = m_Input.m_Direction;
@@ -4034,17 +3802,17 @@ void CCharacter::Snap(int SnappingClient)
 		if(m_aWeapons[m_ActiveWeapon].m_Ammo > 0)
 			pCharacter->m_AmmoCount = m_aWeapons[m_ActiveWeapon].m_Ammo;
 	}
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	if(GetInfWeaponID(m_ActiveWeapon) == INFWEAPON_MERCENARY_GUN)
 	{
-		pCharacter->m_AmmoCount /= (Server()->GetMaxAmmo(INFWEAPON_MERCENARY_GUN)/10);
+		pCharacter->m_AmmoCount /= (Server()->GetMaxAmmo(INFWEAPON_MERCENARY_GUN) / 10);
 	}
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	if(pCharacter->m_Emote == EmoteNormal)
 	{
-		if(250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)
+		if(250 - ((Server()->Tick() - m_LastAction) % (250)) < 5)
 			pCharacter->m_Emote = EMOTE_BLINK;
 	}
 
@@ -4078,18 +3846,18 @@ void CCharacter::GiveNinjaBuf()
 {
 	if(GetClass() != PLAYERCLASS_NINJA)
 		return;
-	
+
 	switch(random_int(0, 2))
 	{
-		case 0: //Velocity Buff
+		case 0: // Velocity Buff
 			m_NinjaVelocityBuff++;
 			GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("Sword velocity increased"), NULL);
 			break;
-		case 1: //Strength Buff
+		case 1: // Strength Buff
 			m_NinjaStrengthBuff++;
 			GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("Sword strength increased"), NULL);
 			break;
-		case 2: //Ammo Buff
+		case 2: // Ammo Buff
 			m_NinjaAmmoBuff++;
 			GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_SCORE, _("Grenade limit increased"), NULL);
 			break;
@@ -4109,7 +3877,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GUN, -1);
 			GiveWeapon(WEAPON_RIFLE, -1);
 			m_ActiveWeapon = WEAPON_RIFLE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_ENGINEER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_ENGINEER))
 			{
@@ -4126,7 +3894,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GUN, -1);
 			GiveWeapon(WEAPON_GRENADE, -1);
 			m_ActiveWeapon = WEAPON_GRENADE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SOLDIER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SOLDIER))
 			{
@@ -4143,7 +3911,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GRENADE, -1);
 			GiveWeapon(WEAPON_GUN, -1);
 			m_ActiveWeapon = WEAPON_GUN;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_MERCENARY);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_MERCENARY))
 			{
@@ -4160,7 +3928,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GUN, -1);
 			GiveWeapon(WEAPON_RIFLE, -1);
 			m_ActiveWeapon = WEAPON_RIFLE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SNIPER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SNIPER))
 			{
@@ -4178,7 +3946,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_RIFLE, -1);
 			GiveWeapon(WEAPON_GRENADE, -1);
 			m_ActiveWeapon = WEAPON_GRENADE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SCIENTIST);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SCIENTIST))
 			{
@@ -4195,7 +3963,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_RIFLE, -1);
 			GiveWeapon(WEAPON_GRENADE, -1);
 			m_ActiveWeapon = WEAPON_GRENADE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_CATAPULT);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_CATAPULT))
 			{
@@ -4213,7 +3981,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_RIFLE, -1);
 			GiveWeapon(WEAPON_SHOTGUN, -1);
 			m_ActiveWeapon = WEAPON_SHOTGUN;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_BIOLOGIST);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_BIOLOGIST))
 			{
@@ -4231,29 +3999,12 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_RIFLE, -1);
 			GiveWeapon(WEAPON_SHOTGUN, -1);
 			m_ActiveWeapon = WEAPON_RIFLE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SCIOGIST);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SCIOGIST))
 			{
 				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_DEFAULT, _("Type “/help {str:ClassName}” for more information about your class"), "ClassName", "Sciogist", NULL);
 				m_pPlayer->m_knownClass[PLAYERCLASS_SCIOGIST] = true;
-			}
-			break;
-		case PLAYERCLASS_POLICE:
-			RemoveAllGun();
-			m_pPlayer->m_InfectionTick = -1;
-			m_Health = 10;
-			m_aWeapons[WEAPON_HAMMER].m_Got = true;
-			GiveWeapon(WEAPON_HAMMER, -1);
-			GiveWeapon(WEAPON_RIFLE, -1);
-			GiveWeapon(WEAPON_GUN, -1);
-			m_ActiveWeapon = WEAPON_GUN;
-			
-			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_POLICE);
-			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_POLICE))
-			{
-				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_DEFAULT, _("Type “/help {str:ClassName}” for more information about your class"), "ClassName", "Police", NULL);
-				m_pPlayer->m_knownClass[PLAYERCLASS_POLICE] = true;
 			}
 			break;
 		case PLAYERCLASS_LOOPER:
@@ -4265,7 +4016,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_RIFLE, -1);
 			GiveWeapon(WEAPON_GRENADE, -1);
 			m_ActiveWeapon = WEAPON_RIFLE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_LOOPER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_LOOPER))
 			{
@@ -4273,7 +4024,7 @@ void CCharacter::ClassSpawnAttributes()
 				m_pPlayer->m_knownClass[PLAYERCLASS_LOOPER] = true;
 			}
 			break;
-	
+
 		case PLAYERCLASS_MEDIC:
 			RemoveAllGun();
 			m_pPlayer->m_InfectionTick = -1;
@@ -4285,7 +4036,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GRENADE, -1);
 			GiveWeapon(WEAPON_RIFLE, -1);
 			m_ActiveWeapon = WEAPON_SHOTGUN;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_MEDIC);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_MEDIC))
 			{
@@ -4303,7 +4054,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_SHOTGUN, -1);
 			GiveWeapon(WEAPON_RIFLE, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_REVIVER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_REVIVER))
 			{
@@ -4322,7 +4073,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GRENADE, -1);
 			m_pHeroFlag = nullptr;
 			m_ActiveWeapon = WEAPON_GRENADE;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_HERO);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_HERO))
 			{
@@ -4339,7 +4090,7 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GRENADE, -1);
 			GiveWeapon(WEAPON_RIFLE, 3);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_NINJA);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_NINJA))
 			{
@@ -4361,10 +4112,10 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SMOKER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SMOKER))
-			{   
+			{
 				GameServer()->SendChatTarget_Localization(m_pPlayer->GetCID(), CHATCATEGORY_DEFAULT, _("Type “/help {str:ClassName}” for more information about your class"), "ClassName", "smoker", NULL);
 				m_pPlayer->m_knownClass[PLAYERCLASS_SMOKER] = true;
 			}
@@ -4376,7 +4127,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_BOOMER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_BOOMER))
 			{
@@ -4391,7 +4142,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_HUNTER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_HUNTER))
 			{
@@ -4406,7 +4157,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_BAT);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_BAT))
 			{
@@ -4421,7 +4172,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_GHOST);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_GHOST))
 			{
@@ -4436,7 +4187,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SPIDER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SPIDER))
 			{
@@ -4466,7 +4217,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_GHOUL);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_GHOUL))
 			{
@@ -4481,7 +4232,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SLUG);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SLUG))
 			{
@@ -4496,7 +4247,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SLIME);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SLIME))
 			{
@@ -4511,7 +4262,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_UNDEAD);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_UNDEAD))
 			{
@@ -4526,7 +4277,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_WITCH);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_WITCH))
 			{
@@ -4541,7 +4292,7 @@ void CCharacter::ClassSpawnAttributes()
 			m_aWeapons[WEAPON_HAMMER].m_Got = true;
 			GiveWeapon(WEAPON_HAMMER, -1);
 			m_ActiveWeapon = WEAPON_HAMMER;
-			
+
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_FREEZER);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_FREEZER))
 			{
@@ -4552,9 +4303,12 @@ void CCharacter::ClassSpawnAttributes()
 	}
 }
 
-void CCharacter::GiveArmorIfLonely() {
-	if (IsZombie()) {
-		if (GameServer()->GetZombieCount() <= 1) {
+void CCharacter::GiveArmorIfLonely()
+{
+	if(IsZombie())
+	{
+		if(GameServer()->GetZombieCount() <= 1)
+		{
 			/* Lonely zombie */
 			IncreaseArmor(10);
 		}
@@ -4566,143 +4320,164 @@ void CCharacter::DestroyChildEntities()
 	m_NinjaVelocityBuff = 0;
 	m_NinjaStrengthBuff = 0;
 	m_NinjaAmmoBuff = 0;
-	
-	for(CProjectile *pProjectile = (CProjectile*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_PROJECTILE); pProjectile; pProjectile = (CProjectile*) pProjectile->TypeNext())
+
+	for(CProjectile *pProjectile = (CProjectile *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_PROJECTILE); pProjectile; pProjectile = (CProjectile *) pProjectile->TypeNext())
 	{
-		if(pProjectile->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pProjectile);
+		if(pProjectile->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pProjectile);
 	}
-	for(CPoliceShield *pShield = (CPoliceShield*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_POLICE_SHIELD); pShield; pShield = (CPoliceShield*) pShield->TypeNext())
+	for(CEngineerWall *pWall = (CEngineerWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall *) pWall->TypeNext())
 	{
-		if(pShield->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pShield);
+		if(pWall->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pWall);
 	}
-	for(CEngineerWall *pWall = (CEngineerWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ENGINEER_WALL); pWall; pWall = (CEngineerWall*) pWall->TypeNext())
+	for(CLooperWall *pWall = (CLooperWall *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall *) pWall->TypeNext())
 	{
-		if(pWall->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pWall);
+		if(pWall->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pWall);
 	}
-	for(CLooperWall *pWall = (CLooperWall*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_LOOPER_WALL); pWall; pWall = (CLooperWall*) pWall->TypeNext())
+	for(CSoldierBomb *pBomb = (CSoldierBomb *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SOLDIER_BOMB); pBomb; pBomb = (CSoldierBomb *) pBomb->TypeNext())
 	{
-		if(pWall->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pWall);
+		if(pBomb->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pBomb);
 	}
-	for(CSoldierBomb *pBomb = (CSoldierBomb*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SOLDIER_BOMB); pBomb; pBomb = (CSoldierBomb*) pBomb->TypeNext())
+	for(CScatterGrenade *pGrenade = (CScatterGrenade *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCATTER_GRENADE); pGrenade; pGrenade = (CScatterGrenade *) pGrenade->TypeNext())
 	{
-		if(pBomb->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pBomb);
+		if(pGrenade->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pGrenade);
 	}
-	for(CScatterGrenade* pGrenade = (CScatterGrenade*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCATTER_GRENADE); pGrenade; pGrenade = (CScatterGrenade*) pGrenade->TypeNext())
+	for(CMedicGrenade *pGrenade = (CMedicGrenade *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MEDIC_GRENADE); pGrenade; pGrenade = (CMedicGrenade *) pGrenade->TypeNext())
 	{
-		if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pGrenade);
+		if(pGrenade->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pGrenade);
 	}
-	for(CMedicGrenade* pGrenade = (CMedicGrenade*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MEDIC_GRENADE); pGrenade; pGrenade = (CMedicGrenade*) pGrenade->TypeNext())
+	for(CSciogistGrenade *pGrenade = (CSciogistGrenade *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIOGIST_GRENADE); pGrenade; pGrenade = (CSciogistGrenade *) pGrenade->TypeNext())
 	{
-		if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pGrenade);
+		if(pGrenade->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pGrenade);
 	}
-	for(CSciogistGrenade* pGrenade = (CSciogistGrenade*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIOGIST_GRENADE); pGrenade; pGrenade = (CSciogistGrenade*) pGrenade->TypeNext())
+	for(CElasticGrenade *pGrenade = (CElasticGrenade *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_GRENADE); pGrenade; pGrenade = (CElasticGrenade *) pGrenade->TypeNext())
 	{
-		if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pGrenade);
+		if(pGrenade->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pGrenade);
 	}
-	for(CElasticGrenade* pGrenade = (CElasticGrenade*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_GRENADE); pGrenade; pGrenade = (CElasticGrenade*) pGrenade->TypeNext())
+	for(CReviverGrenade *pGrenade = (CReviverGrenade *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_REVIVER_GRENADE); pGrenade; pGrenade = (CReviverGrenade *) pGrenade->TypeNext())
 	{
-		if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pGrenade);
+		if(pGrenade->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pGrenade);
 	}
-	for(CReviverGrenade* pGrenade = (CReviverGrenade*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_REVIVER_GRENADE); pGrenade; pGrenade = (CReviverGrenade*) pGrenade->TypeNext())
+	for(CHealBoom *pHB = (CHealBoom *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_HEAL_BOOM); pHB; pHB = (CHealBoom *) pHB->TypeNext())
 	{
-		if(pGrenade->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pGrenade);
+		if(pHB->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pHB);
 	}
-	for(CHealBoom* pHB = (CHealBoom*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_HEAL_BOOM); pHB; pHB = (CHealBoom*) pHB->TypeNext())
+	for(CMercenaryBomb *pBomb = (CMercenaryBomb *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MERCENARY_BOMB); pBomb; pBomb = (CMercenaryBomb *) pBomb->TypeNext())
 	{
-		if(pHB->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pHB);
+		if(pBomb->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pBomb);
 	}
-	for(CMercenaryBomb *pBomb = (CMercenaryBomb*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_MERCENARY_BOMB); pBomb; pBomb = (CMercenaryBomb*) pBomb->TypeNext())
+	for(CScientistMine *pMine = (CScientistMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIENTIST_MINE); pMine; pMine = (CScientistMine *) pMine->TypeNext())
 	{
-		if(pBomb->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pBomb);
-	}
-	for(CScientistMine* pMine = (CScientistMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SCIENTIST_MINE); pMine; pMine = (CScientistMine*) pMine->TypeNext())
-	{
-		if(pMine->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pMine);
-	}
-	for(CAntiAirMine* pMine = (CAntiAirMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ANTI_AIRMINE); pMine; pMine = (CAntiAirMine*) pMine->TypeNext())
-	{
-		if(pMine->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pMine);
-	}
-	for(CBiologistMine* pMine = (CBiologistMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_BIOLOGIST_MINE); pMine; pMine = (CBiologistMine*) pMine->TypeNext())
-	{
-		if(pMine->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pMine);
-	}
-	for(CSlugSlime* pSlime = (CSlugSlime*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SLUG_SLIME); pSlime; pSlime = (CSlugSlime*) pSlime->TypeNext())
-	{
-		if(pSlime->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pSlime);
-	}
-	for(CSlimeEntity* pSlime = (CSlimeEntity*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SLIME_ENTITY); pSlime; pSlime = (CSlimeEntity*) pSlime->TypeNext())
-	{
-		if(pSlime->m_Owner != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pSlime);
-	}
-	for(CGrowingExplosion* pGrowiExpl = (CGrowingExplosion*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_GROWINGEXPLOSION); pGrowiExpl; pGrowiExpl = (CGrowingExplosion*) pGrowiExpl->TypeNext())
-	{
-		if(pGrowiExpl->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pGrowiExpl);
-	}
-	for(CWhiteHole* pWhiteHole = (CWhiteHole*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_WHITE_HOLE); pWhiteHole; pWhiteHole = (CWhiteHole*) pWhiteHole->TypeNext())
-	{
-		if(pWhiteHole->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pWhiteHole);
-	}
-	for(CElasticHole* pElasticHole = (CElasticHole*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_HOLE); pElasticHole; pElasticHole = (CElasticHole*) pElasticHole->TypeNext())
-	{
-		if(pElasticHole->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pElasticHole);
-	}
-	for(CElasticEntity* pElasticEntity = (CElasticEntity*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_ENTITY); pElasticEntity; pElasticEntity = (CElasticEntity*) pElasticEntity->TypeNext())
-	{
-		if(pElasticEntity->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pElasticEntity);
-	}
-	for(CSuperWeaponIndicator* pIndicator = (CSuperWeaponIndicator*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SUPERWEAPON_INDICATOR); pIndicator; pIndicator = (CSuperWeaponIndicator*) pIndicator->TypeNext())
-	{
-		if(pIndicator->GetOwner() != m_pPlayer->GetCID()) continue;
-			GameServer()->m_World.DestroyEntity(pIndicator);
-	}
-	for(CTurret* pTurret = (CTurret*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_TURRET); pTurret; pTurret = (CTurret*) pTurret->TypeNext())
-	{
-		if(pTurret->GetOwner() != m_pPlayer->GetCID()) continue;
-		GameServer()->m_World.DestroyEntity(pTurret);
-	}
-	for(CPlasma* pPlasma = (CPlasma*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_PLASMA); pPlasma; pPlasma = (CPlasma*) pPlasma->TypeNext())
-	{
-		if(pPlasma->GetOwner() != m_pPlayer->GetCID()) continue;
-		GameServer()->m_World.DestroyEntity(pPlasma);
-	}
-	for(CPlasmaPlus* pPlasma = (CPlasmaPlus*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_PLASMA_PLUS); pPlasma; pPlasma = (CPlasmaPlus*) pPlasma->TypeNext())
-	{
-		if(pPlasma->GetOwner() != m_pPlayer->GetCID()) continue;
-		GameServer()->m_World.DestroyEntity(pPlasma);
-	}
-	for(CHeroFlag* pFlag = (CHeroFlag*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_HERO_FLAG); pFlag; pFlag = (CHeroFlag*) pFlag->TypeNext())
-	{
-		if(pFlag->GetOwner() != m_pPlayer->GetCID()) continue;
-		GameServer()->m_World.DestroyEntity(pFlag);
-	}
-	for(CFreezeMine* pMine = (CFreezeMine*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_FREEZE_MINE); pMine; pMine = (CFreezeMine*) pMine->TypeNext())
-	{
-		if(pMine->GetOwner() != m_pPlayer->GetCID()) continue;
+		if(pMine->m_Owner != m_pPlayer->GetCID())
+			continue;
 		GameServer()->m_World.DestroyEntity(pMine);
 	}
-			
+	for(CAntiAirMine *pMine = (CAntiAirMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ANTI_AIRMINE); pMine; pMine = (CAntiAirMine *) pMine->TypeNext())
+	{
+		if(pMine->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pMine);
+	}
+	for(CBiologistMine *pMine = (CBiologistMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_BIOLOGIST_MINE); pMine; pMine = (CBiologistMine *) pMine->TypeNext())
+	{
+		if(pMine->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pMine);
+	}
+	for(CSlugSlime *pSlime = (CSlugSlime *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SLUG_SLIME); pSlime; pSlime = (CSlugSlime *) pSlime->TypeNext())
+	{
+		if(pSlime->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pSlime);
+	}
+	for(CSlimeEntity *pSlime = (CSlimeEntity *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SLIME_ENTITY); pSlime; pSlime = (CSlimeEntity *) pSlime->TypeNext())
+	{
+		if(pSlime->m_Owner != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pSlime);
+	}
+	for(CGrowingExplosion *pGrowiExpl = (CGrowingExplosion *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_GROWINGEXPLOSION); pGrowiExpl; pGrowiExpl = (CGrowingExplosion *) pGrowiExpl->TypeNext())
+	{
+		if(pGrowiExpl->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pGrowiExpl);
+	}
+	for(CWhiteHole *pWhiteHole = (CWhiteHole *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_WHITE_HOLE); pWhiteHole; pWhiteHole = (CWhiteHole *) pWhiteHole->TypeNext())
+	{
+		if(pWhiteHole->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pWhiteHole);
+	}
+	for(CElasticHole *pElasticHole = (CElasticHole *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_HOLE); pElasticHole; pElasticHole = (CElasticHole *) pElasticHole->TypeNext())
+	{
+		if(pElasticHole->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pElasticHole);
+	}
+	for(CElasticEntity *pElasticEntity = (CElasticEntity *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_ELASTIC_ENTITY); pElasticEntity; pElasticEntity = (CElasticEntity *) pElasticEntity->TypeNext())
+	{
+		if(pElasticEntity->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pElasticEntity);
+	}
+	for(CSuperWeaponIndicator *pIndicator = (CSuperWeaponIndicator *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SUPERWEAPON_INDICATOR); pIndicator; pIndicator = (CSuperWeaponIndicator *) pIndicator->TypeNext())
+	{
+		if(pIndicator->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pIndicator);
+	}
+	for(CTurret *pTurret = (CTurret *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_TURRET); pTurret; pTurret = (CTurret *) pTurret->TypeNext())
+	{
+		if(pTurret->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pTurret);
+	}
+	for(CPlasma *pPlasma = (CPlasma *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_PLASMA); pPlasma; pPlasma = (CPlasma *) pPlasma->TypeNext())
+	{
+		if(pPlasma->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pPlasma);
+	}
+	for(CPlasmaPlus *pPlasma = (CPlasmaPlus *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_PLASMA_PLUS); pPlasma; pPlasma = (CPlasmaPlus *) pPlasma->TypeNext())
+	{
+		if(pPlasma->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pPlasma);
+	}
+	for(CHeroFlag *pFlag = (CHeroFlag *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_HERO_FLAG); pFlag; pFlag = (CHeroFlag *) pFlag->TypeNext())
+	{
+		if(pFlag->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pFlag);
+	}
+	for(CFreezeMine *pMine = (CFreezeMine *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_FREEZE_MINE); pMine; pMine = (CFreezeMine *) pMine->TypeNext())
+	{
+		if(pMine->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pMine);
+	}
+
 	m_FirstShot = true;
 	m_HookMode = 0;
 	m_PositionLockTick = 0;
@@ -4715,10 +4490,10 @@ void CCharacter::SetClass(int ClassChoosed)
 	ClassSpawnAttributes();
 	DestroyChildEntities();
 	GiveArmorIfLonely();
-	
+
 	m_QueuedWeapon = -1;
 	m_NeedFullHeal = false;
-	
+
 	GameServer()->CreatePlayerSpawn(m_Pos);
 }
 
@@ -4740,19 +4515,19 @@ bool CCharacter::IsInLove() const
 void CCharacter::LoveEffect()
 {
 	if(m_LoveTick <= 0)
-		m_LoveTick = Server()->TickSpeed()*5;
+		m_LoveTick = Server()->TickSpeed() * 5;
 }
 
 void CCharacter::HallucinationEffect()
 {
 	if(m_HallucinationTick <= 0)
-		m_HallucinationTick = Server()->TickSpeed()*5;
+		m_HallucinationTick = Server()->TickSpeed() * 5;
 }
 
 void CCharacter::SlipperyEffect()
 {
 	if(m_SlipperyTick <= 0)
-		m_SlipperyTick = Server()->TickSpeed()/2;
+		m_SlipperyTick = Server()->TickSpeed() / 2;
 }
 
 void CCharacter::GrantSpawnProtection()
@@ -4773,9 +4548,9 @@ void CCharacter::Freeze(float Time, int Player, int Reason)
 		GameServer()->CreatePlayerSpawn(m_Pos);
 	}
 	m_IsFrozen = true;
-	m_FrozenTime = Server()->TickSpeed()*Time;
+	m_FrozenTime = Server()->TickSpeed() * Time;
 	m_FreezeReason = Reason;
-	
+
 	m_LastFreezer = Player;
 }
 
@@ -4783,12 +4558,12 @@ void CCharacter::Unfreeze()
 {
 	m_IsFrozen = false;
 	m_FrozenTime = -1;
-	
+
 	if(m_FreezeReason == FREEZEREASON_UNDEAD)
 	{
 		m_Health = 10.0;
 	}
-	
+
 	GameServer()->CreatePlayerSpawn(m_Pos);
 }
 
@@ -4815,11 +4590,12 @@ bool CCharacter::IsInSlowMotion() const
 // duration in centiSec (10 == 1 second)
 void CCharacter::SlowMotionEffect(float duration)
 {
-	if (duration == 0) return;
+	if(duration == 0)
+		return;
 	duration *= 0.1f;
 	if(m_SlowMotionTick <= 0)
 	{
-		m_SlowMotionTick = Server()->TickSpeed()*duration;
+		m_SlowMotionTick = Server()->TickSpeed() * duration;
 		m_IsInSlowMotion = true;
 		m_Core.m_Vel *= 0.4;
 	}
@@ -4833,11 +4609,9 @@ int CCharacter::GetInfWeaponID(int WID)
 		{
 			case PLAYERCLASS_NINJA:
 				return INFWEAPON_NINJA_HAMMER;
-			case PLAYERCLASS_POLICE:
-				return INFWEAPON_POLICE_HAMMER;
 			case PLAYERCLASS_REVIVER:
 				return INFWEAPON_REVIVER_HAMMER;
-			case PLAYERCLASS_SLIME://infect class
+			case PLAYERCLASS_SLIME: // infect class
 				return INFWEAPON_SLIME_HAMMER;
 			default:
 				return INFWEAPON_HAMMER;
@@ -4849,10 +4623,6 @@ int CCharacter::GetInfWeaponID(int WID)
 		{
 			case PLAYERCLASS_MERCENARY:
 				return INFWEAPON_MERCENARY_GUN;
-			case PLAYERCLASS_CATAPULT:
-				return INFWEAPON_CATAPULT_GUN;
-			case PLAYERCLASS_POLICE:
-				return INFWEAPON_POLICE_GUN;
 			case PLAYERCLASS_SCIENTIST:
 				return INFWEAPON_SCIENTIST_GUN;
 			default:
@@ -4930,8 +4700,6 @@ int CCharacter::GetInfWeaponID(int WID)
 				return INFWEAPON_MEDIC_RIFLE;
 			case PLAYERCLASS_CATAPULT:
 				return INFWEAPON_CATAPULT_RIFLE;
-			case PLAYERCLASS_POLICE:
-				return INFWEAPON_POLICE_RIFLE;
 			case PLAYERCLASS_REVIVER:
 				return INFWEAPON_REVIVER_RIFLE;
 			default:
@@ -4942,12 +4710,14 @@ int CCharacter::GetInfWeaponID(int WID)
 	{
 		return INFWEAPON_NINJA;
 	}
-	else return INFWEAPON_NONE;
+	else
+		return INFWEAPON_NONE;
 }
 
 int CCharacter::GetInfZoneTick() // returns how many ticks long a player is already in InfZone
 {
-	if (m_InfZoneTick < 0) return 0;
-	return Server()->Tick()-m_InfZoneTick;
+	if(m_InfZoneTick < 0)
+		return 0;
+	return Server()->Tick() - m_InfZoneTick;
 }
 /* INFECTION MODIFICATION END *****************************************/

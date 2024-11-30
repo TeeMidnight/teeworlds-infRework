@@ -8,7 +8,6 @@
 
 class CMeasureTicks
 {
-	
 public:
 	CMeasureTicks(int LogIntervalInSeconds, const char *pLogTag);
 	void Begin();

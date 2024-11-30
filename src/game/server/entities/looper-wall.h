@@ -12,10 +12,11 @@ public:
 		NUM_PARTICLES = 18,
 		NUM_IDS = 2,
 	};
+
 public:
 	CLooperWall(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, int Owner);
 	virtual ~CLooperWall();
-	
+
 	virtual void Reset();
 	virtual void Tick();
 	virtual void TickPaused();
@@ -24,6 +25,7 @@ public:
 
 public:
 	int m_Owner;
+
 private:
 	vec2 m_Pos2;
 	int m_LifeSpan;
@@ -35,4 +37,3 @@ private:
 };
 
 #endif
-	

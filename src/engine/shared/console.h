@@ -19,9 +19,8 @@ class CConsole : public IConsole
 
 		virtual const CCommandInfo *NextCommandInfo(int AccessLevel, int FlagMask) const;
 
-		void SetAccessLevel(int AccessLevel) { m_AccessLevel = clamp(AccessLevel, (int)(ACCESS_LEVEL_ADMIN), (int)(ACCESS_LEVEL_MOD)); }
+		void SetAccessLevel(int AccessLevel) { m_AccessLevel = clamp(AccessLevel, (int) (ACCESS_LEVEL_ADMIN), (int) (ACCESS_LEVEL_MOD)); }
 	};
-
 
 	class CChain
 	{
@@ -73,19 +72,20 @@ class CConsole : public IConsole
 	enum
 	{
 		CONSOLE_MAX_STR_LENGTH = 1024,
-		MAX_PARTS = (CONSOLE_MAX_STR_LENGTH+1)/2
+		MAX_PARTS = (CONSOLE_MAX_STR_LENGTH + 1) / 2
 	};
 
 	class CResult : public IResult
 	{
 	public:
-		char m_aStringStorage[CONSOLE_MAX_STR_LENGTH+1];
+		char m_aStringStorage[CONSOLE_MAX_STR_LENGTH + 1];
 		char *m_pArgsStart;
 
 		const char *m_pCommand;
 		const char *m_apArgs[MAX_PARTS];
 
-		CResult() : IResult()
+		CResult() :
+			IResult()
 		{
 			mem_zero(m_aStringStorage, sizeof(m_aStringStorage));
 			m_pArgsStart = 0;
@@ -93,16 +93,16 @@ class CConsole : public IConsole
 			mem_zero(m_apArgs, sizeof(m_apArgs));
 		}
 
-		CResult &operator =(const CResult &Other)
+		CResult &operator=(const CResult &Other)
 		{
 			if(this != &Other)
 			{
 				IResult::operator=(Other);
 				mem_copy(m_aStringStorage, Other.m_aStringStorage, sizeof(m_aStringStorage));
-				m_pArgsStart = m_aStringStorage+(Other.m_pArgsStart-Other.m_aStringStorage);
-				m_pCommand = m_aStringStorage+(Other.m_pCommand-Other.m_aStringStorage);
+				m_pArgsStart = m_aStringStorage + (Other.m_pArgsStart - Other.m_aStringStorage);
+				m_pCommand = m_aStringStorage + (Other.m_pCommand - Other.m_aStringStorage);
 				for(unsigned i = 0; i < Other.m_NumArgs; ++i)
-					m_apArgs[i] = m_aStringStorage+(Other.m_apArgs[i]-Other.m_aStringStorage);
+					m_apArgs[i] = m_aStringStorage + (Other.m_apArgs[i] - Other.m_aStringStorage);
 			}
 			return *this;
 		}
@@ -121,9 +121,9 @@ class CConsole : public IConsole
 	int ParseArgs(CResult *pResult, const char *pFormat);
 
 	char NextParam(const char *&pFormat);
-	
-	void GenerateUsage(const char* pParam, char* pUsage);
-	
+
+	void GenerateUsage(const char *pParam, char *pUsage);
+
 	class CExecutionQueue
 	{
 		CHeap m_Queue;
@@ -146,7 +146,7 @@ class CConsole : public IConsole
 			if(m_pLast)
 				m_pLast->m_pNext = pEntry;
 			m_pLast = pEntry;
-			(void)new(&(pEntry->m_Result)) CResult;
+			(void) new(&(pEntry->m_Result)) CResult;
 		}
 		void Reset()
 		{
@@ -182,7 +182,7 @@ public:
 	virtual void SetPrintOutputLevel(int Index, int OutputLevel);
 	virtual void Print(int Level, const char *pFrom, const char *pStr);
 
-	void SetAccessLevel(int AccessLevel) { m_AccessLevel = clamp(AccessLevel, (int)(ACCESS_LEVEL_ADMIN), (int)(ACCESS_LEVEL_MOD)); }
+	void SetAccessLevel(int AccessLevel) { m_AccessLevel = clamp(AccessLevel, (int) (ACCESS_LEVEL_ADMIN), (int) (ACCESS_LEVEL_MOD)); }
 };
 
 #endif

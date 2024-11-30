@@ -14,7 +14,7 @@ public:
 	virtual void Tick();
 
 	int GetOwner() const;
-	
+
 public:
 	int m_Owner;
 	int m_LifeSpan;

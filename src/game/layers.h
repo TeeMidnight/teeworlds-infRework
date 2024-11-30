@@ -32,6 +32,7 @@ public:
 	CMapItemLayer *GetLayer(int Index) const;
 
 	CMapItemLayerTilemap *TeleLayer() const { return m_pTeleLayer; }
+
 private:
 	CMapItemLayerTilemap *m_pTeleLayer = nullptr;
 };

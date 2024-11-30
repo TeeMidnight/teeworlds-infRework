@@ -1,10 +1,10 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <base/system.h>
-#include <engine/shared/network.h>
-#include <engine/shared/config.h>
 #include <engine/console.h>
 #include <engine/masterserver.h>
+#include <engine/shared/config.h>
+#include <engine/shared/network.h>
 
 #include <mastersrv/mastersrv.h>
 
@@ -60,7 +60,7 @@ void CRegister::RegisterSendHeartbeat(NETADDR Addr)
 	if(g_Config.m_SvExternalPort)
 		Port = g_Config.m_SvExternalPort;
 	aData[sizeof(SERVERBROWSE_HEARTBEAT)] = Port >> 8;
-	aData[sizeof(SERVERBROWSE_HEARTBEAT)+1] = Port&0xff;
+	aData[sizeof(SERVERBROWSE_HEARTBEAT) + 1] = Port & 0xff;
 	m_pNetServer->Send(&Packet);
 }
 
@@ -77,8 +77,8 @@ void CRegister::RegisterSendCountRequest(NETADDR Addr)
 
 void CRegister::RegisterGotCount(CNetChunk *pChunk)
 {
-	unsigned char *pData = (unsigned char *)pChunk->m_pData;
-	int Count = (pData[sizeof(SERVERBROWSE_COUNT)]<<8) | pData[sizeof(SERVERBROWSE_COUNT)+1];
+	unsigned char *pData = (unsigned char *) pChunk->m_pData;
+	int Count = (pData[sizeof(SERVERBROWSE_COUNT)] << 8) | pData[sizeof(SERVERBROWSE_COUNT) + 1];
 
 	for(int i = 0; i < IMasterServer::MAX_MASTERSERVERS; i++)
 	{
@@ -153,7 +153,7 @@ void CRegister::RegisterUpdate(int Nettype)
 			if(m_aMasterserverInfo[i].m_Count == -1)
 			{
 				Left++;
-				if(m_aMasterserverInfo[i].m_LastSend+Freq < Now)
+				if(m_aMasterserverInfo[i].m_LastSend + Freq < Now)
 				{
 					m_aMasterserverInfo[i].m_LastSend = Now;
 					RegisterSendCountRequest(m_aMasterserverInfo[i].m_Addr);
@@ -162,7 +162,7 @@ void CRegister::RegisterUpdate(int Nettype)
 		}
 
 		// check if we are done or timed out
-		if(Left == 0 || Now > m_RegisterStateStart+Freq*3)
+		if(Left == 0 || Now > m_RegisterStateStart + Freq * 3)
 		{
 			// choose server
 			int Best = -1;
@@ -196,13 +196,13 @@ void CRegister::RegisterUpdate(int Nettype)
 	else if(m_RegisterState == REGISTERSTATE_HEARTBEAT)
 	{
 		// check if we should send heartbeat
-		if(Now > m_aMasterserverInfo[m_RegisterRegisteredServer].m_LastSend+Freq*15)
+		if(Now > m_aMasterserverInfo[m_RegisterRegisteredServer].m_LastSend + Freq * 15)
 		{
 			m_aMasterserverInfo[m_RegisterRegisteredServer].m_LastSend = Now;
 			RegisterSendHeartbeat(m_aMasterserverInfo[m_RegisterRegisteredServer].m_Addr);
 		}
 
-		if(Now > m_RegisterStateStart+Freq*60)
+		if(Now > m_RegisterStateStart + Freq * 60)
 		{
 			m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "register", "WARNING: Master server is not responding, switching master");
 			RegisterNewState(REGISTERSTATE_START);
@@ -216,7 +216,7 @@ void CRegister::RegisterUpdate(int Nettype)
 		m_RegisterFirst = 0;
 
 		// check if we should send new heartbeat again
-		if(Now > m_RegisterStateStart+Freq)
+		if(Now > m_RegisterStateStart + Freq)
 		{
 			if(m_RegisterCount == 120) // redo the whole process after 60 minutes to balance out the master servers
 				RegisterNewState(REGISTERSTATE_START);
@@ -230,7 +230,7 @@ void CRegister::RegisterUpdate(int Nettype)
 	else if(m_RegisterState == REGISTERSTATE_ERROR)
 	{
 		// check for restart
-		if(Now > m_RegisterStateStart+Freq*60)
+		if(Now > m_RegisterStateStart + Freq * 60)
 			RegisterNewState(REGISTERSTATE_START);
 	}
 }
@@ -275,10 +275,10 @@ int CRegister::RegisterProcessPacket(CNetChunk *pPacket)
 		char aBuf[256];
 		str_format(aBuf, sizeof(aBuf), "ERROR: configure your firewall/nat to let through udp on port %d.", g_Config.m_SvPort);
 		m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "register", aBuf);
-		//RegisterNewState(REGISTERSTATE_ERROR);
+		// RegisterNewState(REGISTERSTATE_ERROR);
 		return 1;
 	}
-	else if(pPacket->m_DataSize == sizeof(SERVERBROWSE_COUNT)+2 &&
+	else if(pPacket->m_DataSize == sizeof(SERVERBROWSE_COUNT) + 2 &&
 		mem_comp(pPacket->m_pData, SERVERBROWSE_COUNT, sizeof(SERVERBROWSE_COUNT)) == 0)
 	{
 		RegisterGotCount(pPacket);

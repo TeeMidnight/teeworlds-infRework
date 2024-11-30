@@ -2,10 +2,10 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.				*/
 #ifndef ENGINE_SERVER_H
 #define ENGINE_SERVER_H
+#include <engine/shared/protocol.h>
+#include <game/generated/protocol.h>
 #include "kernel.h"
 #include "message.h"
-#include <game/generated/protocol.h>
-#include <engine/shared/protocol.h>
 #include <string>
 #include <vector>
 
@@ -19,35 +19,35 @@ enum
 	INFWEAPON_GRENADE,
 	INFWEAPON_RIFLE,
 	INFWEAPON_NINJA,
-	
+
 	INFWEAPON_ENGINEER_RIFLE,
-	
+
 	INFWEAPON_SNIPER_RIFLE,
-	
+
 	INFWEAPON_SOLDIER_GRENADE,
-	
+
 	INFWEAPON_SCIENTIST_GUN,
 	INFWEAPON_SCIENTIST_GRENADE,
 	INFWEAPON_SCIENTIST_RIFLE,
-	
+
 	INFWEAPON_MEDIC_GRENADE,
 	INFWEAPON_MEDIC_RIFLE,
 	INFWEAPON_MEDIC_SHOTGUN,
-	
+
 	INFWEAPON_HERO_GRENADE,
 	INFWEAPON_HERO_RIFLE,
 	INFWEAPON_HERO_SHOTGUN,
-	
+
 	INFWEAPON_BIOLOGIST_SHOTGUN,
 	INFWEAPON_BIOLOGIST_RIFLE,
-	
+
 	INFWEAPON_LOOPER_RIFLE,
 	INFWEAPON_LOOPER_GRENADE,
-	
+
 	INFWEAPON_NINJA_HAMMER,
 	INFWEAPON_NINJA_GRENADE,
 	INFWEAPON_NINJA_RIFLE,
-	
+
 	INFWEAPON_MERCENARY_GUN,
 	INFWEAPON_MERCENARY_GRENADE,
 
@@ -57,12 +57,7 @@ enum
 
 	INFWEAPON_CATAPULT_GRENADE,
 	INFWEAPON_CATAPULT_RIFLE,
-	INFWEAPON_CATAPULT_GUN,
 
-	INFWEAPON_POLICE_HAMMER,
-	INFWEAPON_POLICE_RIFLE,
-	INFWEAPON_POLICE_GUN,
-	
 	INFWEAPON_REVIVER_HAMMER,
 	INFWEAPON_REVIVER_RIFLE,
 	INFWEAPON_REVIVER_GRENADE,
@@ -77,7 +72,7 @@ enum
 {
 	INFAMMO_LASER,
 	INFAMMO_PLASMA,
-	
+
 	NB_INFAMMO
 };
 
@@ -91,7 +86,7 @@ enum
 
 enum
 {
-	CLIENTMEMORY_LANGUAGESELECTION=0,
+	CLIENTMEMORY_LANGUAGESELECTION = 0,
 	CLIENTMEMORY_TOP10,
 	CLIENTMEMORY_MOTD,
 	CLIENTMEMORY_ROUNDSTART_OR_MAPCHANGE,
@@ -107,7 +102,7 @@ enum
 
 enum
 {
-	CHATCATEGORY_DEFAULT=0,
+	CHATCATEGORY_DEFAULT = 0,
 	CHATCATEGORY_INFECTION,
 	CHATCATEGORY_SCORE,
 	CHATCATEGORY_PLAYER,
@@ -126,16 +121,16 @@ protected:
 	int m_TickSpeed;
 
 public:
-	class CLocalization* m_pLocalization;
+	class CLocalization *m_pLocalization;
 
 public:
 	enum
 	{
-		AUTHED_NO=0,
+		AUTHED_NO = 0,
 		AUTHED_MOD,
 		AUTHED_ADMIN,
 	};
-	
+
 public:
 	/*
 		Structure: CClientInfo
@@ -146,14 +141,14 @@ public:
 		int m_Latency;
 		bool m_CustClt;
 	};
-	
+
 	struct CClientSession
 	{
 		int m_RoundId;
 		int m_Class;
 		int m_MuteTick;
 	};
-	
+
 	struct CClientAccusation
 	{
 		int m_Num;
@@ -170,8 +165,8 @@ public:
 	};
 
 	virtual ~IServer() {};
-	
-	inline class CLocalization* Localization() { return m_pLocalization; }
+
+	inline class CLocalization *Localization() { return m_pLocalization; }
 
 	int Tick() const { return m_CurrentGameTick; }
 	int TickSpeed() const { return m_TickSpeed; }
@@ -192,18 +187,20 @@ public:
 	{
 		int result = 0;
 		T tmp;
-		if (ClientID == -1)
+		if(ClientID == -1)
 		{
-			//Only for demo record
-			SendPackMsgOne(pMsg, Flags|MSGFLAG_NOSEND, -1);
+			// Only for demo record
+			SendPackMsgOne(pMsg, Flags | MSGFLAG_NOSEND, -1);
 
 			for(int i = 0; i < MAX_CLIENTS; i++)
 				if(ClientIngame(i))
 				{
 					mem_copy(&tmp, pMsg, sizeof(T));
-					result = SendPackMsgTranslate(&tmp, Flags|MSGFLAG_NORECORD, i);
+					result = SendPackMsgTranslate(&tmp, Flags | MSGFLAG_NORECORD, i);
 				}
-		} else {
+		}
+		else
+		{
 			mem_copy(&tmp, pMsg, sizeof(T));
 			result = SendPackMsgTranslate(&tmp, Flags, ClientID);
 		}
@@ -225,7 +222,7 @@ public:
 
 	int SendPackMsgTranslate(CNetMsg_Sv_Chat *pMsg, int Flags, int ClientID)
 	{
-		if (pMsg->m_ClientID >= 0 && !Translate(pMsg->m_ClientID, ClientID))
+		if(pMsg->m_ClientID >= 0 && !Translate(pMsg->m_ClientID, ClientID))
 		{
 			str_format(msgbuf, sizeof(msgbuf), "%s: %s", ClientName(pMsg->m_ClientID), pMsg->m_pMessage);
 			pMsg->m_pMessage = msgbuf;
@@ -236,8 +233,10 @@ public:
 
 	int SendPackMsgTranslate(CNetMsg_Sv_KillMsg *pMsg, int Flags, int ClientID)
 	{
-		if (!Translate(pMsg->m_Victim, ClientID)) return 0;
-		if (!Translate(pMsg->m_Killer, ClientID)) pMsg->m_Killer = pMsg->m_Victim;
+		if(!Translate(pMsg->m_Victim, ClientID))
+			return 0;
+		if(!Translate(pMsg->m_Killer, ClientID))
+			pMsg->m_Killer = pMsg->m_Victim;
 		return SendPackMsgOne(pMsg, Flags, ClientID);
 	}
 
@@ -250,17 +249,17 @@ public:
 		return SendMsg(&Packer, Flags, ClientID);
 	}
 
-	bool Translate(int& target, int client)
+	bool Translate(int &target, int client)
 	{
 		CClientInfo info;
 		GetClientInfo(client, &info);
-		if (info.m_CustClt)
+		if(info.m_CustClt)
 			return true;
-		int* map = GetIdMap(client);
+		int *map = GetIdMap(client);
 		bool found = false;
-		for (int i = 0; i < VANILLA_MAX_CLIENTS; i++)
+		for(int i = 0; i < VANILLA_MAX_CLIENTS; i++)
 		{
-			if (target == map[i])
+			if(target == map[i])
 			{
 				target = i;
 				found = true;
@@ -270,14 +269,14 @@ public:
 		return found;
 	}
 
-	bool ReverseTranslate(int& target, int client)
+	bool ReverseTranslate(int &target, int client)
 	{
 		CClientInfo info;
 		GetClientInfo(client, &info);
-		if (info.m_CustClt)
+		if(info.m_CustClt)
 			return true;
-		int* map = GetIdMap(client);
-		if (map[target] == -1)
+		int *map = GetIdMap(client);
+		if(map[target] == -1)
 			return false;
 		target = map[target];
 		return true;
@@ -295,8 +294,8 @@ public:
 
 	enum
 	{
-		RCON_CID_SERV=-1,
-		RCON_CID_VOTE=-2,
+		RCON_CID_SERV = -1,
+		RCON_CID_VOTE = -2,
 	};
 	virtual void SetRconCID(int ClientID) = 0;
 	virtual bool IsAuthed(int ClientID) = 0;
@@ -304,49 +303,49 @@ public:
 
 	virtual void DemoRecorder_HandleAutoStart() = 0;
 	virtual bool DemoRecorder_IsRecording() = 0;
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	virtual int IsClientInfectedBefore(int ClientID) = 0;
 	virtual void InfectClient(int ClientID) = 0;
 	virtual void UnInfectClient(int ClientID) = 0;
-	
+
 	virtual int GetClientNbRound(int ClientID) = 0;
-	
+
 	virtual int GetClientAntiPing(int ClientID) = 0;
 	virtual void SetClientAntiPing(int ClientID, int Value) = 0;
-	
+
 	virtual int GetClientCustomSkin(int ClientID) = 0;
 	virtual void SetClientCustomSkin(int ClientID, int Value) = 0;
-	
+
 	virtual int GetClientAlwaysRandom(int ClientID) = 0;
 	virtual void SetClientAlwaysRandom(int ClientID, int Value) = 0;
-	
+
 	virtual int GetClientDefaultScoreMode(int ClientID) = 0;
 	virtual void SetClientDefaultScoreMode(int ClientID, int Value) = 0;
-	
-	virtual const char* GetClientLanguage(int ClientID) = 0;
-	virtual void SetClientLanguage(int ClientID, const char* pLanguage) = 0;
-	
+
+	virtual const char *GetClientLanguage(int ClientID) = 0;
+	virtual void SetClientLanguage(int ClientID, const char *pLanguage) = 0;
+
 	virtual int GetFireDelay(int WID) = 0;
 	virtual void SetFireDelay(int WID, int Time) = 0;
-	
+
 	virtual int GetAmmoRegenTime(int WID) = 0;
 	virtual void SetAmmoRegenTime(int WID, int Time) = 0;
-	
+
 	virtual int GetMaxAmmo(int WID) = 0;
 	virtual void SetMaxAmmo(int WID, int n) = 0;
-	
+
 	virtual int GetClassAvailability(int CID) = 0;
 	virtual void SetClassAvailability(int CID, int n) = 0;
-	
+
 	virtual int IsClassChooserEnabled() = 0;
-	
+
 	virtual bool IsClientLogged(int ClientID) = 0;
 #ifdef CONF_SQL
-	virtual void Login(int ClientID, const char* pUsername, const char* pPassword) = 0;
+	virtual void Login(int ClientID, const char *pUsername, const char *pPassword) = 0;
 	virtual void Logout(int ClientID) = 0;
-	virtual void SetEmail(int ClientID, const char* pEmail) = 0;
-	virtual void Register(int ClientID, const char* pUsername, const char* pPassword, const char* pEmail) = 0;
+	virtual void SetEmail(int ClientID, const char *pEmail) = 0;
+	virtual void Register(int ClientID, const char *pUsername, const char *pPassword, const char *pEmail) = 0;
 	virtual void ShowTop10(int ClientID, int ScoreType) = 0;
 	virtual void ShowChallenge(int ClientID) = 0;
 	virtual void ShowRank(int ClientID, int ScoreType) = 0;
@@ -354,31 +353,31 @@ public:
 	virtual void ShowStats(int ClientID, int UserId) = 0;
 	virtual int GetUserLevel(int ClientID) = 0;
 #endif
-	virtual void Ban(int i, int Seconds, const char* pReason) = 0;
+	virtual void Ban(int i, int Seconds, const char *pReason) = 0;
 
 public:
-	virtual class CRoundStatistics* RoundStatistics() = 0;
+	virtual class CRoundStatistics *RoundStatistics() = 0;
 	virtual void OnRoundStart() = 0;
 	virtual void OnRoundEnd() = 0;
-	
+
 	virtual void SetClientMemory(int ClientID, int Memory, bool Value = true) = 0;
 	virtual void ResetClientMemoryAboutGame(int ClientID) = 0;
 	virtual bool GetClientMemory(int ClientID, int Memory) = 0;
-	virtual IServer::CClientSession* GetClientSession(int ClientID) = 0;
-	virtual void AddAccusation(int From, int To, const char* pReason) = 0;
+	virtual IServer::CClientSession *GetClientSession(int ClientID) = 0;
+	virtual void AddAccusation(int From, int To, const char *pReason) = 0;
 	virtual bool ClientShouldBeBanned(int ClientID) = 0;
 	virtual void RemoveAccusations(int ClientID) = 0;
-	virtual void AddMapVote(int From, const char* pCommand, const char* pReason, const char* pDesc) = 0;
+	virtual void AddMapVote(int From, const char *pCommand, const char *pReason, const char *pDesc) = 0;
 	virtual void RemoveMapVotesForID(int ClientID) = 0;
 	virtual void ResetMapVotes() = 0;
-	virtual CMapVote* GetMapVote() = 0;
-	virtual int GetMinPlayersForMap(const char* pMapName) = 0;
-	virtual int GetMaxPlayersForMap(const char* pMapName) = 0;
-	
-	virtual int GetTimeShiftUnit() const = 0; //In ms
-/* INFECTION MODIFICATION END *****************************************/
+	virtual CMapVote *GetMapVote() = 0;
+	virtual int GetMinPlayersForMap(const char *pMapName) = 0;
+	virtual int GetMaxPlayersForMap(const char *pMapName) = 0;
 
-	virtual int* GetIdMap(int ClientID) = 0;
+	virtual int GetTimeShiftUnit() const = 0; // In ms
+	/* INFECTION MODIFICATION END *****************************************/
+
+	virtual int *GetIdMap(int ClientID) = 0;
 	virtual void SetCustClt(int ClientID) = 0;
 };
 
@@ -411,21 +410,21 @@ public:
 	virtual const char *GameType() = 0;
 	virtual const char *Version() = 0;
 	virtual const char *NetVersion() = 0;
-	
+
 	virtual class CLayers *Layers() = 0;
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	virtual void ClearBroadcast(int To, int Priority) = 0;
-	virtual void SendBroadcast_Localization(int To, int Priority, int LifeSpan, const char* pText, ...) = 0;
-	virtual void SendBroadcast_Localization_P(int To, int Priority, int LifeSpan, int Number, const char* pText, ...) = 0;
-	virtual void SendChatTarget(int To, const char* pText) = 0;
-	virtual void SendChatTarget_Localization(int To, int Category, const char* pText, ...) = 0;
-	virtual void SendChatTarget_Localization_P(int To, int Category, int Number, const char* pText, ...) = 0;
-	virtual void SendMOTD(int To, const char* pText) = 0;
-	virtual void SendMOTD_Localization(int To, const char* pText, ...) = 0;
-	
+	virtual void SendBroadcast_Localization(int To, int Priority, int LifeSpan, const char *pText, ...) = 0;
+	virtual void SendBroadcast_Localization_P(int To, int Priority, int LifeSpan, int Number, const char *pText, ...) = 0;
+	virtual void SendChatTarget(int To, const char *pText) = 0;
+	virtual void SendChatTarget_Localization(int To, int Category, const char *pText, ...) = 0;
+	virtual void SendChatTarget_Localization_P(int To, int Category, int Number, const char *pText, ...) = 0;
+	virtual void SendMOTD(int To, const char *pText) = 0;
+	virtual void SendMOTD_Localization(int To, const char *pText, ...) = 0;
+
 	virtual void OnSetAuthed(int ClientID, int Level) = 0;
-	
+
 	virtual int GetTargetToKill() = 0;
 	virtual void TargetKilled() = 0;
 	virtual void EnableTargetToKill() = 0;
@@ -433,7 +432,7 @@ public:
 	virtual int GetTargetToKillCoolDown() = 0;
 	virtual int GetHeroGiftCoolDown() = 0;
 	virtual void FlagCollected() = 0;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 };
 
 extern IGameServer *CreateGameServer();

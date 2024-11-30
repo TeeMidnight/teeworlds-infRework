@@ -19,7 +19,6 @@ public:
 	virtual int NumItems() = 0;
 };
 
-
 class IEngineMap : public IMap
 {
 	MACRO_INTERFACE("enginemap", 0)

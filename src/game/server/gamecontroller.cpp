@@ -5,9 +5,8 @@
 
 #include <game/generated/protocol.h>
 
-#include "gamecontroller.h"
 #include "gamecontext.h"
-
+#include "gamecontroller.h"
 
 IGameController::IGameController(class CGameContext *pGameServer)
 {
@@ -31,7 +30,7 @@ IGameController::IGameController(class CGameContext *pGameServer)
 
 	m_aNumSpawnPoints[0] = 0;
 	m_aNumSpawnPoints[1] = 0;
-	
+
 	m_RoundId = -1;
 }
 
@@ -40,10 +39,10 @@ IGameController::~IGameController()
 }
 
 /* INFECTION MODIFICATION START ***************************************/
-bool IGameController::PreSpawn(CPlayer* pPlayer, vec2 *pOutPos)
+bool IGameController::PreSpawn(CPlayer *pPlayer, vec2 *pOutPos)
 {
 	int Team = pPlayer->GetTeam();
-	
+
 	// spectators can't spawn
 	if(Team == TEAM_SPECTATORS)
 		return false;
@@ -59,27 +58,26 @@ bool IGameController::PreSpawn(CPlayer* pPlayer, vec2 *pOutPos)
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 /* INFECTION MODIFICATION END *****************************************/
 
-
-bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, vec2 P2, vec2 P3, int PosEnv)
+bool IGameController::OnEntity(const char *pName, vec2 Pivot, vec2 P0, vec2 P1, vec2 P2, vec2 P3, int PosEnv)
 {
-	vec2 Pos = (P0 + P1 + P2 + P3)/4.0f;
-	
+	vec2 Pos = (P0 + P1 + P2 + P3) / 4.0f;
+
 	if(str_comp(pName, "icInfected") == 0)
 		m_SpawnPoints[0].add(Pos);
 	else if(str_comp(pName, "icHuman") == 0)
 		m_SpawnPoints[1].add(Pos);
-	
+
 	return false;
 }
 
 double IGameController::GetTime()
 {
-	return static_cast<double>(Server()->Tick() - m_RoundStartTick)/Server()->TickSpeed();
+	return static_cast<double>(Server()->Tick() - m_RoundStartTick) / Server()->TickSpeed();
 }
 
 void IGameController::EndRound()
@@ -90,12 +88,9 @@ void IGameController::EndRound()
 	GameServer()->m_World.m_Paused = true;
 	m_GameOverTick = Server()->Tick();
 	m_SuddenDeath = 0;
-	
-	//Send score to the server
-	Server()->OnRoundEnd();
 
-	if (GameServer()->m_FunRound)
-		GameServer()->EndFunRound();
+	// Send score to the server
+	Server()->OnRoundEnd();
 }
 
 void IGameController::ResetGame()
@@ -123,11 +118,12 @@ const char *IGameController::GetTeamName(int Team)
 
 static bool IsSeparator(char c) { return c == ';' || c == ' ' || c == ',' || c == '\t'; }
 
-int IGameController::GetRoundCount() {
+int IGameController::GetRoundCount()
+{
 	return m_RoundCount;
 }
 
-bool IGameController::IsRoundEndTime() 
+bool IGameController::IsRoundEndTime()
 {
 	return m_GameOverTick > 0;
 }
@@ -146,27 +142,24 @@ void IGameController::StartRound()
 	m_ForceBalanced = false;
 	Server()->DemoRecorder_HandleAutoStart();
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d' id='%d'", m_pGameType, m_GameFlags&GAMEFLAG_TEAMS, m_RoundId);
+	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d' id='%d'", m_pGameType, m_GameFlags & GAMEFLAG_TEAMS, m_RoundId);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	Server()->OnRoundStart();
 	GameServer()->OnStartRound();
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(GameServer()->m_apPlayers[i])
 		{
 			Server()->SetClientMemory(i, CLIENTMEMORY_ROUNDSTART_OR_MAPCHANGE, true);
-			if(GameServer()->m_FunRound)
-				GameServer()->m_apPlayers[i]->SetClass(GameServer()->m_FunRoundHumanClass);
-			else
-				GameServer()->m_apPlayers[i]->SetClass(PLAYERCLASS_NONE);			
+			GameServer()->m_apPlayers[i]->SetClass(PLAYERCLASS_NONE);
 			GameServer()->m_apPlayers[i]->m_ScoreRound = 0;
 			GameServer()->m_apPlayers[i]->m_HumanTime = 0;
 		}
-	}	
-/* INFECTION MODIFICATION END *****************************************/
+	}
+	/* INFECTION MODIFICATION END *****************************************/
 }
 
 void IGameController::ChangeMap(const char *pToMap)
@@ -181,7 +174,8 @@ void IGameController::GetWordFromList(char *pNextWord, const char *pList, int Li
 	int i = 0;
 	while(*pList)
 	{
-		if (IsSeparator(*pList)) break;
+		if(IsSeparator(*pList))
+			break;
 		pNextWord[i] = *pList;
 		pList++;
 		i++;
@@ -203,19 +197,19 @@ void IGameController::GetMapRotationInfo(CMapRotationInfo *pMapRotationInfo)
 	int i = 0;
 	while(*pNextMap)
 	{
-		if (IsSeparator(*pNextMap))
+		if(IsSeparator(*pNextMap))
 		{
-			if (insideWord)
+			if(insideWord)
 				insideWord = false;
 		}
 		else // current char is not a seperator
 		{
-			if (!insideWord)
+			if(!insideWord)
 			{
 				insideWord = true;
 				pMapRotationInfo->m_MapNameIndices[pMapRotationInfo->m_MapCount] = i;
 				GetWordFromList(aBuf, g_Config.m_SvMaprotation, i);
-				if (str_comp(aBuf, pCurrentMap) == 0)
+				if(str_comp(aBuf, pCurrentMap) == 0)
 					pMapRotationInfo->m_CurrentMapNumber = pMapRotationInfo->m_MapCount;
 				pMapRotationInfo->m_MapCount++;
 			}
@@ -227,7 +221,6 @@ void IGameController::GetMapRotationInfo(CMapRotationInfo *pMapRotationInfo)
 
 void IGameController::CycleMap(bool Forced)
 {
-	
 	char aOldMap[512];
 	str_copy(aOldMap, g_Config.m_SvMap, sizeof(aOldMap));
 
@@ -246,30 +239,30 @@ void IGameController::CycleMap(bool Forced)
 	if(!str_length(g_Config.m_SvMaprotation))
 		return;
 
-	if(!Forced && m_RoundCount < g_Config.m_SvRoundsPerMap-1)
+	if(!Forced && m_RoundCount < g_Config.m_SvRoundsPerMap - 1)
 		return;
 
 	int PlayerCount = GameServer()->GetActivePlayerCount();
 
 	CMapRotationInfo pMapRotationInfo;
 	GetMapRotationInfo(&pMapRotationInfo);
-	
-	if (pMapRotationInfo.m_MapCount <= 1)
+
+	if(pMapRotationInfo.m_MapCount <= 1)
 		return;
 
 	char aBuf[256] = {0};
-	int i=0;
-	if (g_Config.m_InfMaprotationRandom)
+	int i = 0;
+	if(g_Config.m_InfMaprotationRandom)
 	{
 		// handle random maprotation
 		int RandInt;
-		for ( ; i<32; i++)
+		for(; i < 32; i++)
 		{
-			RandInt = random_int(0, pMapRotationInfo.m_MapCount-1);
+			RandInt = random_int(0, pMapRotationInfo.m_MapCount - 1);
 			GetWordFromList(aBuf, g_Config.m_SvMaprotation, pMapRotationInfo.m_MapNameIndices[RandInt]);
 			int MinPlayers = Server()->GetMinPlayersForMap(aBuf);
 			int MaxPlayers = Server()->GetMaxPlayersForMap(aBuf);
-			if (RandInt != pMapRotationInfo.m_CurrentMapNumber && PlayerCount >= MinPlayers && PlayerCount <= MaxPlayers)
+			if(RandInt != pMapRotationInfo.m_CurrentMapNumber && PlayerCount >= MinPlayers && PlayerCount <= MaxPlayers)
 				break;
 		}
 		i = RandInt;
@@ -277,33 +270,31 @@ void IGameController::CycleMap(bool Forced)
 	else
 	{
 		// handle normal maprotation
-		i = pMapRotationInfo.m_CurrentMapNumber+1;
-		for ( ; i != pMapRotationInfo.m_CurrentMapNumber; i++)
+		i = pMapRotationInfo.m_CurrentMapNumber + 1;
+		for(; i != pMapRotationInfo.m_CurrentMapNumber; i++)
 		{
-			if (i >= pMapRotationInfo.m_MapCount)
+			if(i >= pMapRotationInfo.m_MapCount)
 			{
 				i = 0;
-				if (i == pMapRotationInfo.m_CurrentMapNumber)
+				if(i == pMapRotationInfo.m_CurrentMapNumber)
 					break;
 			}
 			GetWordFromList(aBuf, g_Config.m_SvMaprotation, pMapRotationInfo.m_MapNameIndices[i]);
 			int MinPlayers = Server()->GetMinPlayersForMap(aBuf);
 			int MaxPlayers = Server()->GetMaxPlayersForMap(aBuf);
-			if (PlayerCount >= MinPlayers && PlayerCount <= MaxPlayers)
+			if(PlayerCount >= MinPlayers && PlayerCount <= MaxPlayers)
 				break;
 		}
 	}
 
-
-	if (i == pMapRotationInfo.m_CurrentMapNumber)
+	if(i == pMapRotationInfo.m_CurrentMapNumber)
 	{
 		// couldnt find map with small enough minplayers number
 		i++;
-		if (i >= pMapRotationInfo.m_MapCount)
+		if(i >= pMapRotationInfo.m_MapCount)
 			i = 0;
 		GetWordFromList(aBuf, g_Config.m_SvMaprotation, pMapRotationInfo.m_MapNameIndices[i]);
 	}
-
 
 	m_RoundCount = 0;
 
@@ -319,7 +310,7 @@ void IGameController::SkipMap()
 	CycleMap(true);
 	EndRound();
 }
-	
+
 bool IGameController::CanVote()
 {
 	return true;
@@ -332,11 +323,11 @@ void IGameController::PostReset()
 		if(GameServer()->m_apPlayers[i])
 		{
 			GameServer()->m_apPlayers[i]->Respawn();
-/* INFECTION MODIFICATION START ***************************************/
+			/* INFECTION MODIFICATION START ***************************************/
 			//~ GameServer()->m_apPlayers[i]->m_Score = 0;
 			//~ GameServer()->m_apPlayers[i]->m_ScoreStartTick = Server()->Tick();
-/* INFECTION MODIFICATION END *****************************************/
-			GameServer()->m_apPlayers[i]->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
+			/* INFECTION MODIFICATION END *****************************************/
+			GameServer()->m_apPlayers[i]->m_RespawnTick = Server()->Tick() + Server()->TickSpeed() / 2;
 		}
 	}
 }
@@ -360,14 +351,13 @@ void IGameController::OnPlayerInfoChange(class CPlayer *pP)
 	}
 }
 
-
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
-{	
+{
 	// do scoreing
 	if(!pKiller || Weapon == WEAPON_GAME)
 		return 0;
 	if(Weapon == WEAPON_SELF)
-		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;
+		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick() + Server()->TickSpeed() * 3.0f;
 	return 0;
 }
 
@@ -386,7 +376,7 @@ void IGameController::DoWarmup(int Seconds)
 	if(Seconds < 0)
 		m_Warmup = 0;
 	else
-		m_Warmup = Seconds*Server()->TickSpeed();
+		m_Warmup = Seconds * Server()->TickSpeed();
 }
 
 bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2)
@@ -435,7 +425,7 @@ void IGameController::Tick()
 	if(m_GameOverTick != -1)
 	{
 		// game over.. wait for restart
-		if(Server()->Tick() > m_GameOverTick+Server()->TickSpeed()*g_Config.m_InfShowScoreTime)
+		if(Server()->Tick() > m_GameOverTick + Server()->TickSpeed() * g_Config.m_InfShowScoreTime)
 		{
 			for(int i = 0; i < MAX_CLIENTS; i++)
 			{
@@ -444,26 +434,19 @@ void IGameController::Tick()
 					GameServer()->m_apPlayers[i]->SetScoreMode(Server()->GetClientDefaultScoreMode(i));
 				}
 			}
-			
+
 			CycleMap();
-			if(random_int(0, 100) <= g_Config.m_FunRoundProba)
-			{
-				GameServer()->StartFunRound();
-			}
-			else
-			{
-				StartRound();
-			}
+			StartRound();
 			m_RoundCount++;
 		}
 		else
 		{
 			int ScoreMode = PLAYERSCOREMODE_SCORE;
-			if((Server()->Tick() - m_GameOverTick) > Server()->TickSpeed() * (g_Config.m_InfShowScoreTime/2.0f))
+			if((Server()->Tick() - m_GameOverTick) > Server()->TickSpeed() * (g_Config.m_InfShowScoreTime / 2.0f))
 			{
 				ScoreMode = PLAYERSCOREMODE_TIME;
 			}
-			
+
 			for(int i = 0; i < MAX_CLIENTS; i++)
 			{
 				if(GameServer()->m_apPlayers[i])
@@ -479,12 +462,12 @@ void IGameController::Tick()
 		++m_RoundStartTick;
 
 	// do team-balancing
-	if(IsTeamplay() && m_UnbalancedTick != -1 && Server()->Tick() > m_UnbalancedTick+g_Config.m_SvTeambalanceTime*Server()->TickSpeed()*60)
+	if(IsTeamplay() && m_UnbalancedTick != -1 && Server()->Tick() > m_UnbalancedTick + g_Config.m_SvTeambalanceTime * Server()->TickSpeed() * 60)
 	{
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", "Balancing teams");
 
-		int aT[2] = {0,0};
-		float aTScore[2] = {0,0};
+		int aT[2] = {0, 0};
+		float aTScore[2] = {0, 0};
 		float aPScore[MAX_CLIENTS] = {0.0f};
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
@@ -497,10 +480,10 @@ void IGameController::Tick()
 		}
 
 		// are teams unbalanced?
-		if(absolute(aT[0]-aT[1]) >= 2)
+		if(absolute(aT[0] - aT[1]) >= 2)
 		{
 			int M = (aT[0] > aT[1]) ? 0 : 1;
-			int NumBalance = absolute(aT[0]-aT[1]) / 2;
+			int NumBalance = absolute(aT[0] - aT[1]) / 2;
 
 			do
 			{
@@ -511,53 +494,52 @@ void IGameController::Tick()
 					if(!GameServer()->m_apPlayers[i] || !CanBeMovedOnBalance(i))
 						continue;
 					// remember the player who would cause lowest score-difference
-					if(GameServer()->m_apPlayers[i]->GetTeam() == M && (!pP || absolute((aTScore[M^1]+aPScore[i]) - (aTScore[M]-aPScore[i])) < PD))
+					if(GameServer()->m_apPlayers[i]->GetTeam() == M && (!pP || absolute((aTScore[M ^ 1] + aPScore[i]) - (aTScore[M] - aPScore[i])) < PD))
 					{
 						pP = GameServer()->m_apPlayers[i];
-						PD = absolute((aTScore[M^1]+aPScore[i]) - (aTScore[M]-aPScore[i]));
+						PD = absolute((aTScore[M ^ 1] + aPScore[i]) - (aTScore[M] - aPScore[i]));
 					}
 				}
 
 				// move the player to the other team
 				int Temp = pP->m_LastActionTick;
-				pP->SetTeam(M^1);
+				pP->SetTeam(M ^ 1);
 				pP->m_LastActionTick = Temp;
 
 				pP->Respawn();
 				pP->m_ForceBalanced = true;
-			} while (--NumBalance);
+			} while(--NumBalance);
 
 			m_ForceBalanced = true;
 		}
 		m_UnbalancedTick = -1;
 	}
 
-
 	// check for inactive players
 	if(g_Config.m_SvInactiveKickTime > 0 && GameServer()->GetActivePlayerCount() > 1)
 	{
 		for(int i = 0; i < MAX_CLIENTS; ++i)
 		{
-		#ifdef CONF_DEBUG
+#ifdef CONF_DEBUG
 			if(g_Config.m_DbgDummies)
 			{
-				if(i >= MAX_CLIENTS-g_Config.m_DbgDummies)
+				if(i >= MAX_CLIENTS - g_Config.m_DbgDummies)
 					break;
 			}
-		#endif
+#endif
 			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && !Server()->IsAuthed(i))
 			{
-				if(Server()->Tick() > GameServer()->m_apPlayers[i]->m_LastActionTick+g_Config.m_SvInactiveKickTime*Server()->TickSpeed()*60)
+				if(Server()->Tick() > GameServer()->m_apPlayers[i]->m_LastActionTick + g_Config.m_SvInactiveKickTime * Server()->TickSpeed() * 60)
 				{
 					switch(g_Config.m_SvInactiveKick)
 					{
-					case 0:
+						case 0:
 						{
 							// move player to spectator
 							GameServer()->m_apPlayers[i]->SetTeam(TEAM_SPECTATORS);
 						}
 						break;
-					case 1:
+						case 1:
 						{
 							// move player to spectator if the reserved slots aren't filled yet, kick him otherwise
 							int Spectators = 0;
@@ -570,7 +552,7 @@ void IGameController::Tick()
 								GameServer()->m_apPlayers[i]->SetTeam(TEAM_SPECTATORS);
 						}
 						break;
-					case 2:
+						case 2:
 						{
 							// kick the player
 							Server()->Kick(i, "Kicked for inactivity");
@@ -584,15 +566,14 @@ void IGameController::Tick()
 	DoWincheck();
 }
 
-
 bool IGameController::IsTeamplay() const
 {
-	return m_GameFlags&GAMEFLAG_TEAMS;
+	return m_GameFlags & GAMEFLAG_TEAMS;
 }
 
 void IGameController::Snap(int SnappingClient)
 {
-	CNetObj_GameInfo *pGameInfoObj = (CNetObj_GameInfo *)Server()->SnapNewItem(NETOBJTYPE_GAMEINFO, 0, sizeof(CNetObj_GameInfo));
+	CNetObj_GameInfo *pGameInfoObj = (CNetObj_GameInfo *) Server()->SnapNewItem(NETOBJTYPE_GAMEINFO, 0, sizeof(CNetObj_GameInfo));
 	if(!pGameInfoObj)
 		return;
 
@@ -611,7 +592,7 @@ void IGameController::Snap(int SnappingClient)
 	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;
 
 	pGameInfoObj->m_RoundNum = (str_length(g_Config.m_SvMaprotation) && g_Config.m_SvRoundsPerMap) ? g_Config.m_SvRoundsPerMap : 0;
-	pGameInfoObj->m_RoundCurrent = m_RoundCount+1;
+	pGameInfoObj->m_RoundCurrent = m_RoundCount + 1;
 }
 
 int IGameController::GetAutoTeam(int NotThisID)
@@ -620,7 +601,7 @@ int IGameController::GetAutoTeam(int NotThisID)
 	if(g_Config.m_DbgStress)
 		return 0;
 
-	int aNumplayers[2] = {0,0};
+	int aNumplayers[2] = {0, 0};
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(GameServer()->m_apPlayers[i] && i != NotThisID)
@@ -644,7 +625,7 @@ bool IGameController::CanJoinTeam(int Team, int NotThisID)
 	if(Team == TEAM_SPECTATORS || (GameServer()->m_apPlayers[NotThisID] && GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
 		return true;
 
-	int aNumplayers[2] = {0,0};
+	int aNumplayers[2] = {0, 0};
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(GameServer()->m_apPlayers[i] && i != NotThisID)
@@ -654,7 +635,7 @@ bool IGameController::CanJoinTeam(int Team, int NotThisID)
 		}
 	}
 
-	return (aNumplayers[0] + aNumplayers[1]) < Server()->MaxClients()-g_Config.m_SvSpectatorSlots;
+	return (aNumplayers[0] + aNumplayers[1]) < Server()->MaxClients() - g_Config.m_SvSpectatorSlots;
 }
 
 bool IGameController::CheckTeamBalance()
@@ -671,7 +652,7 @@ bool IGameController::CheckTeamBalance()
 	}
 
 	char aBuf[256];
-	if(absolute(aT[0]-aT[1]) >= 2)
+	if(absolute(aT[0] - aT[1]) >= 2)
 	{
 		str_format(aBuf, sizeof(aBuf), "Teams are NOT balanced (red=%d blue=%d)", aT[0], aT[1]);
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
@@ -692,7 +673,7 @@ bool IGameController::CanChangeTeam(CPlayer *pPlayer, int JoinTeam)
 {
 	int aT[2] = {0, 0};
 
-	if (!IsTeamplay() || JoinTeam == TEAM_SPECTATORS || !g_Config.m_SvTeambalanceTime)
+	if(!IsTeamplay() || JoinTeam == TEAM_SPECTATORS || !g_Config.m_SvTeambalanceTime)
 		return true;
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
@@ -704,14 +685,14 @@ bool IGameController::CanChangeTeam(CPlayer *pPlayer, int JoinTeam)
 
 	// simulate what would happen if changed team
 	aT[JoinTeam]++;
-	if (pPlayer->GetTeam() != TEAM_SPECTATORS)
-		aT[JoinTeam^1]--;
+	if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+		aT[JoinTeam ^ 1]--;
 
 	// there is a player-difference of at least 2
-	if(absolute(aT[0]-aT[1]) >= 2)
+	if(absolute(aT[0] - aT[1]) >= 2)
 	{
 		// player wants to join team with less players
-		if ((aT[0] < aT[1] && JoinTeam == TEAM_RED) || (aT[0] > aT[1] && JoinTeam == TEAM_BLUE))
+		if((aT[0] < aT[1] && JoinTeam == TEAM_RED) || (aT[0] > aT[1] && JoinTeam == TEAM_BLUE))
 			return true;
 		else
 			return false;
@@ -728,7 +709,7 @@ void IGameController::DoWincheck()
 		{
 			// check score win condition
 			if((g_Config.m_SvScorelimit > 0 && (m_aTeamscore[TEAM_RED] >= g_Config.m_SvScorelimit || m_aTeamscore[TEAM_BLUE] >= g_Config.m_SvScorelimit)) ||
-				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+				(g_Config.m_SvTimelimit > 0 && (Server()->Tick() - m_RoundStartTick) >= g_Config.m_SvTimelimit * Server()->TickSpeed() * 60))
 			{
 				if(m_aTeamscore[TEAM_RED] != m_aTeamscore[TEAM_BLUE])
 					EndRound();
@@ -744,7 +725,7 @@ void IGameController::DoWincheck()
 
 			// check score win condition
 			if((g_Config.m_SvScorelimit > 0 && Topscore >= g_Config.m_SvScorelimit) ||
-				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+				(g_Config.m_SvTimelimit > 0 && (Server()->Tick() - m_RoundStartTick) >= g_Config.m_SvTimelimit * Server()->TickSpeed() * 60))
 			{
 				if(TopscoreCount == 1)
 					EndRound();
@@ -760,6 +741,6 @@ int IGameController::ClampTeam(int Team)
 	if(Team < 0)
 		return TEAM_SPECTATORS;
 	if(IsTeamplay())
-		return Team&1;
+		return Team & 1;
 	return 0;
 }

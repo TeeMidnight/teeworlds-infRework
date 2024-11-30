@@ -3,8 +3,8 @@
 #include <game/server/gamecontext.h>
 #include "laser-teleport.h"
 
-CLaserTeleport::CLaserTeleport(CGameWorld *pGameWorld, vec2 StartPos, vec2 EndPos)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER_TELEPORT)
+CLaserTeleport::CLaserTeleport(CGameWorld *pGameWorld, vec2 StartPos, vec2 EndPos) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER_TELEPORT)
 {
 	m_StartPos = StartPos;
 	m_EndPos = EndPos;
@@ -19,27 +19,26 @@ void CLaserTeleport::Reset()
 
 void CLaserTeleport::Tick()
 {
-	if (m_LaserFired)
+	if(m_LaserFired)
 		GameServer()->m_World.DestroyEntity(this);
 }
 
 void CLaserTeleport::Snap(int SnappingClient)
 {
-	
 	if(NetworkClipped(SnappingClient))
 		return;
 	m_LaserFired = true;
 
-	if (Server()->GetClientAntiPing(SnappingClient))
+	if(Server()->GetClientAntiPing(SnappingClient))
 		return;
 
 	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
 	if(!pObj)
 		return;
 
-	pObj->m_X = (int)m_EndPos.x;
-	pObj->m_Y = (int)m_EndPos.y;
-	pObj->m_FromX = (int)m_StartPos.x;
-	pObj->m_FromY = (int)m_StartPos.y;
+	pObj->m_X = (int) m_EndPos.x;
+	pObj->m_Y = (int) m_EndPos.y;
+	pObj->m_FromX = (int) m_StartPos.x;
+	pObj->m_FromY = (int) m_StartPos.y;
 	pObj->m_StartTick = Server()->Tick();
 }

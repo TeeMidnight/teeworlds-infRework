@@ -6,12 +6,12 @@
 // layer types
 enum
 {
-	LAYERTYPE_INVALID=0,
+	LAYERTYPE_INVALID = 0,
 	LAYERTYPE_GAME,
 	LAYERTYPE_TILES,
 	LAYERTYPE_QUADS,
 
-	MAPITEMTYPE_VERSION=0,
+	MAPITEMTYPE_VERSION = 0,
 	MAPITEMTYPE_INFO,
 	MAPITEMTYPE_IMAGE,
 	MAPITEMTYPE_ENVELOPE,
@@ -19,8 +19,7 @@ enum
 	MAPITEMTYPE_LAYER,
 	MAPITEMTYPE_ENVPOINTS,
 
-
-	CURVETYPE_STEP=0,
+	CURVETYPE_STEP = 0,
 	CURVETYPE_LINEAR,
 	CURVETYPE_SLOW,
 	CURVETYPE_FAST,
@@ -28,7 +27,7 @@ enum
 	NUM_CURVETYPES,
 
 	// game layer tiles
-	TILE_ENTITY_NULL=0,
+	TILE_ENTITY_NULL = 0,
 	TILE_ENTITY_SPAWN_RED,
 	TILE_ENTITY_SPAWN_BLUE,
 	TILE_ENTITY_FLAGSTAND_RED,
@@ -40,32 +39,32 @@ enum
 	TILE_ENTITY_POWERUP_NINJA,
 	TILE_ENTITY_WEAPON_RIFLE,
 
-	TILE_PHYSICS_AIR=0,
-	TILE_PHYSICS_SOLID=1,
-	TILE_PHYSICS_NOHOOK=3,
-	
-	ZONE_NULL=0,
-	ZONE_TELE_NOWITCH=1,
+	TILE_PHYSICS_AIR = 0,
+	TILE_PHYSICS_SOLID = 1,
+	TILE_PHYSICS_NOHOOK = 3,
+
+	ZONE_NULL = 0,
+	ZONE_TELE_NOWITCH = 1,
 	ZONE_TELE_NOSCIENTIST,
-	
-	ZONE_DAMAGE_DEATH=1,
+
+	ZONE_DAMAGE_DEATH = 1,
 	ZONE_DAMAGE_DEATH_NOUNDEAD,
 	ZONE_DAMAGE_DEATH_INFECTED,
 	ZONE_DAMAGE_INFECTION,
 
-	ZONE_BONUS_BONUS=1,
-	
-	TILEFLAG_VFLIP=1,
-	TILEFLAG_HFLIP=2,
-	TILEFLAG_OPAQUE=4,
-	TILEFLAG_ROTATE=8,
+	ZONE_BONUS_BONUS = 1,
 
-	LAYERFLAG_DETAIL=1,
-	TILESLAYERFLAG_PHYSICS=1,
-	TILESLAYERFLAG_ENTITY=2,
-	TILESLAYERFLAG_ZONE=4,
+	TILEFLAG_VFLIP = 1,
+	TILEFLAG_HFLIP = 2,
+	TILEFLAG_OPAQUE = 4,
+	TILEFLAG_ROTATE = 8,
 
-	ENTITY_OFFSET=255-16*4,
+	LAYERFLAG_DETAIL = 1,
+	TILESLAYERFLAG_PHYSICS = 1,
+	TILESLAYERFLAG_ENTITY = 2,
+	TILESLAYERFLAG_ZONE = 4,
+
+	ENTITY_OFFSET = 255 - 16 * 4,
 };
 
 struct CPoint
@@ -107,7 +106,7 @@ struct CMapItemInfo
 	int m_MapVersion;
 	int m_Credits;
 	int m_License;
-} ;
+};
 
 struct CMapItemImage
 {
@@ -117,7 +116,7 @@ struct CMapItemImage
 	int m_External;
 	int m_ImageName;
 	int m_ImageData;
-} ;
+};
 
 struct CMapItemGroup_v1
 {
@@ -129,12 +128,14 @@ struct CMapItemGroup_v1
 
 	int m_StartLayer;
 	int m_NumLayers;
-} ;
-
+};
 
 struct CMapItemGroup : public CMapItemGroup_v1
 {
-	enum { CURRENT_VERSION=3 };
+	enum
+	{
+		CURRENT_VERSION = 3
+	};
 
 	int m_UseClipping;
 	int m_ClipX;
@@ -143,14 +144,14 @@ struct CMapItemGroup : public CMapItemGroup_v1
 	int m_ClipH;
 
 	int m_aName[3];
-} ;
+};
 
 struct CMapItemLayer
 {
 	int m_Version;
 	int m_Type;
 	int m_Flags;
-} ;
+};
 
 struct CMapItemLayerTilemap
 {
@@ -173,7 +174,7 @@ struct CMapItemLayerTilemap
 	// DDRace
 
 	int m_Tele;
-} ;
+};
 
 struct CMapItemLayerQuads
 {
@@ -185,12 +186,12 @@ struct CMapItemLayerQuads
 	int m_Image;
 
 	int m_aName[3];
-} ;
+};
 
 struct CMapItemVersion
 {
 	int m_Version;
-} ;
+};
 
 struct CEnvPoint
 {
@@ -199,7 +200,7 @@ struct CEnvPoint
 	int m_aValues[4]; // 1-4 depending on envelope (22.10 fixed point)
 
 	bool operator<(const CEnvPoint &Other) { return m_Time < Other.m_Time; }
-} ;
+};
 
 struct CMapItemEnvelope_v1
 {
@@ -208,11 +209,14 @@ struct CMapItemEnvelope_v1
 	int m_StartPoint;
 	int m_NumPoints;
 	int m_aName[8];
-} ;
+};
 
 struct CMapItemEnvelope : public CMapItemEnvelope_v1
 {
-	enum { CURRENT_VERSION=2 };
+	enum
+	{
+		CURRENT_VERSION = 2
+	};
 	int m_Synchronized;
 };
 

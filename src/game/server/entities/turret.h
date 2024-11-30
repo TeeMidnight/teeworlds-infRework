@@ -10,11 +10,11 @@ class CTurret : public CEntity
 public:
 	CTurret(CGameWorld *pGameWorld, vec2 Pos, int Owner, vec2 Direction, float StartEnergy, int Type);
 	virtual ~CTurret();
-	
+
 	virtual void Reset();
 	virtual void Tick();
 	virtual void Snap(int SnappingClient);
-	
+
 	int GetOwner() const;
 
 protected:
@@ -35,11 +35,10 @@ private:
 	int m_ReloadCounter;
 	int m_ammunition;
 	bool m_foundTarget;
-	
+
 	array<int> m_IDs;
 
 	int m_LifeSpan;
-
 };
 
 #endif

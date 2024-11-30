@@ -3,10 +3,10 @@
 #ifndef BASE_MATH_H
 #define BASE_MATH_H
 
-#include <stdlib.h>
 #include <random>
+#include <stdlib.h>
 
-template <typename T>
+template<typename T>
 inline T clamp(T val, T min, T max)
 {
 	if(val < min)
@@ -18,37 +18,40 @@ inline T clamp(T val, T min, T max)
 
 inline float sign(float f)
 {
-	return f<0.0f?-1.0f:1.0f;
+	return f < 0.0f ? -1.0f : 1.0f;
 }
 
 inline int round_to_int(float f)
 {
 	if(f > 0)
-		return (int)(f+0.5f);
-	return (int)(f-0.5f);
+		return (int) (f + 0.5f);
+	return (int) (f - 0.5f);
 }
 inline int get_power_num_int(int a, int b)
 {
-	int x=0;
-	for(;a > 0;){a/=b;x++;}
+	int x = 0;
+	for(; a > 0;)
+	{
+		a /= b;
+		x++;
+	}
 	return x;
 }
-
 
 template<typename T, typename TB>
 inline T mix(const T a, const T b, TB amount)
 {
-	return a + (b-a)*amount;
+	return a + (b - a) * amount;
 }
 
 float random_float();
 bool random_prob(float f);
 int random_int(int Min, int Max);
-int random_distribution(double* pProb, double* pProb2);
+int random_distribution(double *pProb, double *pProb2);
 
 // float to fixed
-inline int f2fx(float v) { return (int)(v*(float)(1<<10)); }
-inline float fx2f(int v) { return v*(1.0f/(1<<10)); }
+inline int f2fx(float v) { return (int) (v * (float) (1 << 10)); }
+inline float fx2f(int v) { return v * (1.0f / (1 << 10)); }
 
 inline int gcd(int a, int b)
 {
@@ -64,18 +67,39 @@ inline int gcd(int a, int b)
 class fxp
 {
 	int value;
+
 public:
 	void set(int v) { value = v; }
 	int get() const { return value; }
-	fxp &operator = (int v) { value = v<<10; return *this; }
-	fxp &operator = (float v) { value = (int)(v*(float)(1<<10)); return *this; }
-	operator float() const { return value/(float)(1<<10); }
+	fxp &operator=(int v)
+	{
+		value = v << 10;
+		return *this;
+	}
+	fxp &operator=(float v)
+	{
+		value = (int) (v * (float) (1 << 10));
+		return *this;
+	}
+	operator float() const { return value / (float) (1 << 10); }
 };
 
 const float pi = 3.1415926535897932384626433f;
 
-template <typename T> inline T min(T a, T b) { return a<b?a:b; }
-template <typename T> inline T max(T a, T b) { return a>b?a:b; }
-template <typename T> inline T absolute(T a) { return a<T(0)?-a:a; }
+template<typename T>
+inline T min(T a, T b)
+{
+	return a < b ? a : b;
+}
+template<typename T>
+inline T max(T a, T b)
+{
+	return a > b ? a : b;
+}
+template<typename T>
+inline T absolute(T a)
+{
+	return a < T(0) ? -a : a;
+}
 
 #endif // BASE_MATH_H

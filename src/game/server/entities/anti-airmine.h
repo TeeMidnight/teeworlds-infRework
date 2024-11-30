@@ -7,17 +7,15 @@
 
 class CAntiAirMine : public CEntity
 {
+public:
+	enum
+	{
+		NUM_LASERS = 6,
+		NUM_AMMOS = NUM_LASERS,
+		NUM_IDS = NUM_LASERS + NUM_AMMOS
+	};
 
 public:
-    enum
-    {
-        NUM_LASERS = 6,
-        NUM_AMMOS = NUM_LASERS,
-        NUM_IDS = NUM_LASERS + NUM_AMMOS
-    };
-
-public:
-
 	CAntiAirMine(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 	virtual ~CAntiAirMine();
 
@@ -28,19 +26,18 @@ public:
 
 	int GetOwner() const;
 	void Explode();
-    void MovePlayer();
+	void MovePlayer();
 
-    int m_AttackNow;
+	int m_AttackNow;
 
 private:
-    vec2 m_LaserPos[NUM_LASERS];
-    int m_StartTick;
-    int m_LifeSpan;
-    int m_Owner;
-    int m_Angle;
-    int m_LaserIDs[NUM_LASERS];
-    int m_AmmoIDs[NUM_AMMOS];
-
+	vec2 m_LaserPos[NUM_LASERS];
+	int m_StartTick;
+	int m_LifeSpan;
+	int m_Owner;
+	int m_Angle;
+	int m_LaserIDs[NUM_LASERS];
+	int m_AmmoIDs[NUM_AMMOS];
 };
 
 #endif

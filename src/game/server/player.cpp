@@ -1,12 +1,11 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.				*/
-#include <new>
-#include <iostream>
-#include <engine/shared/config.h>
-#include "player.h"
-#include <engine/shared/network.h>
 #include <engine/server/roundstatistics.h>
-
+#include <engine/shared/config.h>
+#include <engine/shared/network.h>
+#include "player.h"
+#include <iostream>
+#include <new>
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
@@ -25,44 +24,43 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_LastActionTick = Server()->Tick();
 	m_LastActionMoveTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	m_Authed = IServer::AUTHED_NO;
 	m_ScoreRound = 0;
 	m_ScoreMode = PLAYERSCOREMODE_SCORE;
 	m_WinAsHuman = 0;
-	m_class = PLAYERCLASS_NONE;
+	m_Class = PLAYERCLASS_NONE;
 	m_InfectionTick = -1;
 	m_NumberKills = 0;
 	SetLanguage(Server()->GetClientLanguage(ClientID));
-	for(int i=0; i<NB_PLAYERCLASS; i++)
+	for(int i = 0; i < NB_PLAYERCLASS; i++)
 	{
 		m_knownClass[i] = false;
-	
-	int* idMap = Server()->GetIdMap(ClientID);
-	for (int i = 1;i < VANILLA_MAX_CLIENTS;i++)
-	{
-		idMap[i] = -1;
-	}
-	idMap[0] = ClientID;
 
+		int *idMap = Server()->GetIdMap(ClientID);
+		for(int i = 1; i < VANILLA_MAX_CLIENTS; i++)
+		{
+			idMap[i] = -1;
+		}
+		idMap[0] = ClientID;
 	}
 	m_WasHumanThisRound = false;
-	
+
 	m_MapMenu = 0;
 	m_MapMenuItem = -1;
 	m_MapMenuTick = -1;
 	m_HookProtectionAutomatic = true;
-	
+
 	m_PrevTuningParams = *pGameServer->Tuning();
 	m_NextTuningParams = m_PrevTuningParams;
 	m_IsInGame = false;
-	
-	for(unsigned int i=0; i<sizeof(m_LastHumanClasses)/sizeof(int); i++)
+
+	for(unsigned int i = 0; i < sizeof(m_LastHumanClasses) / sizeof(int); i++)
 		m_LastHumanClasses[i] = -1;
 
 	m_VoodooIsSpirit = false;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 }
 
 CPlayer::~CPlayer()
@@ -74,10 +72,10 @@ CPlayer::~CPlayer()
 void CPlayer::Tick()
 {
 #ifdef CONF_DEBUG
-	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS-g_Config.m_DbgDummies)
+	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
 #endif
-	if(!Server()->ClientIngame(m_ClientID))
-		return;
+		if(!Server()->ClientIngame(m_ClientID))
+			return;
 
 	Server()->SetClientLanguage(m_ClientID, m_aLanguage);
 
@@ -91,9 +89,9 @@ void CPlayer::Tick()
 			m_Latency.m_AccumMin = min(m_Latency.m_AccumMin, Info.m_Latency);
 		}
 		// each second
-		if(Server()->Tick()%Server()->TickSpeed() == 0)
+		if(Server()->Tick() % Server()->TickSpeed() == 0)
 		{
-			m_Latency.m_Avg = m_Latency.m_Accum/Server()->TickSpeed();
+			m_Latency.m_Avg = m_Latency.m_Accum / Server()->TickSpeed();
 			m_Latency.m_Max = m_Latency.m_AccumMax;
 			m_Latency.m_Min = m_Latency.m_AccumMin;
 			m_Latency.m_Accum = 0;
@@ -105,9 +103,9 @@ void CPlayer::Tick()
 	if(!GameServer()->m_World.m_Paused)
 	{
 		if(!m_pCharacter && m_Team == TEAM_SPECTATORS && m_SpectatorID == SPEC_FREEVIEW)
-			m_ViewPos -= vec2(clamp(m_ViewPos.x-m_LatestActivity.m_TargetX, -500.0f, 500.0f), clamp(m_ViewPos.y-m_LatestActivity.m_TargetY, -400.0f, 400.0f));
+			m_ViewPos -= vec2(clamp(m_ViewPos.x - m_LatestActivity.m_TargetX, -500.0f, 500.0f), clamp(m_ViewPos.y - m_LatestActivity.m_TargetY, -400.0f, 400.0f));
 
-		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
+		if(!m_pCharacter && m_DieTick + Server()->TickSpeed() * 3 <= Server()->Tick())
 			m_Spawning = true;
 
 		if(m_pCharacter)
@@ -125,8 +123,9 @@ void CPlayer::Tick()
 		}
 		else if(m_Spawning && m_RespawnTick <= Server()->Tick())
 			TryRespawn();
-		
-		if(IsHuman()) m_HumanTime++;
+
+		if(IsHuman())
+			m_HumanTime++;
 	}
 	else
 	{
@@ -136,27 +135,27 @@ void CPlayer::Tick()
 		++m_LastActionTick;
 		++m_LastActionMoveTick;
 		++m_TeamChangeTick;
- 	}
+	}
 
 	if(m_MapMenu > 0)
 		m_MapMenuTick++;
- 	
+
 	if(GetClass() == PLAYERCLASS_GHOUL)
 	{
 		if(m_GhoulLevel > 0)
 		{
 			m_GhoulLevelTick--;
-			
+
 			if(m_GhoulLevelTick <= 0)
 			{
-				m_GhoulLevelTick = (Server()->TickSpeed()*g_Config.m_InfGhoulDigestion);
+				m_GhoulLevelTick = (Server()->TickSpeed() * g_Config.m_InfGhoulDigestion);
 				IncreaseGhoulLevel(-1);
 			}
 		}
-		
+
 		SetClassSkin(PLAYERCLASS_GHOUL, m_GhoulLevel);
 	}
-	else if (GetClass() == PLAYERCLASS_VOODOO)
+	else if(GetClass() == PLAYERCLASS_VOODOO)
 	{
 		if(m_VoodooIsSpirit)
 		{
@@ -167,14 +166,14 @@ void CPlayer::Tick()
 			SetClassSkin(PLAYERCLASS_VOODOO, 1); // 1 = normal skin
 		}
 	}
-	
- 	HandleTuningParams();
+
+	HandleTuningParams();
 }
 
 void CPlayer::PostTick()
 {
 	// update latency value
-	if(m_PlayerFlags&PLAYERFLAG_SCOREBOARD)
+	if(m_PlayerFlags & PLAYERFLAG_SCOREBOARD)
 	{
 		for(int i = 0; i < MAX_CLIENTS; ++i)
 		{
@@ -195,15 +194,15 @@ void CPlayer::HandleTuningParams()
 		if(m_IsReady)
 		{
 			CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS);
-			int *pParams = (int *)&m_NextTuningParams;
-			for(unsigned i = 0; i < sizeof(m_NextTuningParams)/sizeof(int); i++)
+			int *pParams = (int *) &m_NextTuningParams;
+			for(unsigned i = 0; i < sizeof(m_NextTuningParams) / sizeof(int); i++)
 				Msg.AddInt(pParams[i]);
 			Server()->SendMsg(&Msg, MSGFLAG_VITAL, GetCID());
 		}
-		
+
 		m_PrevTuningParams = m_NextTuningParams;
 	}
-	
+
 	m_NextTuningParams = *GameServer()->Tuning();
 }
 
@@ -212,7 +211,7 @@ void CPlayer::HookProtection(bool Value, bool Automatic)
 	if(m_HookProtection != Value)
 	{
 		m_HookProtection = Value;
-		
+
 		if(!m_HookProtectionAutomatic || !Automatic)
 		{
 			if(m_HookProtection)
@@ -221,41 +220,39 @@ void CPlayer::HookProtection(bool Value, bool Automatic)
 				GameServer()->SendChatTarget_Localization(GetCID(), CHATCATEGORY_DEFAULT, _("Hook protection disabled"), NULL);
 		}
 	}
-	
+
 	m_HookProtectionAutomatic = Automatic;
 }
 
 void CPlayer::Snap(int SnappingClient)
 {
 #ifdef CONF_DEBUG
-	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS-g_Config.m_DbgDummies)
+	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
 #endif
-	if(!Server()->ClientIngame(m_ClientID))
-		return;
+		if(!Server()->ClientIngame(m_ClientID))
+			return;
 
 	int id = m_ClientID;
 	if(SnappingClient != -1)
-		if (!Server()->Translate(id, SnappingClient)) return;
+		if(!Server()->Translate(id, SnappingClient))
+			return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
-
-	CPlayer *pClient = GameServer()->m_apPlayers[SnappingClient];
-
 	if(!pClientInfo)
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-	
+
 	int SnapScoreMode = PLAYERSCOREMODE_SCORE;
 	if(SnappingClient != -1)
 		if(GameServer()->m_apPlayers[SnappingClient])
 		{
 			SnapScoreMode = GameServer()->m_apPlayers[SnappingClient]->GetScoreMode();
 		}
-	
-/* INFECTION MODIFICATION STRAT ***************************************/
+
+	/* INFECTION MODIFICATION STRAT ***************************************/
 	int PlayerInfoScore = 0;
-	
+
 	if(GetTeam() == TEAM_SPECTATORS)
 	{
 		StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
@@ -264,130 +261,39 @@ void CPlayer::Snap(int SnappingClient)
 	{
 		if(SnapScoreMode == PLAYERSCOREMODE_TIME)
 		{
-			float RoundDuration = static_cast<float>(m_HumanTime/((float)Server()->TickSpeed()))/60.0f;
+			float RoundDuration = static_cast<float>(m_HumanTime / ((float) Server()->TickSpeed())) / 60.0f;
 			int Minutes = static_cast<int>(RoundDuration);
-			int Seconds = static_cast<int>((RoundDuration - Minutes)*60.0f);
-			
+			int Seconds = static_cast<int>((RoundDuration - Minutes) * 60.0f);
+
 			char aBuf[512];
-			str_format(aBuf, sizeof(aBuf), "%i:%s%i min", Minutes,((Seconds < 10) ? "0" : ""), Seconds);
+			str_format(aBuf, sizeof(aBuf), "%i:%s%i min", Minutes, ((Seconds < 10) ? "0" : ""), Seconds);
 			StrToInts(&pClientInfo->m_Clan0, 3, aBuf);
-			
-			PlayerInfoScore = m_HumanTime/Server()->TickSpeed();
+
+			PlayerInfoScore = m_HumanTime / Server()->TickSpeed();
 		}
-		else	
+		else
 		{
-			char aClanName[16];
-			switch(GetClass())
-			{
-				case PLAYERCLASS_ENGINEER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Engineer"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SOLDIER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Soldier"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_MERCENARY:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Mercenary"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SNIPER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Sniper"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SCIENTIST:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Scientist"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_CATAPULT:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Catapult"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_BIOLOGIST:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Biologist"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SCIOGIST:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Sciogist"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_POLICE:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Police"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_LOOPER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Looper"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_REVIVER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Reviver"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_MEDIC:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Medic"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_HERO:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Hero"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_NINJA:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Ninja"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SMOKER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Smoker"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_BOOMER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Boomer"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_HUNTER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Hunter"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_BAT:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Bat"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_GHOST:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Ghost"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SPIDER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Spider"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_GHOUL:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Ghoul"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SLUG:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Slug"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_SLIME:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Slime"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_VOODOO:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Voodoo"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_UNDEAD:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Undead"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_WITCH:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Witch"), sizeof(aClanName));
-					break;
-				case PLAYERCLASS_FREEZER:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"Freezer"), sizeof(aClanName));
-					break;
-				default:
-					str_copy(aClanName, Server()->Localization()->Localize(pClient->GetLanguage() ,"????"), sizeof(aClanName));
-			}
-			
-			StrToInts(&pClientInfo->m_Clan0, 4, aClanName);
-			
+			StrToInts(&pClientInfo->m_Clan0, 4, GameServer()->GetClassName(m_Class));
 			PlayerInfoScore = Server()->RoundStatistics()->PlayerScore(m_ClientID);
 		}
 	}
-	
+
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 
 	if(
 		GameServer()->m_apPlayers[SnappingClient] && IsHuman() &&
-		(
-			(Server()->GetClientCustomSkin(SnappingClient) == 1 && SnappingClient == GetCID()) ||
-			(Server()->GetClientCustomSkin(SnappingClient) == 2)
-		)
-	)
+		((Server()->GetClientCustomSkin(SnappingClient) == 1 && SnappingClient == GetCID()) ||
+			(Server()->GetClientCustomSkin(SnappingClient) == 2)))
 	{
 		StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_CustomSkinName);
 	}
-	else StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
-	
+	else
+		StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+
 	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
 	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
@@ -396,9 +302,9 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = id;
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	pPlayerInfo->m_Score = PlayerInfoScore;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 	pPlayerInfo->m_Team = m_Team;
 
 	if(m_ClientID == SnappingClient)
@@ -420,7 +326,7 @@ void CPlayer::FakeSnap(int SnappingClient)
 {
 	IServer::CClientInfo info;
 	Server()->GetClientInfo(SnappingClient, &info);
-	if (info.m_CustClt)
+	if(info.m_CustClt)
 		return;
 
 	int id = VANILLA_MAX_CLIENTS - 1;
@@ -474,7 +380,7 @@ void CPlayer::OnDisconnect(int Type, const char *pReason)
 void CPlayer::OnPredictedInput(CNetObj_PlayerInput *NewInput)
 {
 	// skip the input if chat is active
-	if((m_PlayerFlags&PLAYERFLAG_CHATTING) && (NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING))
+	if((m_PlayerFlags & PLAYERFLAG_CHATTING) && (NewInput->m_PlayerFlags & PLAYERFLAG_CHATTING))
 		return;
 
 	if(m_pCharacter)
@@ -483,10 +389,10 @@ void CPlayer::OnPredictedInput(CNetObj_PlayerInput *NewInput)
 
 void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 {
-	if(NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING)
+	if(NewInput->m_PlayerFlags & PLAYERFLAG_CHATTING)
 	{
 		// skip the input if chat is active
-		if(m_PlayerFlags&PLAYERFLAG_CHATTING)
+		if(m_PlayerFlags & PLAYERFLAG_CHATTING)
 			return;
 
 		// reset input
@@ -494,7 +400,7 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 			m_pCharacter->ResetInput();
 
 		m_PlayerFlags = NewInput->m_PlayerFlags;
- 		return;
+		return;
 	}
 
 	m_PlayerFlags = NewInput->m_PlayerFlags;
@@ -502,18 +408,18 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 	if(m_pCharacter)
 		m_pCharacter->OnDirectInput(NewInput);
 
-	if(!m_pCharacter && m_Team != TEAM_SPECTATORS && (NewInput->m_Fire&1))
+	if(!m_pCharacter && m_Team != TEAM_SPECTATORS && (NewInput->m_Fire & 1))
 		m_Spawning = true;
 
 	// check for activity
 	if(NewInput->m_Direction || m_LatestActivity.m_TargetX != NewInput->m_TargetX ||
 		m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
-		NewInput->m_Fire&1 || NewInput->m_Hook)
+		NewInput->m_Fire & 1 || NewInput->m_Hook)
 	{
 		m_LatestActivity.m_TargetX = NewInput->m_TargetX;
 		m_LatestActivity.m_TargetY = NewInput->m_TargetY;
 		m_LastActionTick = Server()->Tick();
-		if (NewInput->m_Direction || NewInput->m_Jump || NewInput->m_Hook)
+		if(NewInput->m_Direction || NewInput->m_Jump || NewInput->m_Hook)
 			m_LastActionMoveTick = Server()->Tick();
 	}
 }
@@ -548,10 +454,10 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 	Team = GameServer()->m_pController->ClampTeam(Team);
 	if(m_Team == Team)
 		return;
-	
+
 	char aBuf[512];
-	
-	if(DoChatMsg) //default is true
+
+	if(DoChatMsg) // default is true
 	{
 		if(Team == TEAM_SPECTATORS)
 		{
@@ -570,7 +476,7 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 	m_LastActionMoveTick = Server()->Tick();
 	m_SpectatorID = SPEC_FREEVIEW;
 	// we got to wait 0.5 secs before respawning
-	m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
+	m_RespawnTick = Server()->Tick() + Server()->TickSpeed() / 2;
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' m_Team=%d", m_ClientID, Server()->ClientName(m_ClientID), m_Team);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
@@ -584,20 +490,20 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->m_SpectatorID == m_ClientID)
 				GameServer()->m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
 		}
-		
-		//add spectator
+
+		// add spectator
 		GameServer()->AddSpectatorCID(m_ClientID);
-	} 
+	}
 	else
 	{
-		//remove spectator
+		// remove spectator
 		GameServer()->RemoveSpectatorCID(m_ClientID);
 	}
-	
+
 	GameServer()->CountActivePlayers();
 	GameServer()->CountSpectators();
 	GameServer()->CountInfPlayers();
-	
+
 	GameServer()->m_pController->CheckTeamBalance();
 	m_TeamChangeTick = Server()->Tick();
 }
@@ -606,10 +512,10 @@ void CPlayer::TryRespawn()
 {
 	vec2 SpawnPos;
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(!GameServer()->m_pController->PreSpawn(this, &SpawnPos))
 		return;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	m_Spawning = false;
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World, GameServer()->Console());
@@ -621,7 +527,7 @@ void CPlayer::TryRespawn()
 /* INFECTION MODIFICATION START ***************************************/
 int CPlayer::GetClass()
 {
-	return m_class;
+	return m_Class;
 }
 
 void CPlayer::SetClassSkin(int newClass, int State)
@@ -659,10 +565,6 @@ void CPlayer::SetClassSkin(int newClass, int State)
 		case PLAYERCLASS_SCIOGIST:
 			m_TeeInfos.m_UseCustomColor = 0;
 			str_copy(m_TeeInfos.m_SkinName, "random", sizeof(m_TeeInfos.m_SkinName));
-			break;
-		case PLAYERCLASS_POLICE:
-			m_TeeInfos.m_UseCustomColor = 0;
-			str_copy(m_TeeInfos.m_SkinName, "kitty_x_ninja", sizeof(m_TeeInfos.m_SkinName));
 			break;
 		case PLAYERCLASS_REVIVER:
 			m_TeeInfos.m_UseCustomColor = 0;
@@ -728,8 +630,8 @@ void CPlayer::SetClassSkin(int newClass, int State)
 			m_TeeInfos.m_UseCustomColor = 1;
 			str_copy(m_TeeInfos.m_SkinName, "cammo", sizeof(m_TeeInfos.m_SkinName));
 			{
-				int Hue = 58 * (1.0f - clamp(State/static_cast<float>(g_Config.m_InfGhoulStomachSize), 0.0f, 1.0f));
-				m_TeeInfos.m_ColorBody = (Hue<<16) + (255<<8);
+				int Hue = 58 * (1.0f - clamp(State / static_cast<float>(g_Config.m_InfGhoulStomachSize), 0.0f, 1.0f));
+				m_TeeInfos.m_ColorBody = (Hue << 16) + (255 << 8);
 			}
 			m_TeeInfos.m_ColorFeet = 65414;
 			break;
@@ -784,40 +686,40 @@ void CPlayer::SetClassSkin(int newClass, int State)
 }
 
 void CPlayer::SetClass(int newClass)
-{	
-	if(m_class == newClass)
+{
+	if(m_Class == newClass)
 		return;
-	
+
 	if(newClass > START_HUMANCLASS && newClass < END_HUMANCLASS)
 	{
 		bool ClassFound = false;
-		for(unsigned int i=0; i<sizeof(m_LastHumanClasses)/sizeof(int); i++)
+		for(unsigned int i = 0; i < sizeof(m_LastHumanClasses) / sizeof(int); i++)
 		{
 			if(m_LastHumanClasses[i] == newClass)
 				ClassFound = true;
 		}
 		if(!ClassFound)
 		{
-			for(unsigned int i=0; i<sizeof(m_LastHumanClasses)/sizeof(int)-1; i++)
+			for(unsigned int i = 0; i < sizeof(m_LastHumanClasses) / sizeof(int) - 1; i++)
 			{
-				m_LastHumanClasses[i] = m_LastHumanClasses[i+1];
+				m_LastHumanClasses[i] = m_LastHumanClasses[i + 1];
 			}
-			m_LastHumanClasses[sizeof(m_LastHumanClasses)/sizeof(int)-1] = newClass;
+			m_LastHumanClasses[sizeof(m_LastHumanClasses) / sizeof(int) - 1] = newClass;
 		}
 	}
-	
+
 	m_GhoulLevel = 0;
 	m_GhoulLevelTick = 0;
-	
-	m_class = newClass;
-	
-	if(m_class < END_HUMANCLASS)
+
+	m_Class = newClass;
+
+	if(m_Class < END_HUMANCLASS)
 		HookProtection(true);
 	else
 		HookProtection(true); // true = hook protection for zombies by default
-	
+
 	SetClassSkin(newClass);
-	
+
 	if(m_pCharacter)
 	{
 		m_pCharacter->SetClass(newClass);
@@ -826,54 +728,55 @@ void CPlayer::SetClass(int newClass)
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "choose_class player='%s' class='%d'", Server()->ClientName(m_ClientID), newClass);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);
-	
+
 	GameServer()->CountInfPlayers();
 }
 
 int CPlayer::GetOldClass()
 {
 	bool hasOldClass = false;
-	for (int i = START_HUMANCLASS+1; i < END_HUMANCLASS; i++) {
-		if (m_classOld == i) {
+	for(int i = START_HUMANCLASS + 1; i < END_HUMANCLASS; i++)
+	{
+		if(m_ClassOld == i)
+		{
 			hasOldClass = true;
 			break;
 		}
 	}
-	if (!hasOldClass)
+	if(!hasOldClass)
 		return PLAYERCLASS_MEDIC; // if old class was not set, it defaults to medic
 	else
-		return m_classOld;
+		return m_ClassOld;
 }
 
 void CPlayer::SetOldClass(int oldClass)
 {
-	m_classOld = oldClass;
+	m_ClassOld = oldClass;
 }
 
 void CPlayer::StartInfection(bool force)
 {
 	if(!force && IsZombie())
 		return;
-	
-	
+
 	if(IsHuman())
 	{
 		m_InfectionTick = Server()->Tick();
 	}
-	
+
 	int c = GameServer()->m_pController->ChooseInfectedClass(this);
-	
+
 	SetClass(c);
 }
 
 bool CPlayer::IsZombie() const
 {
-	return (m_class > END_HUMANCLASS);
+	return (m_Class > END_HUMANCLASS);
 }
 
 bool CPlayer::IsHuman() const
 {
-	return !(m_class > END_HUMANCLASS);
+	return !(m_Class > END_HUMANCLASS);
 }
 
 bool CPlayer::IsSpectator() const
@@ -898,7 +801,7 @@ void CPlayer::SetScoreMode(int Mode)
 
 int CPlayer::GetNumberKills()
 {
-	if( GetClass() == PLAYERCLASS_NONE )
+	if(GetClass() == PLAYERCLASS_NONE)
 		return 0;
 	else
 		return m_NumberKills;
@@ -914,13 +817,12 @@ void CPlayer::ResetNumberKills()
 	m_NumberKills = 0;
 }
 
-
-const char* CPlayer::GetLanguage()
+const char *CPlayer::GetLanguage()
 {
 	return m_aLanguage;
 }
 
-void CPlayer::SetLanguage(const char* pLanguage)
+void CPlayer::SetLanguage(const char *pLanguage)
 {
 	str_copy(m_aLanguage, pLanguage, sizeof(m_aLanguage));
 }
@@ -938,12 +840,12 @@ void CPlayer::CloseMapMenu()
 
 bool CPlayer::MapMenuClickable()
 {
-	return (m_MapMenu > 0 && (m_MapMenuTick > Server()->TickSpeed()/2));
+	return (m_MapMenu > 0 && (m_MapMenuTick > Server()->TickSpeed() / 2));
 }
 
 float CPlayer::GetGhoulPercent()
 {
-	return clamp(m_GhoulLevel/static_cast<float>(g_Config.m_InfGhoulStomachSize), 0.0f, 1.0f);
+	return clamp(m_GhoulLevel / static_cast<float>(g_Config.m_InfGhoulStomachSize), 0.0f, 1.0f);
 }
 
 void CPlayer::IncreaseGhoulLevel(int Diff)
@@ -953,7 +855,7 @@ void CPlayer::IncreaseGhoulLevel(int Diff)
 		NewGhoulLevel = 0;
 	if(NewGhoulLevel > g_Config.m_InfGhoulStomachSize)
 		NewGhoulLevel = g_Config.m_InfGhoulStomachSize;
-	
+
 	m_GhoulLevel = NewGhoulLevel;
 }
 

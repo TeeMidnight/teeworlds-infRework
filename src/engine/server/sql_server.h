@@ -11,38 +11,37 @@
 
 enum
 {
-	//Never, never, never, ..., NEVER change these values
-	//otherwise, the statistics in the database will be corrupted
-	SQL_SCORETYPE_ROUND_SCORE=0,
-	
-	SQL_SCORETYPE_ENGINEER_SCORE=100,
-	SQL_SCORETYPE_SOLDIER_SCORE=101,
-	SQL_SCORETYPE_SCIENTIST_SCORE=102,
-	SQL_SCORETYPE_MEDIC_SCORE=103,
-	SQL_SCORETYPE_NINJA_SCORE=104,
-	SQL_SCORETYPE_MERCENARY_SCORE=105,
-	SQL_SCORETYPE_SNIPER_SCORE=106,
-	SQL_SCORETYPE_HERO_SCORE=107,
-	SQL_SCORETYPE_BIOLOGIST_SCORE=108,
-	SQL_SCORETYPE_LOOPER_SCORE=109,
-	SQL_SCORETYPE_SCIOGIST_SCORE=110,
-	SQL_SCORETYPE_POLICE_SCORE=111,
-	SQL_SCORETYPE_CATAPULT_SCORE=112,
-	SQL_SCORETYPE_REVIVER_SCORE=113,
-	
-	SQL_SCORETYPE_SMOKER_SCORE=200,
-	SQL_SCORETYPE_HUNTER_SCORE=201,
-	SQL_SCORETYPE_BOOMER_SCORE=202,
-	SQL_SCORETYPE_GHOST_SCORE=203,
-	SQL_SCORETYPE_SPIDER_SCORE=204,
-	SQL_SCORETYPE_UNDEAD_SCORE=205,
-	SQL_SCORETYPE_WITCH_SCORE=206,
-	SQL_SCORETYPE_GHOUL_SCORE=207,
-	SQL_SCORETYPE_SLUG_SCORE=208,
-	SQL_SCORETYPE_SLIME_SCORE=209,
-	SQL_SCORETYPE_HOOKER_SCORE=210,
-	
-	SQL_SCORE_NUMROUND=32,
+	// Never, never, never, ..., NEVER change these values
+	// otherwise, the statistics in the database will be corrupted
+	SQL_SCORETYPE_ROUND_SCORE = 0,
+
+	SQL_SCORETYPE_ENGINEER_SCORE = 100,
+	SQL_SCORETYPE_SOLDIER_SCORE = 101,
+	SQL_SCORETYPE_SCIENTIST_SCORE = 102,
+	SQL_SCORETYPE_MEDIC_SCORE = 103,
+	SQL_SCORETYPE_NINJA_SCORE = 104,
+	SQL_SCORETYPE_MERCENARY_SCORE = 105,
+	SQL_SCORETYPE_SNIPER_SCORE = 106,
+	SQL_SCORETYPE_HERO_SCORE = 107,
+	SQL_SCORETYPE_BIOLOGIST_SCORE = 108,
+	SQL_SCORETYPE_LOOPER_SCORE = 109,
+	SQL_SCORETYPE_SCIOGIST_SCORE = 110,
+	SQL_SCORETYPE_CATAPULT_SCORE = 112,
+	SQL_SCORETYPE_REVIVER_SCORE = 113,
+
+	SQL_SCORETYPE_SMOKER_SCORE = 200,
+	SQL_SCORETYPE_HUNTER_SCORE = 201,
+	SQL_SCORETYPE_BOOMER_SCORE = 202,
+	SQL_SCORETYPE_GHOST_SCORE = 203,
+	SQL_SCORETYPE_SPIDER_SCORE = 204,
+	SQL_SCORETYPE_UNDEAD_SCORE = 205,
+	SQL_SCORETYPE_WITCH_SCORE = 206,
+	SQL_SCORETYPE_GHOUL_SCORE = 207,
+	SQL_SCORETYPE_SLUG_SCORE = 208,
+	SQL_SCORETYPE_SLIME_SCORE = 209,
+	SQL_SCORETYPE_HOOKER_SCORE = 210,
+
+	SQL_SCORE_NUMROUND = 32,
 };
 
 enum
@@ -55,23 +54,23 @@ enum
 class CSqlServer
 {
 public:
-	CSqlServer(const char* pDatabase, const char* pPrefix, const char* pUser, const char* pPass, const char* pIp, int Port, bool ReadOnly = true, bool SetUpDb = false);
+	CSqlServer(const char *pDatabase, const char *pPrefix, const char *pUser, const char *pPass, const char *pIp, int Port, bool ReadOnly = true, bool SetUpDb = false);
 	~CSqlServer();
 
 	bool Connect();
 	void Disconnect();
 	void CreateTables();
 
-	void executeSql(const char* pCommand);
-	void executeSqlQuery(const char* pQuery);
+	void executeSql(const char *pCommand);
+	void executeSqlQuery(const char *pQuery);
 
-	sql::ResultSet* GetResults() { return m_pResults; }
+	sql::ResultSet *GetResults() { return m_pResults; }
 
-	const char* GetDatabase() { return m_aDatabase; }
-	const char* GetPrefix() { return m_aPrefix; }
-	const char* GetUser() { return m_aUser; }
-	const char* GetPass() { return m_aPass; }
-	const char* GetIP() { return m_aIp; }
+	const char *GetDatabase() { return m_aDatabase; }
+	const char *GetPrefix() { return m_aPrefix; }
+	const char *GetUser() { return m_aUser; }
+	const char *GetPass() { return m_aPass; }
+	const char *GetIP() { return m_aIp; }
 	int GetPort() { return m_Port; }
 
 	void Lock() { lock_wait(m_SqlLock); }

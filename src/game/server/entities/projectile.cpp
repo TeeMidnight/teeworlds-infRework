@@ -3,13 +3,13 @@
 #include <base/math.h>
 #include <base/vmath.h>
 #include <game/generated/protocol.h>
-#include <game/server/gamecontext.h>
 #include <game/server/entities/growingexplosion.h>
+#include <game/server/gamecontext.h>
 #include "projectile.h"
 
 CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, vec2 Dir, int Span,
-		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon, int TakeDamageMode)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
+	int Damage, bool Explosive, float Force, int SoundImpact, int Weapon, int TakeDamageMode) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_Type = Type;
 	m_Pos = Pos;
@@ -25,12 +25,12 @@ CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, 
 	m_Explosive = Explosive;
 
 	GameWorld()->InsertEntity(this);
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	m_IsFlashGrenade = false;
 	m_IsPortal = false;
 	m_StartPos = Pos;
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 }
 
 void CProjectile::Reset()
@@ -69,11 +69,10 @@ vec2 CProjectile::GetPos(float Time)
 	return CalcPos(m_Pos, m_Direction, Curvature, Speed, Time);
 }
 
-
 void CProjectile::Tick()
 {
-	float Pt = (Server()->Tick()-m_StartTick-1)/(float)Server()->TickSpeed();
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	float Pt = (Server()->Tick() - m_StartTick - 1) / (float) Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
 	m_ActualPos = CurPos;
@@ -83,7 +82,7 @@ void CProjectile::Tick()
 
 	m_LifeSpan--;
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	if(TargetChr || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
 		if(m_LifeSpan >= 0 || (m_Weapon == WEAPON_GRENADE && !m_IsPortal))
@@ -92,8 +91,9 @@ void CProjectile::Tick()
 		if(m_IsFlashGrenade)
 		{
 			vec2 Dir = normalize(PrevPos - CurPos);
-			if(length(Dir) > 1.1) Dir = normalize(m_StartPos - CurPos);
-			
+			if(length(Dir) > 1.1)
+				Dir = normalize(m_StartPos - CurPos);
+
 			new CGrowingExplosion(GameWorld(), CurPos, Dir, m_Owner, 8, GROWINGEXPLOSIONEFFECT_FREEZE_INFECTED);
 		}
 		else if(m_IsPortal)
@@ -102,30 +102,30 @@ void CProjectile::Tick()
 			while(Iterator > 0.0f)
 			{
 				vec2 CheckPos = GetPos(Iterator);
-				
+
 				vec2 PortalPos = vec2(16.0f, 16.0f) + vec2(
-				static_cast<float>(static_cast<int>(round(CheckPos.x))/32)*32.0,
-				static_cast<float>(static_cast<int>(round(CheckPos.y))/32)*32.0);
-				
+									      static_cast<float>(static_cast<int>(round(CheckPos.x)) / 32) * 32.0,
+									      static_cast<float>(static_cast<int>(round(CheckPos.y)) / 32) * 32.0);
+
 				if(GameServer()->m_pController->IsSpawnable(PortalPos, ZONE_TELE_NOSCIENTIST))
 				{
 					CCharacter *OwnerChar = GameServer()->GetPlayerChar(m_Owner);
 					if(OwnerChar)
 					{
 						vec2 OldPos = OwnerChar->m_Core.m_Pos;
-						
+
 						OwnerChar->m_Core.m_Pos = PortalPos;
 						OwnerChar->m_Core.m_HookedPlayer = -1;
 						OwnerChar->m_Core.m_HookState = HOOK_RETRACTED;
 						OwnerChar->m_Core.m_HookPos = OwnerChar->m_Core.m_Pos;
-						
+
 						GameServer()->CreateDeath(OldPos, m_Owner);
 						GameServer()->CreateDeath(PortalPos, m_Owner);
-						
+
 						break;
 					}
 				}
-					
+
 				Iterator -= 0.02f;
 			}
 		}
@@ -150,8 +150,8 @@ void CProjectile::Tick()
 
 		GameServer()->m_World.DestroyEntity(this);
 	}
-	
-/* INFECTION MODIFICATION END *****************************************/
+
+	/* INFECTION MODIFICATION END *****************************************/
 }
 
 void CProjectile::TickPaused()
@@ -161,17 +161,17 @@ void CProjectile::TickPaused()
 
 void CProjectile::FillInfo(CNetObj_Projectile *pProj)
 {
-	pProj->m_X = (int)m_Pos.x;
-	pProj->m_Y = (int)m_Pos.y;
-	pProj->m_VelX = (int)(m_Direction.x*100.0f);
-	pProj->m_VelY = (int)(m_Direction.y*100.0f);
+	pProj->m_X = (int) m_Pos.x;
+	pProj->m_Y = (int) m_Pos.y;
+	pProj->m_VelX = (int) (m_Direction.x * 100.0f);
+	pProj->m_VelY = (int) (m_Direction.y * 100.0f);
 	pProj->m_StartTick = m_StartTick;
 	pProj->m_Type = m_Type;
 }
 
 void CProjectile::Snap(int SnappingClient)
 {
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
 
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;

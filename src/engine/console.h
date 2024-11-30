@@ -9,23 +9,22 @@ class IConsole : public IInterface
 {
 	MACRO_INTERFACE("console", 0)
 public:
-
 	//	TODO: rework/cleanup
 	enum
 	{
-		OUTPUT_LEVEL_STANDARD=0,
+		OUTPUT_LEVEL_STANDARD = 0,
 		OUTPUT_LEVEL_ADDINFO,
 		OUTPUT_LEVEL_DEBUG,
 
-		ACCESS_LEVEL_ADMIN=0,
+		ACCESS_LEVEL_ADMIN = 0,
 		ACCESS_LEVEL_MOD,
 		ACCESS_LEVEL_USER,
 
-		TEMPCMD_NAME_LENGTH=32,
-		TEMPCMD_HELP_LENGTH=96,
-		TEMPCMD_PARAMS_LENGTH=16,
+		TEMPCMD_NAME_LENGTH = 32,
+		TEMPCMD_HELP_LENGTH = 96,
+		TEMPCMD_PARAMS_LENGTH = 16,
 
-		MAX_PRINT_CB=4,
+		MAX_PRINT_CB = 4,
 	};
 
 	// TODO: rework this interface to reduce the amount of virtual calls
@@ -35,18 +34,22 @@ public:
 		unsigned m_NumArgs;
 		int m_ClientID;
 		bool m_TeamChat;
-		
+
 	public:
-		IResult() { m_NumArgs = 0; m_ClientID = -1; }
+		IResult()
+		{
+			m_NumArgs = 0;
+			m_ClientID = -1;
+		}
 		virtual ~IResult() {}
 
 		virtual int GetInteger(unsigned Index) = 0;
 		virtual float GetFloat(unsigned Index) = 0;
 		virtual const char *GetString(unsigned Index) = 0;
-		
+
 		int GetClientID() { return m_ClientID; }
 		bool GetTeamChat() { return m_TeamChat; }
-		
+
 		void SetClientID(int ClientID) { m_ClientID = ClientID; }
 		void SetTeamChat(bool TeamChat) { m_TeamChat = TeamChat; }
 
@@ -57,6 +60,7 @@ public:
 	{
 	protected:
 		int m_AccessLevel;
+
 	public:
 		CCommandInfo() { m_AccessLevel = ACCESS_LEVEL_ADMIN; }
 		virtual ~CCommandInfo() {}

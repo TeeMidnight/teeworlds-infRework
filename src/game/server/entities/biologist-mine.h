@@ -14,7 +14,7 @@ public:
 		NUM_PARTICLES = 1,
 		NUM_IDS = NUM_SIDE + NUM_PARTICLES,
 	};
-	
+
 public:
 	CBiologistMine(CGameWorld *pGameWorld, vec2 Pos, vec2 EndPos, int Owner);
 	virtual ~CBiologistMine();
@@ -28,7 +28,7 @@ public:
 
 private:
 	int m_IDs[NUM_IDS];
-	
+
 public:
 	int m_Owner;
 	vec2 m_EndPos;

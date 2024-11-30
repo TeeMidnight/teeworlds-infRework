@@ -3,14 +3,14 @@
 #ifndef GAME_SERVER_GAMECONTEXT_H
 #define GAME_SERVER_GAMECONTEXT_H
 
-#include <engine/server.h>
-#include <engine/storage.h>
 #include <engine/console.h>
+#include <engine/server.h>
 #include <engine/shared/memheap.h>
+#include <engine/storage.h>
 
 #include <game/layers.h>
-#include <game/voting.h>
 #include <game/server/classes.h>
+#include <game/voting.h>
 
 #include <teeuniverses/components/localization.h>
 
@@ -19,14 +19,9 @@
 #include "gameworld.h"
 #include "player.h"
 
-//#define MEASURE_TICKS // uncomment, to measure server performance
+// #define MEASURE_TICKS // uncomment, to measure server performance
 #if defined(MEASURE_TICKS)
-	#include <engine/server/measure_ticks.h>
-#endif
-
-
-#ifdef CONF_GEOLOCATION
-	#include <infclassr/geolocation.h>
+#include <engine/server/measure_ticks.h>
 #endif
 
 #ifdef _MSC_VER
@@ -60,11 +55,11 @@ typedef unsigned __int64 uint64_t;
 */
 
 #define BROADCAST_DURATION_REALTIME (0)
-#define BROADCAST_DURATION_GAMEANNOUNCE (Server()->TickSpeed()*2)
+#define BROADCAST_DURATION_GAMEANNOUNCE (Server()->TickSpeed() * 2)
 
 enum
 {
-	BROADCAST_PRIORITY_LOWEST=0,
+	BROADCAST_PRIORITY_LOWEST = 0,
 	BROADCAST_PRIORITY_WEAPONSTATE,
 	BROADCAST_PRIORITY_EFFECTSTATE,
 	BROADCAST_PRIORITY_GAMEANNOUNCE,
@@ -85,10 +80,6 @@ class CGameContext : public IGameServer
 	int m_TargetToKillCoolDown;
 	int m_HeroGiftCooldown;
 
-	#ifdef CONF_GEOLOCATION
-	Geolocation* geolocation;
-	#endif
-
 	static bool ConTuneParam(IConsole::IResult *pResult, void *pUserData);
 	static bool ConTuneReset(IConsole::IResult *pResult, void *pUserData);
 	static bool ConTuneDump(IConsole::IResult *pResult, void *pUserData);
@@ -105,11 +96,9 @@ class CGameContext : public IGameServer
 	static bool ConForceVote(IConsole::IResult *pResult, void *pUserData);
 	static bool ConClearVotes(IConsole::IResult *pResult, void *pUserData);
 	static bool ConVote(IConsole::IResult *pResult, void *pUserData);
-	static bool ConStartFunRound(IConsole::IResult *pResult, void *pUserData);
 	static bool ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	void Teleport(CCharacter *pChr, vec2 Pos);
 	static bool ConTeleport(IConsole::IResult *pResult, void *pUserData);
-
 
 	CGameContext(int Resetting);
 	void Construct(int Resetting);
@@ -152,7 +141,7 @@ public:
 	void CountInfPlayers();
 	int GetHumanCount();
 	int GetZombieCount();
-	static std::vector<int> spectators_id; //spectators vector
+	static std::vector<int> spectators_id; // spectators vector
 	int m_NbActivePlayers;
 	int m_NbSpectators;
 	int m_NbHumans;
@@ -161,19 +150,9 @@ public:
 	int RandomZombieToWitch();
 	std::vector<int> m_WitchCallers;
 
-	// InfClassR fun round
-	void StartFunRound();
-	void EndFunRound();
-	bool m_FunRound;
-	int m_FunRoundHumanClass;
-	int m_FunRoundZombieClass;
-	int m_FunRoundsPassed;
-	void SetAvailabilities(std::vector<int> value);
-	void SetProbabilities(std::vector<int> value);
-	
-	#if defined(MEASURE_TICKS)
-		CMeasureTicks *m_pMeasure;
-	#endif
+#if defined(MEASURE_TICKS)
+	CMeasureTicks *m_pMeasure;
+#endif
 
 	// voting
 	void StartVote(const char *pDesc, const char *pCommand, const char *pReason);
@@ -193,7 +172,7 @@ public:
 	int m_VoteEnforce;
 	enum
 	{
-		VOTE_ENFORCE_UNKNOWN=0,
+		VOTE_ENFORCE_UNKNOWN = 0,
 		VOTE_ENFORCE_NO,
 		VOTE_ENFORCE_YES,
 	};
@@ -208,15 +187,15 @@ public:
 	void CreateHammerHit(vec2 Pos);
 	void CreatePlayerSpawn(vec2 Pos);
 	void CreateDeath(vec2 Pos, int Who);
-	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1);
-	void CreateSoundGlobal(int Sound, int Target=-1);
+	void CreateSound(vec2 Pos, int Sound, int64_t Mask = -1);
+	void CreateSoundGlobal(int Sound, int Target = -1);
 
 	enum
 	{
-		CHAT_ALL=-2,
-		CHAT_SPEC=-1,
-		CHAT_RED=0,
-		CHAT_BLUE=1
+		CHAT_ALL = -2,
+		CHAT_SPEC = -1,
+		CHAT_RED = 0,
+		CHAT_BLUE = 1
 	};
 
 	// network
@@ -225,7 +204,7 @@ public:
 	void SendEmoticon(int ClientID, int Emoticon);
 	void SendWeaponPickup(int ClientID, int Weapon);
 
-	void List(int ClientID, const char* filter);
+	void List(int ClientID, const char *filter);
 
 	//
 	void CheckPureTuning();
@@ -256,8 +235,8 @@ public:
 	virtual const char *GameType();
 	virtual const char *Version();
 	virtual const char *NetVersion();
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 public:
 	int m_ChatResponseTargetID;
 	int m_ChatPrintCBIndex;
@@ -266,7 +245,7 @@ private:
 	static void ChatConsolePrintCallback(const char *pLine, void *pUser);
 
 	static bool ConSetClass(IConsole::IResult *pResult, void *pUserData);
-	
+
 	static bool ConChatInfo(IConsole::IResult *pResult, void *pUserData);
 #ifdef CONF_SQL
 	static bool ConRegister(IConsole::IResult *pResult, void *pUserData);
@@ -286,12 +265,12 @@ private:
 	static bool ConLanguage(IConsole::IResult *pResult, void *pUserData);
 	static bool ConCmdList(IConsole::IResult *pResult, void *pUserData);
 	static bool ConWitch(IConsole::IResult *pResult, void *pUserData);
-	bool PrivateMessage(const char* pStr, int ClientID, bool TeamChat);
-	void MutePlayer(const char* pStr, int ClientID);
-	
+	bool PrivateMessage(const char *pStr, int ClientID, bool TeamChat);
+	void MutePlayer(const char *pStr, int ClientID);
+
 	void OnCallVote(void *pRawMsg, int ClientID);
 	int IsMapVote(const char *pVoteCommand);
-	void GetMapNameFromCommand(char* pMapName, const char *pCommand);
+	void GetMapNameFromCommand(char *pMapName, const char *pCommand);
 
 	enum
 	{
@@ -299,44 +278,44 @@ private:
 		CHANGE_MAP = 2,
 		SKIP_MAP = 3
 	};
-	
+
 public:
-	virtual void OnSetAuthed(int ClientID,int Level);
-	
+	virtual void OnSetAuthed(int ClientID, int Level);
+
 	virtual void SendBroadcast(int To, const char *pText, int Priority, int LifeSpan);
-	virtual void SendBroadcast_Localization(int To, int Priority, int LifeSpan, const char* pText, ...);
-	virtual void SendBroadcast_Localization_P(int To, int Priority, int LifeSpan, int Number, const char* pText, ...);
+	virtual void SendBroadcast_Localization(int To, int Priority, int LifeSpan, const char *pText, ...);
+	virtual void SendBroadcast_Localization_P(int To, int Priority, int LifeSpan, int Number, const char *pText, ...);
 	virtual void SendBroadcast_ClassIntro(int To, int Class);
 	virtual void ClearBroadcast(int To, int Priority);
-	
-	virtual void SendChatTarget_Localization(int To, int Category, const char* pText, ...);
-	virtual void SendChatTarget_Localization_P(int To, int Category, int Number, const char* pText, ...);
-	
-	virtual void SendMOTD(int To, const char* pParam);
-	virtual void SendMOTD_Localization(int To, const char* pText, ...);
-	
+
+	virtual void SendChatTarget_Localization(int To, int Category, const char *pText, ...);
+	virtual void SendChatTarget_Localization_P(int To, int Category, int Number, const char *pText, ...);
+
+	virtual void SendMOTD(int To, const char *pParam);
+	virtual void SendMOTD_Localization(int To, const char *pText, ...);
+
 	void CreateLaserDotEvent(vec2 Pos0, vec2 Pos1, int LifeSpan);
 	void CreateHammerDotEvent(vec2 Pos, int LifeSpan);
 	void CreateLoveEvent(vec2 Pos);
 	void SendHitSound(int ClientID);
 	void SendScoreSound(int ClientID);
-	void AddBroadcast(int ClientID, const char* pText, int Priority, int LifeSpan);
-	
+	void AddBroadcast(int ClientID, const char *pText, int Priority, int LifeSpan);
+
 private:
 	int m_VoteLanguageTick[MAX_CLIENTS];
 	char m_VoteLanguage[MAX_CLIENTS][16];
 	int m_VoteBanClientID;
 	static bool m_ClientMuted[MAX_CLIENTS][MAX_CLIENTS]; // m_ClientMuted[i][j]: i muted j
-	
+
 	class CBroadcastState
 	{
 	public:
 		int m_NoChangeTick;
 		char m_PrevMessage[1024];
-		
+
 		int m_Priority;
 		char m_NextMessage[1024];
-		
+
 		int m_LifeSpanTick;
 		int m_TimedPriority;
 		char m_TimedMessage[1024];
@@ -344,9 +323,8 @@ private:
 
 	static void ConList(IConsole::IResult *pResult, void *pUserData);
 
-	
 	CBroadcastState m_BroadcastStates[MAX_CLIENTS];
-	
+
 	struct LaserDotState
 	{
 		vec2 m_Pos0;
@@ -355,7 +333,7 @@ private:
 		int m_SnapID;
 	};
 	array<LaserDotState> m_LaserDots;
-	
+
 	struct HammerDotState
 	{
 		vec2 m_Pos;
@@ -363,7 +341,7 @@ private:
 		int m_SnapID;
 	};
 	array<HammerDotState> m_HammerDots;
-	
+
 	struct LoveDotState
 	{
 		vec2 m_Pos;
@@ -371,8 +349,8 @@ private:
 		int m_SnapID;
 	};
 	array<LoveDotState> m_LoveDots;
-	
-	int m_aHitSoundState[MAX_CLIENTS]; //1 for hit, 2 for kill (no sounds must be sent)	
+
+	int m_aHitSoundState[MAX_CLIENTS]; // 1 for hit, 2 for kill (no sounds must be sent)
 
 public:
 	virtual int GetTargetToKill();
@@ -382,7 +360,7 @@ public:
 	virtual int GetTargetToKillCoolDown() { return m_TargetToKillCoolDown; }
 	virtual int GetHeroGiftCoolDown() { return m_HeroGiftCooldown; }
 	virtual void FlagCollected(); // Triggers global gift cooldown
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 	// InfClassR begin
 	void AddSpectatorCID(int ClientID);
 	void RemoveSpectatorCID(int ClientID);
@@ -391,7 +369,7 @@ public:
 };
 
 inline int64_t CmaskAll() { return -1LL; }
-inline int64_t CmaskOne(int ClientID) { return 1LL<<ClientID; }
-inline int64_t CmaskAllExceptOne(int ClientID) { return CmaskAll()^CmaskOne(ClientID); }
-inline bool CmaskIsSet(int64_t Mask, int ClientID) { return (Mask&CmaskOne(ClientID)) != 0; }
+inline int64_t CmaskOne(int ClientID) { return 1LL << ClientID; }
+inline int64_t CmaskAllExceptOne(int ClientID) { return CmaskAll() ^ CmaskOne(ClientID); }
+inline bool CmaskIsSet(int64_t Mask, int ClientID) { return (Mask & CmaskOne(ClientID)) != 0; }
 #endif

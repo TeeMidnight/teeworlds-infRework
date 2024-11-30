@@ -7,7 +7,7 @@ class CBouncingBullet : public CEntity
 {
 public:
 	int m_Owner;
-	
+
 public:
 	CBouncingBullet(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir);
 

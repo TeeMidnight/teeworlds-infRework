@@ -53,7 +53,7 @@ int CRoundStatistics::CPlayer::OnScoreEvent(int EventType, int Class)
 	}
 
 	m_Score += Points;
-	
+
 	switch(Class)
 	{
 		case PLAYERCLASS_ENGINEER:
@@ -133,9 +133,10 @@ void CRoundStatistics::ResetPlayer(int ClientID)
 		m_aPlayers[ClientID].Reset();
 }
 
-void CRoundStatistics::OnScoreEvent(int ClientID, int EventType, int Class, const char* Name, IConsole* console)
+void CRoundStatistics::OnScoreEvent(int ClientID, int EventType, int Class, const char *Name, IConsole *console)
 {
-	if(ClientID >= 0 && ClientID < MAX_CLIENTS) {
+	if(ClientID >= 0 && ClientID < MAX_CLIENTS)
+	{
 		int Score = m_aPlayers[ClientID].OnScoreEvent(EventType, Class);
 
 		char aBuf[256];
@@ -144,7 +145,6 @@ void CRoundStatistics::OnScoreEvent(int ClientID, int EventType, int Class, cons
 			Score);
 		console->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 	}
-	
 }
 
 void CRoundStatistics::SetPlayerAsWinner(int ClientID)
@@ -153,25 +153,26 @@ void CRoundStatistics::SetPlayerAsWinner(int ClientID)
 		m_aPlayers[ClientID].m_Won = true;
 }
 
-CRoundStatistics::CPlayer* CRoundStatistics::PlayerStatistics(int ClientID)
+CRoundStatistics::CPlayer *CRoundStatistics::PlayerStatistics(int ClientID)
 {
 	if(ClientID >= 0 && ClientID < MAX_CLIENTS)
 		return &m_aPlayers[ClientID];
-	else return 0;
+	else
+		return 0;
 }
-
 
 int CRoundStatistics::PlayerScore(int ClientID)
 {
 	if(ClientID >= 0 && ClientID < MAX_CLIENTS)
-		return m_aPlayers[ClientID].m_Score/10;
-	else return 0;
+		return m_aPlayers[ClientID].m_Score / 10;
+	else
+		return 0;
 }
-	
+
 int CRoundStatistics::NumWinners() const
 {
 	int NumWinner = 0;
-	for(int i=0; i<MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(m_aPlayers[i].m_Won)
 			NumWinner++;
@@ -184,19 +185,19 @@ void CRoundStatistics::UpdatePlayer(int ClientID, bool IsSpectator)
 	if(ClientID >= 0 && ClientID < MAX_CLIENTS)
 		m_aPlayers[ClientID].m_WasSpectator = IsSpectator || m_aPlayers[ClientID].m_WasSpectator;
 }
-	
+
 void CRoundStatistics::UpdateNumberOfPlayers(int Num)
 {
 	if(m_NumPlayersMin > Num)
 		m_NumPlayersMin = Num;
-	
+
 	if(m_NumPlayersMax < Num)
 		m_NumPlayersMax = Num;
-	
+
 	if(Num > 1)
 		m_PlayedTicks++;
 }
-	
+
 bool CRoundStatistics::IsValidePlayer(int ClientID)
 {
 	if(ClientID >= 0 && ClientID < MAX_CLIENTS)

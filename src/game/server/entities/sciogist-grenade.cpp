@@ -1,18 +1,16 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
-
 #include "sciogist-grenade.h"
 
 #include <game/generated/protocol.h>
 #include <game/server/gamecontext.h>
 
-
 #include "elastic-hole.h"
 #include "growingexplosion.h"
 
-CSciogistGrenade::CSciogistGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_SCIOGIST_GRENADE)
+CSciogistGrenade::CSciogistGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_SCIOGIST_GRENADE)
 {
 	m_Pos = Pos;
 	m_Owner = Owner;
@@ -31,26 +29,25 @@ void CSciogistGrenade::Explode()
 	{
 		new CGrowingExplosion(GameWorld(), m_ActualPos, vec2(0.0, -1.0), m_Owner, 5, GROWINGEXPLOSIONEFFECT_BOOM_INFECTED);
 		new CElasticHole(GameWorld(), m_ActualPos, m_Owner, true);
-		
-		//Make it unavailable
+
+		// Make it unavailable
 		m_OwnerChar->m_HasElasticHole = false;
 		m_OwnerChar->m_HasIndicator = false;
 		m_OwnerChar->GetPlayer()->ResetNumberKills();
 	}
 	GameServer()->m_World.DestroyEntity(this);
-	
 }
 
 void CSciogistGrenade::Tick()
 {
-	float Pt = (Server()->Tick()-m_StartTick-1)/(float)Server()->TickSpeed();
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	float Pt = (Server()->Tick() - m_StartTick - 1) / (float) Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
-	
+
 	m_ActualPos = CurPos;
 	m_ActualDir = normalize(CurPos - PrevPos);
-		
+
 	if(GameLayerClipped(CurPos))
 	{
 		GameServer()->m_World.DestroyEntity(this);
@@ -65,8 +62,6 @@ void CSciogistGrenade::Tick()
 	{
 		Explode();
 	}
-	
-	
 }
 
 void CSciogistGrenade::TickPaused()
@@ -89,18 +84,18 @@ void CSciogistGrenade::Reset()
 
 void CSciogistGrenade::Snap(int SnappingClient)
 {
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
-	
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
+
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;
-	
+
 	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
 	if(pProj)
 	{
-		pProj->m_X = (int)m_Pos.x;
-		pProj->m_Y = (int)m_Pos.y;
-		pProj->m_VelX = (int)(m_Direction.x*100.0f);
-		pProj->m_VelY = (int)(m_Direction.y*100.0f);
+		pProj->m_X = (int) m_Pos.x;
+		pProj->m_Y = (int) m_Pos.y;
+		pProj->m_VelX = (int) (m_Direction.x * 100.0f);
+		pProj->m_VelY = (int) (m_Direction.y * 100.0f);
 		pProj->m_StartTick = m_StartTick;
 		pProj->m_Type = WEAPON_GRENADE;
 	}

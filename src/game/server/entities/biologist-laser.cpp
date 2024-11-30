@@ -4,8 +4,8 @@
 #include <game/server/gamecontext.h>
 #include "biologist-laser.h"
 
-CBiologistLaser::CBiologistLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, int Owner, int Dmg)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
+CBiologistLaser::CBiologistLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, int Owner, int Dmg) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Dmg = Dmg;
 	m_Pos = Pos;
@@ -18,12 +18,12 @@ CBiologistLaser::CBiologistLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Directio
 	DoBounce();
 }
 
-
 void CBiologistLaser::HitCharacter(vec2 From, vec2 To)
 {
-	for(CCharacter *p = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
+	for(CCharacter *p = (CCharacter *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *) p->TypeNext())
 	{
-		if(p->IsHuman()) continue;
+		if(p->IsHuman())
+			continue;
 
 		vec2 IntersectPos = closest_point_on_line(From, To, p->m_Pos);
 		float Len = distance(p->m_Pos, IntersectPos);
@@ -50,7 +50,7 @@ void CBiologistLaser::DoBounce()
 	if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
 	{
 		HitCharacter(m_Pos, To);
-		
+
 		// intersected
 		m_From = m_Pos;
 		m_Pos = To;
@@ -74,7 +74,7 @@ void CBiologistLaser::DoBounce()
 	else
 	{
 		HitCharacter(m_Pos, To);
-		
+
 		m_From = m_Pos;
 		m_Pos = To;
 		m_Energy = -1;
@@ -88,7 +88,7 @@ void CBiologistLaser::Reset()
 
 void CBiologistLaser::Tick()
 {
-	if(Server()->Tick() > m_EvalTick+(Server()->TickSpeed()*GameServer()->Tuning()->m_LaserBounceDelay)/1000.0f)
+	if(Server()->Tick() > m_EvalTick + (Server()->TickSpeed() * GameServer()->Tuning()->m_LaserBounceDelay) / 1000.0f)
 		DoBounce();
 }
 
@@ -106,9 +106,9 @@ void CBiologistLaser::Snap(int SnappingClient)
 	if(!pObj)
 		return;
 
-	pObj->m_X = (int)m_Pos.x;
-	pObj->m_Y = (int)m_Pos.y;
-	pObj->m_FromX = (int)m_From.x;
-	pObj->m_FromY = (int)m_From.y;
+	pObj->m_X = (int) m_Pos.x;
+	pObj->m_Y = (int) m_Pos.y;
+	pObj->m_FromX = (int) m_From.x;
+	pObj->m_FromY = (int) m_From.y;
 	pObj->m_StartTick = m_EvalTick;
 }

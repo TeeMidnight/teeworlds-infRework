@@ -1,13 +1,13 @@
 #ifndef ENGINE_SERVER_ROUND_STATISTICS_H
 #define ENGINE_SERVER_ROUND_STATISTICS_H
 
+#include <engine/console.h>
 #include <engine/shared/protocol.h>
 #include <game/server/classes.h>
-#include <engine/console.h>
 
 enum
 {
-	SCOREEVENT_HUMAN_SURVIVE=0,
+	SCOREEVENT_HUMAN_SURVIVE = 0,
 	SCOREEVENT_HUMAN_SUICIDE,
 	SCOREEVENT_HUMAN_HEALING,
 	SCOREEVENT_INFECTION,
@@ -42,7 +42,7 @@ public:
 		int m_NinjaScore;
 		int m_MercenaryScore;
 		int m_SniperScore;
-		
+
 		int m_SmokerScore;
 		int m_HunterScore;
 		int m_BatScore;
@@ -54,10 +54,10 @@ public:
 		int m_VoodooScore;
 		int m_UndeadScore;
 		int m_WitchScore;
-		
+
 		bool m_WasSpectator;
 		bool m_Won;
-	
+
 	public:
 		CPlayer() { Reset(); }
 		void Reset() { mem_zero(this, sizeof(CPlayer)); }
@@ -69,22 +69,22 @@ public:
 	int m_NumPlayersMin;
 	int m_NumPlayersMax;
 	int m_PlayedTicks;
-	
+
 public:
 	CRoundStatistics() { Reset(); }
 	void Reset() { mem_zero(this, sizeof(CRoundStatistics)); }
 	void ResetPlayer(int ClientID);
-	void OnScoreEvent(int ClientID, int EventType, int Class, const char* Name, IConsole* console);
+	void OnScoreEvent(int ClientID, int EventType, int Class, const char *Name, IConsole *console);
 	void SetPlayerAsWinner(int ClientID);
-	
-	CRoundStatistics::CPlayer* PlayerStatistics(int ClientID);
+
+	CRoundStatistics::CPlayer *PlayerStatistics(int ClientID);
 	int PlayerScore(int ClientID);
-	
+
 	int NumWinners() const;
-	
+
 	void UpdatePlayer(int ClientID, bool IsSpectator);
 	void UpdateNumberOfPlayers(int Num);
-	
+
 	bool IsValidePlayer(int ClientID);
 };
 

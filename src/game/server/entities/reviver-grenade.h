@@ -11,7 +11,7 @@ public:
 	{
 		NUM_AMMO = 4,
 	};
-	
+
 public:
 	CReviverGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir);
 	~CReviverGrenade();
@@ -23,9 +23,8 @@ public:
 	virtual void TickPaused();
 	void Explode(vec2 Pos);
 	virtual void Snap(int SnappingClient);
-	
-	int GetTick() { return m_LifeSpan; }
 
+	int GetTick() { return m_LifeSpan; }
 
 private:
 	vec2 m_ActualPos;

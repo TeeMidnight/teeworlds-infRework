@@ -14,7 +14,7 @@ public:
 		NUM_PARTICLES = 6,
 		NUM_IDS = NUM_SIDE + NUM_PARTICLES,
 	};
-	
+
 public:
 	CScientistMine(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 	virtual ~CScientistMine();
@@ -29,7 +29,7 @@ public:
 
 private:
 	int m_IDs[NUM_IDS];
-	
+
 public:
 	int m_StartTick;
 	float m_DetectionRadius;

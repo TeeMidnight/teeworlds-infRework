@@ -4,9 +4,9 @@
 #define GAME_SERVER_PLAYER_H
 
 // this include should perhaps be removed
+#include <game/server/classes.h>
 #include "entities/character.h"
 #include "gamecontext.h"
-#include <game/server/classes.h>
 
 // player object
 class CPlayer
@@ -21,7 +21,7 @@ public:
 
 	void TryRespawn();
 	void Respawn();
-	void SetTeam(int Team, bool DoChatMsg=true);
+	void SetTeam(int Team, bool DoChatMsg = true);
 	int GetTeam() const { return m_Team; };
 	int GetCID() const { return m_ClientID; };
 
@@ -37,10 +37,10 @@ public:
 	void KillCharacter(int Weapon = WEAPON_GAME);
 	CCharacter *GetCharacter();
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	void HookProtection(bool Value, bool Automatic = true);
 	bool HookProtectionEnabled() { return m_HookProtection; }
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	//---------------------------------------------------------
 	// this is used for snapping so we know how we can clip the view for the player
@@ -75,9 +75,9 @@ public:
 	struct
 	{
 		char m_SkinName[64];
-/* INFECTION MODIFICATION START ***************************************/
+		/* INFECTION MODIFICATION START ***************************************/
 		char m_CustomSkinName[64];
-/* INFECTION MODIFICATION END *****************************************/
+		/* INFECTION MODIFICATION END *****************************************/
 		int m_UseCustomColor;
 		int m_ColorBody;
 		int m_ColorFeet;
@@ -120,20 +120,20 @@ private:
 	int m_ClientID;
 	int m_Team;
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 private:
-	int m_class;
-	int m_classOld;
+	int m_Class;
+	int m_ClassOld;
 	int m_ScoreMode;
 	int m_DefaultScoreMode;
 	char m_aLanguage[16];
-	
+
 	int m_MapMenu;
 	int m_MapMenuTick;
-	
+
 	int m_GhoulLevel;
 	int m_GhoulLevelTick;
-  
+
 	int m_NumberKills;
 
 	bool m_VoodooIsSpirit;
@@ -142,17 +142,17 @@ public:
 	int m_Authed;
 	int m_ScoreRound;
 	int m_HumanTime;
-	
+
 	bool m_knownClass[NB_PLAYERCLASS];
 	int m_InfectionTick;
 	bool m_IsSpectator;
-	
+
 	int GetScoreMode();
 	void SetScoreMode(int Mode);
 	int GetNumberKills();
 	void IncreaseNumberKills();
 	void ResetNumberKills();
-	
+
 	int GetClass();
 	void SetClassSkin(int newClass, int State = 0);
 	void SetClass(int newClass);
@@ -163,46 +163,46 @@ public:
 	bool IsSpectator() const;
 	void StartInfection(bool force = false);
 	bool IsKnownClass(int c);
-	
-	const char* GetLanguage();
-	void SetLanguage(const char* pLanguage);
-	
+
+	const char *GetLanguage();
+	void SetLanguage(const char *pLanguage);
+
 	bool m_WasHumanThisRound;
 	int m_WinAsHuman;
 	bool m_HookProtection;
 	bool m_HookProtectionAutomatic;
-	
+
 	int m_MapMenuItem;
-	
+
 	CTuningParams m_PrevTuningParams;
 	CTuningParams m_NextTuningParams;
-	
+
 	void HandleTuningParams();
-	
+
 	bool InscoreBoard() { return m_PlayerFlags & PLAYERFLAG_SCOREBOARD; };
 	int MapMenu() { return (m_Team != TEAM_SPECTATORS) ? m_MapMenu : 0; };
 	void OpenMapMenu(int Menu);
 	void CloseMapMenu();
 	bool MapMenuClickable();
-	
+
 	float GetGhoulPercent();
 	void IncreaseGhoulLevel(int Diff);
 	inline int GetGhoulLevel() const { return m_GhoulLevel; }
-	
+
 	int m_LastHumanClasses[2];
 
 	void SetToSpirit(bool IsSpirit);
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 };
 
 enum
 {
-	PLAYERITER_ALL=0x0,
-	
-	PLAYERITER_COND_READY=0x1,
-	PLAYERITER_COND_SPEC=0x2,
-	PLAYERITER_COND_NOSPEC=0x4,
-	
+	PLAYERITER_ALL = 0x0,
+
+	PLAYERITER_COND_READY = 0x1,
+	PLAYERITER_COND_SPEC = 0x2,
+	PLAYERITER_COND_NOSPEC = 0x4,
+
 	PLAYERITER_INGAME = PLAYERITER_COND_READY | PLAYERITER_COND_NOSPEC,
 	PLAYERITER_SPECTATORS = PLAYERITER_COND_READY | PLAYERITER_COND_SPEC,
 };
@@ -211,37 +211,40 @@ template<int FLAGS>
 class CPlayerIterator
 {
 private:
-	CPlayer** m_ppPlayers;
+	CPlayer **m_ppPlayers;
 	int m_ClientID;
-	
+
 public:
-	
-	CPlayerIterator(CPlayer** ppPlayers) :
+	CPlayerIterator(CPlayer **ppPlayers) :
 		m_ppPlayers(ppPlayers)
 	{
 		Reset();
 	}
-	
+
 	inline bool Next()
 	{
-		for(m_ClientID = m_ClientID+1; m_ClientID<MAX_CLIENTS; m_ClientID++)
+		for(m_ClientID = m_ClientID + 1; m_ClientID < MAX_CLIENTS; m_ClientID++)
 		{
-			CPlayer* pPlayer = Player();
-			
-			if(!pPlayer) continue;
-			if((FLAGS & PLAYERITER_COND_READY) && (!pPlayer->m_IsInGame)) continue;
-			if((FLAGS & PLAYERITER_COND_NOSPEC) && (pPlayer->GetTeam() == TEAM_SPECTATORS)) continue;
-			if((FLAGS & PLAYERITER_COND_SPEC) && (pPlayer->GetTeam() != TEAM_SPECTATORS)) continue;
-			
+			CPlayer *pPlayer = Player();
+
+			if(!pPlayer)
+				continue;
+			if((FLAGS & PLAYERITER_COND_READY) && (!pPlayer->m_IsInGame))
+				continue;
+			if((FLAGS & PLAYERITER_COND_NOSPEC) && (pPlayer->GetTeam() == TEAM_SPECTATORS))
+				continue;
+			if((FLAGS & PLAYERITER_COND_SPEC) && (pPlayer->GetTeam() != TEAM_SPECTATORS))
+				continue;
+
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	inline void Reset() { m_ClientID = -1; }
-	
-	inline CPlayer* Player() { return m_ppPlayers[m_ClientID]; }
+
+	inline CPlayer *Player() { return m_ppPlayers[m_ClientID]; }
 	inline int ClientID() { return m_ClientID; }
 };
 

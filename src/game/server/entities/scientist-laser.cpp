@@ -4,12 +4,11 @@
 #include <game/server/gamecontext.h>
 #include "scientist-laser.h"
 
-
-#include "white-hole.h"
 #include "growingexplosion.h"
+#include "white-hole.h"
 
-CScientistLaser::CScientistLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Dmg)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
+CScientistLaser::CScientistLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Dmg) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Dmg = Dmg;
 	m_Pos = Pos;
@@ -23,7 +22,6 @@ CScientistLaser::CScientistLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Directio
 	DoBounce();
 }
 
-
 bool CScientistLaser::HitCharacter(vec2 From, vec2 To)
 {
 	vec2 At;
@@ -34,7 +32,7 @@ bool CScientistLaser::HitCharacter(vec2 From, vec2 To)
 	m_From = From;
 	m_Pos = At;
 	m_Energy = -1;
-	
+
 	return true;
 }
 
@@ -68,16 +66,16 @@ void CScientistLaser::DoBounce()
 			m_Energy = -1;
 		}
 	}
-	
+
 	GameServer()->CreateExplosion(m_Pos, m_Owner, WEAPON_RIFLE, false, TAKEDAMAGEMODE_NOINFECTION);
-	
-	//Create a white hole entity
+
+	// Create a white hole entity
 	if(m_OwnerChar && m_OwnerChar->m_HasWhiteHole)
 	{
 		new CGrowingExplosion(GameWorld(), m_Pos, vec2(0.0, -1.0), m_Owner, 5, GROWINGEXPLOSIONEFFECT_BOOM_INFECTED);
 		new CWhiteHole(GameWorld(), To, m_Owner);
-		
-		//Make it unavailable
+
+		// Make it unavailable
 		m_OwnerChar->m_HasWhiteHole = false;
 		m_OwnerChar->m_HasIndicator = false;
 		m_OwnerChar->GetPlayer()->ResetNumberKills();
@@ -91,7 +89,7 @@ void CScientistLaser::Reset()
 
 void CScientistLaser::Tick()
 {
-	if(Server()->Tick() > m_EvalTick+(Server()->TickSpeed()*GameServer()->Tuning()->m_LaserBounceDelay)/1000.0f)
+	if(Server()->Tick() > m_EvalTick + (Server()->TickSpeed() * GameServer()->Tuning()->m_LaserBounceDelay) / 1000.0f)
 		DoBounce();
 }
 
@@ -109,9 +107,9 @@ void CScientistLaser::Snap(int SnappingClient)
 	if(!pObj)
 		return;
 
-	pObj->m_X = (int)m_Pos.x;
-	pObj->m_Y = (int)m_Pos.y;
-	pObj->m_FromX = (int)m_From.x;
-	pObj->m_FromY = (int)m_From.y;
+	pObj->m_X = (int) m_Pos.x;
+	pObj->m_Y = (int) m_Pos.y;
+	pObj->m_FromX = (int) m_From.x;
+	pObj->m_FromY = (int) m_From.y;
 	pObj->m_StartTick = m_EvalTick;
 }

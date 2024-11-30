@@ -3,8 +3,8 @@
 #ifndef GAME_SERVER_ENTITIES_MERCENARY_BOMB_H
 #define GAME_SERVER_ENTITIES_MERCENARY_BOMB_H
 
-#include <game/server/entity.h>
 #include <base/tl/array.h>
+#include <game/server/entity.h>
 
 class CMercenaryBomb : public CEntity
 {
@@ -15,7 +15,7 @@ public:
 		NUM_HINT = 12,
 		NUM_IDS = NUM_SIDE + NUM_HINT,
 	};
-	
+
 public:
 	CMercenaryBomb(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 	~CMercenaryBomb();
@@ -29,7 +29,7 @@ public:
 
 private:
 	int m_IDs[NUM_IDS];
-	
+
 public:
 	int m_LoadingTick;
 	int m_Owner;

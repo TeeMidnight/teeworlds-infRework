@@ -10,7 +10,7 @@ class CFreezeMine : public CEntity
 public:
 	CFreezeMine(CGameWorld *pGameWorld, vec2 Pos, int Owner, float Radius = 96.0f);
 	virtual ~CFreezeMine();
-	
+
 	virtual void Reset();
 	virtual void Tick();
 	virtual void Snap(int SnappingClient);
@@ -23,11 +23,10 @@ private:
 	int m_Radius;
 	vec2 m_ActualPos;
 	int m_Owner;
-	
+
 	array<int> m_IDs;
 
 	int m_LifeSpan;
-
 };
 
 #endif

@@ -3,13 +3,13 @@
 #include <base/math.h>
 #include <base/vmath.h>
 #include <game/generated/protocol.h>
-#include <game/server/gamecontext.h>
 #include <game/server/entities/growingexplosion.h>
-#include "growingexplosion.h"
+#include <game/server/gamecontext.h>
 #include "reviver-grenade.h"
+#include "growingexplosion.h"
 
-CReviverGrenade::CReviverGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_REVIVER_GRENADE)
+CReviverGrenade::CReviverGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_REVIVER_GRENADE)
 {
 	m_Pos = Pos;
 	m_ActualPos = Pos;
@@ -17,11 +17,11 @@ CReviverGrenade::CReviverGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, ve
 	m_Direction = Dir;
 	m_Owner = Owner;
 	m_Angle = 0;
-	m_LifeSpan =  g_Config.m_InfReviverGrenadeLifeSpan * Server()->TickSpeed();
+	m_LifeSpan = g_Config.m_InfReviverGrenadeLifeSpan * Server()->TickSpeed();
 	m_StartTick = Server()->Tick();
 
 	GameWorld()->InsertEntity(this);
-	for(int i=0; i< NUM_AMMO; i++)
+	for(int i = 0; i < NUM_AMMO; i++)
 	{
 		m_IDs[i] = Server()->SnapNewID();
 	}
@@ -29,7 +29,7 @@ CReviverGrenade::CReviverGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, ve
 
 CReviverGrenade::~CReviverGrenade()
 {
-	for(int i=0; i< NUM_AMMO; i++)
+	for(int i = 0; i < NUM_AMMO; i++)
 	{
 		Server()->SnapFreeID(m_IDs[i]);
 	}
@@ -59,20 +59,21 @@ void CReviverGrenade::Tick()
 	{
 		GameServer()->m_World.DestroyEntity(this);
 	}
-	float Pt = (Server()->Tick()-m_StartTick-1)/(float)Server()->TickSpeed();
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	float Pt = (Server()->Tick() - m_StartTick - 1) / (float) Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
-	
+
 	m_ActualPos = CurPos;
 	m_ActualDir = normalize(CurPos - PrevPos);
-	
+
 	m_LifeSpan--;
 	m_Angle += 4;
 
-	for(CCharacter *pChr = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); pChr; pChr = (CCharacter *)pChr->TypeNext())
+	for(CCharacter *pChr = (CCharacter *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); pChr; pChr = (CCharacter *) pChr->TypeNext())
 	{
-		if(pChr->IsHuman()) continue;
+		if(pChr->IsHuman())
+			continue;
 		float Len = distance(pChr->m_Pos, m_ActualPos);
 		if(Len < pChr->m_ProximityRadius)
 		{
@@ -80,39 +81,37 @@ void CReviverGrenade::Tick()
 		}
 	}
 
-	
 	if(GameLayerClipped(CurPos))
 	{
 		GameServer()->m_World.DestroyEntity(this);
 		return;
 	}
-	
+
 	vec2 LastPos;
 	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, NULL, &LastPos);
 	if(Collide || m_LifeSpan <= 0)
 	{
 		Explode(LastPos);
 	}
-	
 }
 
 void CReviverGrenade::FillInfo(CNetObj_Projectile *pProj)
 {
-	pProj->m_X = (int)m_Pos.x;
-	pProj->m_Y = (int)m_Pos.y;
-	pProj->m_VelX = (int)(m_Direction.x*100.0f);
-	pProj->m_VelY = (int)(m_Direction.y*100.0f);
+	pProj->m_X = (int) m_Pos.x;
+	pProj->m_Y = (int) m_Pos.y;
+	pProj->m_VelX = (int) (m_Direction.x * 100.0f);
+	pProj->m_VelY = (int) (m_Direction.y * 100.0f);
 	pProj->m_StartTick = m_StartTick;
 	pProj->m_Type = WEAPON_GRENADE;
 }
 
 void CReviverGrenade::Snap(int SnappingClient)
 {
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
-	
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
+
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;
-	
+
 	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
 	if(pProj)
 		FillInfo(pProj);
@@ -120,22 +119,22 @@ void CReviverGrenade::Snap(int SnappingClient)
 	float Radius = 16.0f;
 	int Degres = m_Angle;
 
-	for(int i=0;i < NUM_AMMO;i++)
+	for(int i = 0; i < NUM_AMMO; i++)
 	{
-		vec2 Pos = GetPos(Ct) + (GetDir(Degres*pi/180) * Radius);
+		vec2 Pos = GetPos(Ct) + (GetDir(Degres * pi / 180) * Radius);
 		CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_IDs[i], sizeof(CNetObj_Laser)));
 		if(pObj)
 		{
-			pObj->m_FromX = (int)Pos.x;
-			pObj->m_X = (int)Pos.x;
-			pObj->m_FromY = (int)Pos.y;
-			pObj->m_Y = (int)Pos.y;
+			pObj->m_FromX = (int) Pos.x;
+			pObj->m_X = (int) Pos.x;
+			pObj->m_FromY = (int) Pos.y;
+			pObj->m_Y = (int) Pos.y;
 			pObj->m_StartTick = Server()->Tick();
 		}
 		Degres += 360 / NUM_AMMO;
 	}
 }
-	
+
 void CReviverGrenade::Explode(vec2 Pos)
 {
 	float Radius = 5 * 16.0f;
@@ -143,9 +142,10 @@ void CReviverGrenade::Explode(vec2 Pos)
 	GameServer()->CreateExplosionDisk(Pos, Radius, Radius, 0, -1.0f, m_Owner, WEAPON_GRENADE, TAKEDAMAGEMODE_NOINFECTION);
 	GameServer()->CreateSound(Pos, SOUND_GRENADE_EXPLODE);
 
-	for(CCharacter *pChr = (CCharacter*) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); pChr; pChr = (CCharacter *)pChr->TypeNext())
+	for(CCharacter *pChr = (CCharacter *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_CHARACTER); pChr; pChr = (CCharacter *) pChr->TypeNext())
 	{
-		if(pChr->IsHuman()) continue;
+		if(pChr->IsHuman())
+			continue;
 		float Len = distance(pChr->m_Pos, Pos);
 		if(Len < pChr->m_ProximityRadius + Radius)
 		{

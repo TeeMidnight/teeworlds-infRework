@@ -8,6 +8,7 @@
 class CMap : public IEngineMap
 {
 	CDataFileReader m_DataFile;
+
 public:
 	CMap() {}
 

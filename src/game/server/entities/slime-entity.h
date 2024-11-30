@@ -9,7 +9,7 @@ class CSlimeEntity : public CEntity
 {
 public:
 	int m_Owner;
-	
+
 public:
 	CSlimeEntity(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir);
 

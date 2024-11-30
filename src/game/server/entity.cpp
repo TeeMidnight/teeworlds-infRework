@@ -14,12 +14,12 @@ CEntity::CEntity(CGameWorld *pGameWorld, int ObjType)
 	m_pGameWorld = pGameWorld;
 
 	m_ObjType = ObjType;
-	m_Pos = vec2(0,0);
+	m_Pos = vec2(0, 0);
 	m_ProximityRadius = 0;
 
 	m_MarkedForDestroy = false;
 	m_ID = Server()->SnapNewID();
-	
+
 	/*
 	m_IDs.set_size(2);
 	for(int i=0; i<2; i++)
@@ -36,20 +36,18 @@ CEntity::~CEntity()
 {
 	GameWorld()->RemoveEntity(this);
 	Server()->SnapFreeID(m_ID);
-	
-	
+
 	/*
 	if(m_IDs[0] >= 0)
 	{
-		for(int i=0; i<2; i++) 
+		for(int i=0; i<2; i++)
 		{
 			Server()->SnapFreeID(m_IDs[i]);
 			m_IDs[i] = -1;
 		}
-		
+
 	}
 	*/
-	
 }
 
 int CEntity::NetworkClipped(int SnappingClient)
@@ -62,8 +60,8 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 	if(SnappingClient == -1)
 		return 0;
 
-	float dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x-CheckPos.x;
-	float dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y-CheckPos.y;
+	float dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x - CheckPos.x;
+	float dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y - CheckPos.y;
 
 	if(absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
 		return 1;
@@ -75,8 +73,10 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 
 bool CEntity::GameLayerClipped(vec2 CheckPos)
 {
-	return round(CheckPos.x)/32 < -200 || round(CheckPos.x)/32 > GameServer()->Collision()->GetWidth()+200 ||
-			round(CheckPos.y)/32 < -200 || round(CheckPos.y)/32 > GameServer()->Collision()->GetHeight()+200 ? true : false;
+	return round(CheckPos.x) / 32 < -200 || round(CheckPos.x) / 32 > GameServer()->Collision()->GetWidth() + 200 ||
+			       round(CheckPos.y) / 32 < -200 || round(CheckPos.y) / 32 > GameServer()->Collision()->GetHeight() + 200 ?
+		       true :
+		       false;
 }
 
 CAnimatedEntity::CAnimatedEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pivot) :
@@ -85,7 +85,6 @@ CAnimatedEntity::CAnimatedEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pivot
 	m_RelPosition(vec2(0.0f, 0.0f)),
 	m_PosEnv(-1)
 {
-	
 }
 
 CAnimatedEntity::CAnimatedEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pivot, vec2 RelPosition, int PosEnv) :
@@ -94,7 +93,6 @@ CAnimatedEntity::CAnimatedEntity(CGameWorld *pGameWorld, int Objtype, vec2 Pivot
 	m_RelPosition(RelPosition),
 	m_PosEnv(PosEnv)
 {
-	
 }
 
 void CAnimatedEntity::Tick()
@@ -105,9 +103,9 @@ void CAnimatedEntity::Tick()
 	{
 		GetAnimationTransform(GameServer()->m_pController->GetTime(), m_PosEnv, GameServer()->Layers(), Position, Angle);
 	}
-	
+
 	float x = (m_RelPosition.x * cosf(Angle) - m_RelPosition.y * sinf(Angle));
 	float y = (m_RelPosition.x * sinf(Angle) + m_RelPosition.y * cosf(Angle));
-	
+
 	m_Pos = Position + m_Pivot + vec2(x, y);
 }

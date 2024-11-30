@@ -3,10 +3,10 @@
 #ifndef GAME_SERVER_ENTITIES_CHARACTER_H
 #define GAME_SERVER_ENTITIES_CHARACTER_H
 
-#include <game/server/entity.h>
-#include <game/server/entities/hero-flag.h>
-#include <game/generated/server_data.h>
 #include <game/generated/protocol.h>
+#include <game/generated/server_data.h>
+#include <game/server/entities/hero-flag.h>
+#include <game/server/entity.h>
 
 #include <game/gamecore.h>
 
@@ -26,11 +26,11 @@ enum
 };
 
 #define GHOST_RADIUS 11
-#define GHOST_SEARCHMAP_SIZE (2*GHOST_RADIUS+1)
+#define GHOST_SEARCHMAP_SIZE (2 * GHOST_RADIUS + 1)
 
 enum
 {
-	TAKEDAMAGEMODE_NOINFECTION=0,
+	TAKEDAMAGEMODE_NOINFECTION = 0,
 	TAKEDAMAGEMODE_INFECTION,
 	TAKEDAMAGEMODE_SELFHARM, // works like NOINFECTION but also harms the owner of the damage with 50%
 	TAKEDAMAGEMODE_ALL,
@@ -38,7 +38,7 @@ enum
 
 enum
 {
-	GIFT_HEROFLAG=0,
+	GIFT_HEROFLAG = 0,
 };
 /* INFECTION MODIFICATION END *****************************************/
 
@@ -51,7 +51,7 @@ class CCharacter : public CEntity
 public:
 	class IConsole *Console() { return m_pConsole; }
 
-	//character's size
+	// character's size
 	static const int ms_PhysSize = 28;
 
 	CCharacter(CGameWorld *pWorld, IConsole *pConsole);
@@ -97,7 +97,7 @@ public:
 
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
-	
+
 	void GiveNinjaBuf();
 
 private:
@@ -151,29 +151,29 @@ private:
 	int m_Health;
 	int m_Armor;
 
-/* INFECTION MODIFICATION START ***************************************/
-	//Dart
+	/* INFECTION MODIFICATION START ***************************************/
+	// Dart
 	int m_DartLifeSpan;
 	vec2 m_DartDir;
 	int m_DartLeft;
 	int m_DartOldVelAmount;
-	
+
 	int m_WaterJumpLifeSpan;
 
 	// the player core for the physics
 public:
 	CCharacterCore m_Core;
 	CCharacterCore *m_pCore;
-	
+
 private:
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	// info for dead reckoning
 	int m_ReckoningTick; // tick that we are performing dead reckoning From
 	CCharacterCore m_SendCore; // core that we should send
 	CCharacterCore m_ReckoningCore; // the dead reckoning core
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 private:
 	int m_AirJumpCounter;
 	bool m_FirstShot;
@@ -185,29 +185,29 @@ private:
 	int m_BonusTick;
 	int m_InfZoneTick;
 	int m_ProtectionTick;
-	
+
 	int m_FlagID;
 	int m_HeartID;
 	int m_BarrierHintID;
 	array<int> m_BarrierHintIDs;
 	int m_CursorID;
 	int m_AntiFireTick;
-	
+
 	bool m_IsFrozen;
 	int m_FrozenTime;
-	bool m_IsInSlowMotion; //LooperClass changes here
+	bool m_IsInSlowMotion; // LooperClass changes here
 	int m_FreezeReason;
 	int m_InAirTick;
-	
-	char m_GhostSearchMap[GHOST_SEARCHMAP_SIZE*GHOST_SEARCHMAP_SIZE];
-	
+
+	char m_GhostSearchMap[GHOST_SEARCHMAP_SIZE * GHOST_SEARCHMAP_SIZE];
+
 	vec2 m_SpawnPosition;
 
 	int m_VoodooTimeAlive;
 	int m_VoodooKiller; // Save killer + weapon for delayed kill message
 	int m_VoodooWeapon;
 
-	CHeroFlag* m_pHeroFlag;
+	CHeroFlag *m_pHeroFlag;
 
 public:
 	int m_PositionLockTick;
@@ -219,10 +219,10 @@ public:
 	bool m_HasHealBoom;
 	bool m_HasIndicator;
 	bool m_HasStunGrenade;
-	bool m_HasFreezeMine;// Freezer
+	bool m_HasFreezeMine; // Freezer
 	bool m_ShieldExplode;
 	int m_BroadcastWhiteHoleReady;
-	int m_BroadcastElasticHoleReady;// used to broadcast "WhiteHole ready" for a short period of time
+	int m_BroadcastElasticHoleReady; // used to broadcast "WhiteHole ready" for a short period of time
 	int m_BroadcastHealBoomReady;
 	int m_LoveTick;
 	int m_HallucinationTick;
@@ -231,7 +231,7 @@ public:
 	int m_ReslowlyTick;
 	int m_PoisonTick;
 	int m_Poison;
-	int m_SlowMotionTick; //LooperClass changes here
+	int m_SlowMotionTick; // LooperClass changes here
 	int m_PoisonFrom;
 	int m_LastFreezer;
 	int m_HookMode;
@@ -243,14 +243,13 @@ public:
 	bool m_VoodooAboutToDie;
 	int m_TurretCount;
 	int m_ResetKillsTime;
-	
 
 public:
 	CCharacterCore GetCore() { return m_Core; }
 	CCharacterCore *Core() { return m_pCore; }
-	vec2 GetVel() { return m_Core.m_Vel;}
-	void SetVel(vec2 Vel) { m_Core.m_Vel = Vel;}
-	void SetPos(vec2 Pos) { m_Core.m_Pos = Pos;}
+	vec2 GetVel() { return m_Core.m_Vel; }
+	void SetVel(vec2 Vel) { m_Core.m_Vel = Vel; }
+	void SetPos(vec2 Pos) { m_Core.m_Pos = Pos; }
 	void DestroyChildEntities();
 	void ClassSpawnAttributes();
 	void GiveArmorIfLonely();
@@ -264,8 +263,8 @@ public:
 	void RemoveAllGun();
 	void Freeze(float Time, int Player, int Reason);
 	bool IsFrozen() const;
-	bool IsInSlowMotion() const; //LooperClass changes here
-	void SlowMotionEffect(float duration);	//LooperClass changes here
+	bool IsInSlowMotion() const; // LooperClass changes here
+	void SlowMotionEffect(float duration); // LooperClass changes here
 	void Unfreeze();
 	void Poison(int Count, int From);
 	bool IsInLove() const;
@@ -276,12 +275,12 @@ public:
 	bool IsTeleportable();
 	int GetInfWeaponID(int WID);
 	void UpdateTuningParam();
-	bool FindPortalPosition(vec2 Pos, vec2& Res);
-	bool FindWitchSpawnPosition(vec2& Res);
+	bool FindPortalPosition(vec2 Pos, vec2 &Res);
+	bool FindWitchSpawnPosition(vec2 &Res);
 	void SaturateVelocity(vec2 Force, float MaxSpeed);
 	void GiveGift(int GiftType);
 	int GetInfZoneTick();
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 };
 
 #endif

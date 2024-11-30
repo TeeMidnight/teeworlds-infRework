@@ -4,23 +4,23 @@
 
 #include <game/server/entity.h>
 
-class CPlasmaPlus: public CEntity
+class CPlasmaPlus : public CEntity
 {
-	
 public:
 	CPlasmaPlus(CGameWorld *pGameWorld, vec2 Pos, int Owner, vec2 Direction, bool Freeze, bool Explosive);
-	
+
 	int GetOwner() const;
-	
+
 	virtual void Reset();
 	virtual void Tick();
 	virtual void Snap(int SnappingClient);
-	
+
 private:
 	void Explode();
-	
+
 public:
 	int m_Owner;
+
 private:
 	int m_StartTick;
 	int m_LifeSpan;

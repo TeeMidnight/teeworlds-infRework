@@ -5,7 +5,6 @@
 
 class CLaserTeleport : public CEntity
 {
-
 public:
 	CLaserTeleport(CGameWorld *pGameWorld, vec2 StartPos, vec2 EndPos);
 
@@ -17,7 +16,6 @@ private:
 	vec2 m_StartPos;
 	vec2 m_EndPos;
 	bool m_LaserFired;
-
 };
 
 #endif

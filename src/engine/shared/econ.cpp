@@ -4,10 +4,9 @@
 #include "econ.h"
 #include "netban.h"
 
-
 int CEcon::NewClientCallback(int ClientID, void *pUser)
 {
-	CEcon *pThis = (CEcon *)pUser;
+	CEcon *pThis = (CEcon *) pUser;
 
 	char aAddrStr[NETADDR_MAXSTRSIZE];
 	net_addr_str(pThis->m_NetConsole.ClientAddr(ClientID), aAddrStr, sizeof(aAddrStr), true);
@@ -25,7 +24,7 @@ int CEcon::NewClientCallback(int ClientID, void *pUser)
 
 int CEcon::DelClientCallback(int ClientID, int Type, const char *pReason, void *pUser)
 {
-	CEcon *pThis = (CEcon *)pUser;
+	CEcon *pThis = (CEcon *) pUser;
 
 	char aAddrStr[NETADDR_MAXSTRSIZE];
 	net_addr_str(pThis->m_NetConsole.ClientAddr(ClientID), aAddrStr, sizeof(aAddrStr), true);
@@ -50,7 +49,7 @@ bool CEcon::ConchainEconOutputLevelUpdate(IConsole::IResult *pResult, void *pUse
 		CEcon *pThis = static_cast<CEcon *>(pUserData);
 		pThis->Console()->SetPrintOutputLevel(pThis->m_PrintCBIndex, pResult->GetInteger(0));
 	}
-	
+
 	return true;
 }
 
@@ -60,7 +59,7 @@ bool CEcon::ConLogout(IConsole::IResult *pResult, void *pUserData)
 
 	if(pThis->m_UserClientID >= 0 && pThis->m_UserClientID < NET_MAX_CONSOLE_CLIENTS && pThis->m_aClients[pThis->m_UserClientID].m_State != CClient::STATE_EMPTY)
 		pThis->m_NetConsole.Drop(pThis->m_UserClientID, CLIENTDROPTYPE_LOGOUT, "Logout");
-		
+
 	return true;
 }
 
@@ -97,7 +96,7 @@ void CEcon::Init(IConsole *pConsole, CNetBan *pNetBan)
 		m_Ready = true;
 		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "bound to %s:%d", g_Config.m_EcBindaddr, g_Config.m_EcPort);
-		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD,"econ", aBuf);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "econ", aBuf);
 
 		Console()->Chain("ec_output_level", ConchainEconOutputLevelUpdate, this);
 		m_PrintCBIndex = Console()->RegisterPrintCallback(g_Config.m_EcOutputLevel, SendLineCB, this);
@@ -105,7 +104,7 @@ void CEcon::Init(IConsole *pConsole, CNetBan *pNetBan)
 		Console()->Register("logout", "", CFGFLAG_ECON, ConLogout, this, "Logout of econ");
 	}
 	else
-		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD,"econ", "couldn't open socket. port might already be in use");
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "econ", "couldn't open socket. port might already be in use");
 }
 
 void CEcon::Update()
@@ -118,7 +117,7 @@ void CEcon::Update()
 	char aBuf[NET_MAX_PACKETSIZE];
 	int ClientID;
 
-	while(m_NetConsole.Recv(aBuf, (int)(sizeof(aBuf))-1, &ClientID))
+	while(m_NetConsole.Recv(aBuf, (int) (sizeof(aBuf)) - 1, &ClientID))
 	{
 		dbg_assert(m_aClients[ClientID].m_State != CClient::STATE_EMPTY, "got message from empty slot");
 		if(m_aClients[ClientID].m_State == CClient::STATE_CONNECTED)
@@ -142,7 +141,7 @@ void CEcon::Update()
 					if(!g_Config.m_EcBantime)
 						m_NetConsole.Drop(ClientID, CLIENTDROPTYPE_KICK, "Too many authentication tries");
 					else
-						m_NetConsole.NetBan()->BanAddr(m_NetConsole.ClientAddr(ClientID), g_Config.m_EcBantime*60, "Too many authentication tries");
+						m_NetConsole.NetBan()->BanAddr(m_NetConsole.ClientAddr(ClientID), g_Config.m_EcBantime * 60, "Too many authentication tries");
 				}
 			}
 		}

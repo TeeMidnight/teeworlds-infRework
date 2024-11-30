@@ -2,9 +2,9 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <base/system.h>
 
-#include "packer.h"
 #include "compression.h"
 #include "config.h"
+#include "packer.h"
 
 void CPacker::Reset()
 {
@@ -70,13 +70,13 @@ void CPacker::AddRaw(const void *pData, int Size)
 	if(m_Error)
 		return;
 
-	if(m_pCurrent+Size >= m_pEnd)
+	if(m_pCurrent + Size >= m_pEnd)
 	{
 		m_Error = 1;
 		return;
 	}
 
-	const unsigned char *pSrc = (const unsigned char *)pData;
+	const unsigned char *pSrc = (const unsigned char *) pData;
 	while(Size)
 	{
 		*m_pCurrent++ = *pSrc++;
@@ -84,11 +84,10 @@ void CPacker::AddRaw(const void *pData, int Size)
 	}
 }
 
-
 void CUnpacker::Reset(const void *pData, int Size)
 {
 	m_Error = 0;
-	m_pStart = (const unsigned char *)pData;
+	m_pStart = (const unsigned char *) pData;
 	m_pEnd = m_pStart + Size;
 	m_pCurrent = m_pStart;
 }
@@ -119,24 +118,25 @@ const char *CUnpacker::GetString(int SanitizeType)
 	if(m_Error || m_pCurrent >= m_pEnd)
 		return "";
 
-	char *pPtr = (char *)m_pCurrent;
+	char *pPtr = (char *) m_pCurrent;
 	while(*m_pCurrent) // skip the string
 	{
 		m_pCurrent++;
 		if(m_pCurrent == m_pEnd)
 		{
-			m_Error = 1;;
+			m_Error = 1;
+			;
 			return "";
 		}
 	}
 	m_pCurrent++;
 
 	// sanitize all strings
-	if(SanitizeType&SANITIZE)
+	if(SanitizeType & SANITIZE)
 		str_sanitize(pPtr);
-	else if(SanitizeType&SANITIZE_CC)
+	else if(SanitizeType & SANITIZE_CC)
 		str_sanitize_cc(pPtr);
-	return SanitizeType&SKIP_START_WHITESPACES ? str_utf8_skip_whitespaces(pPtr) : pPtr;
+	return SanitizeType & SKIP_START_WHITESPACES ? str_utf8_skip_whitespaces(pPtr) : pPtr;
 }
 
 const unsigned char *CUnpacker::GetRaw(int Size)
@@ -146,7 +146,7 @@ const unsigned char *CUnpacker::GetRaw(int Size)
 		return 0;
 
 	// check for nasty sizes
-	if(Size < 0 || m_pCurrent+Size > m_pEnd)
+	if(Size < 0 || m_pCurrent + Size > m_pEnd)
 	{
 		m_Error = 1;
 		return 0;

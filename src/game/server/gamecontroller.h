@@ -3,8 +3,8 @@
 #ifndef GAME_SERVER_GAMECONTROLLER_H
 #define GAME_SERVER_GAMECONTROLLER_H
 
-#include <base/vmath.h>
 #include <base/tl/array.h>
+#include <base/vmath.h>
 
 class CDoor;
 #ifdef _MSC_VER
@@ -30,22 +30,21 @@ protected:
 	CGameContext *GameServer() const { return m_pGameServer; }
 	IServer *Server() const { return m_pServer; }
 
-/* INFECTION MODIFICATION START ***************************************/
+	/* INFECTION MODIFICATION START ***************************************/
 	array<vec2> m_HeroFlagPositions;
 	array<vec2> m_SpawnPoints[2];
 	int m_aNumSpawnPoints[2];
 	int m_RoundId;
-	
+
 public:
-	inline const array<vec2>& HeroFlagPositions() const { return m_HeroFlagPositions; }
-/* INFECTION MODIFICATION START ***************************************/
+	inline const array<vec2> &HeroFlagPositions() const { return m_HeroFlagPositions; }
+	/* INFECTION MODIFICATION START ***************************************/
 
 protected:
 	void CycleMap(bool Forced = false);
 	void ResetGame();
 
 	char m_aMapWish[128];
-
 
 	int m_RoundStartTick;
 	int m_GameOverTick;
@@ -62,7 +61,7 @@ protected:
 
 public:
 	const char *m_pGameType;
-	
+
 	void SkipMap();
 
 	bool IsTeamplay() const;
@@ -70,7 +69,7 @@ public:
 
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();
-	
+
 	virtual void DoWincheck();
 
 	void DoWarmup(int Seconds);
@@ -103,7 +102,7 @@ public:
 	virtual void Tick();
 
 	virtual void Snap(int SnappingClient);
-	
+
 	virtual bool CanVote();
 
 	/*
@@ -118,7 +117,7 @@ public:
 		Returns:
 			bool?
 	*/
-	virtual bool OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, vec2 P2, vec2 P3, int PosEnv);
+	virtual bool OnEntity(const char *pName, vec2 Pivot, vec2 P0, vec2 P1, vec2 P2, vec2 P3, int PosEnv);
 
 	/*
 		Function: on_CCharacter_spawn
@@ -141,21 +140,20 @@ public:
 	*/
 	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
 
-
 	virtual void OnPlayerInfoChange(class CPlayer *pP);
 
 	//
-/* INFECTION MODIFICATION START ***************************************/
-	virtual bool PreSpawn(CPlayer* pPlayer, vec2 *pPos);
-	virtual int ChooseHumanClass(const CPlayer* pPlayer) const = 0;
-	virtual int ChooseInfectedClass(const CPlayer* pPlayer) const = 0;
+	/* INFECTION MODIFICATION START ***************************************/
+	virtual bool PreSpawn(CPlayer *pPlayer, vec2 *pPos);
+	virtual int ChooseHumanClass(const CPlayer *pPlayer) const = 0;
+	virtual int ChooseInfectedClass(const CPlayer *pPlayer) const = 0;
 	virtual bool IsChoosableClass(int PlayerClass) = 0;
 	virtual bool IsSpawnable(vec2 Position, int TeleZoneIndex) = 0;
 	virtual void OnClientDrop(int ClientID, int Type) {};
 	virtual bool IsInfectionStarted() = 0;
-	
+
 	int GetRoundId() { return m_RoundId; }
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 
 	/*
 

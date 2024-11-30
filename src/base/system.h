@@ -32,14 +32,13 @@ extern "C" {
 		<dbg_break>
 */
 void dbg_assert(int test, const char *msg);
-#define dbg_assert(test,msg) dbg_assert_imp(__FILE__, __LINE__, test, msg)
+#define dbg_assert(test, msg) dbg_assert_imp(__FILE__, __LINE__, test, msg)
 void dbg_assert_imp(const char *filename, int line, int test, const char *msg);
-
 
 #ifdef __clang_analyzer__
 #include <assert.h>
 #undef dbg_assert
-#define dbg_assert(test,msg) assert(test)
+#define dbg_assert(test, msg) assert(test)
 #endif
 
 /*
@@ -93,7 +92,7 @@ void dbg_msg(const char *sys, const char *fmt, ...);
 		<mem_free>
 */
 void *mem_alloc_debug(const char *filename, int line, unsigned size, unsigned alignment);
-#define mem_alloc(s,a) mem_alloc_debug(__FILE__, __LINE__, (s), (a))
+#define mem_alloc(s, a) mem_alloc_debug(__FILE__, __LINE__, (s), (a))
 
 /*
 	Function: mem_free
@@ -180,7 +179,8 @@ int mem_check_imp();
 #define mem_check() dbg_assert_imp(__FILE__, __LINE__, mem_check_imp(), "Memory check failed")
 
 /* Group: File IO */
-enum {
+enum
+{
 	IOFLAG_READ = 1,
 	IOFLAG_WRITE = 2,
 	IOFLAG_RANDOM = 4,
@@ -322,7 +322,6 @@ int io_close(IOHANDLE io);
 */
 int io_flush(IOHANDLE io);
 
-
 /*
 	Function: io_stdin
 		Returns an <IOHANDLE> to the standard input.
@@ -340,7 +339,6 @@ IOHANDLE io_stdout();
 		Returns an <IOHANDLE> to the standard error.
 */
 IOHANDLE io_stderr();
-
 
 /* Group: Threads */
 
@@ -411,7 +409,7 @@ void thread_yield();
 void thread_detach(void *thread);
 
 /* Group: Locks */
-typedef void* LOCK;
+typedef void *LOCK;
 
 LOCK lock_create();
 void lock_destroy(LOCK lock);
@@ -421,23 +419,22 @@ void lock_wait(LOCK lock);
 void lock_release(LOCK lock);
 void lock_unlock(LOCK lock);
 
-
 /* Group: Semaphores */
 
 #if !defined(CONF_PLATFORM_MACOSX)
-	#if defined(CONF_FAMILY_UNIX)
-		#include <semaphore.h>
-		typedef sem_t SEMAPHORE;
-	#elif defined(CONF_FAMILY_WINDOWS)
-		typedef void* SEMAPHORE;
-	#else
-		#error missing sempahore implementation
-	#endif
+#if defined(CONF_FAMILY_UNIX)
+#include <semaphore.h>
+typedef sem_t SEMAPHORE;
+#elif defined(CONF_FAMILY_WINDOWS)
+typedef void *SEMAPHORE;
+#else
+#error missing sempahore implementation
+#endif
 
-	void semaphore_init(SEMAPHORE *sem);
-	void semaphore_wait(SEMAPHORE *sem);
-	void semaphore_signal(SEMAPHORE *sem);
-	void semaphore_destroy(SEMAPHORE *sem);
+void semaphore_init(SEMAPHORE *sem);
+void semaphore_wait(SEMAPHORE *sem);
+void semaphore_signal(SEMAPHORE *sem);
+void semaphore_destroy(SEMAPHORE *sem);
 #endif
 
 /* Group: Timer */
@@ -489,13 +486,13 @@ typedef struct
 
 enum
 {
-	NETADDR_MAXSTRSIZE = 1+(8*4+7)+1+1+5+1, // [XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX]:XXXXX
+	NETADDR_MAXSTRSIZE = 1 + (8 * 4 + 7) + 1 + 1 + 5 + 1, // [XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX]:XXXXX
 
 	NETTYPE_INVALID = 0,
 	NETTYPE_IPV4 = 1,
 	NETTYPE_IPV6 = 2,
 	NETTYPE_LINK_BROADCAST = 4,
-	NETTYPE_ALL = NETTYPE_IPV4|NETTYPE_IPV6
+	NETTYPE_ALL = NETTYPE_IPV4 | NETTYPE_IPV6
 };
 
 typedef struct
@@ -631,7 +628,6 @@ int net_udp_recv(NETSOCKET sock, NETADDR *addr, void *data, int maxsize);
 */
 int net_udp_close(NETSOCKET sock);
 
-
 /* Group: Network TCP */
 
 /*
@@ -746,7 +742,7 @@ int net_tcp_close(NETSOCKET sock);
 */
 void str_append(char *dst, const char *src, int dst_size);
 
-//TeeUniverses
+// TeeUniverses
 void str_append_num(char *dst, const char *src, int dst_size, int num);
 
 /*
@@ -1145,7 +1141,6 @@ int fs_rename(const char *oldname, const char *newname);
 	Group: Undocumented
 */
 
-
 /*
 	Function: net_tcp_connect_non_blocking
 
@@ -1187,7 +1182,6 @@ void mem_debug_dump(IOHANDLE file);
 
 void swap_endian(void *data, unsigned elem_size, unsigned num);
 
-
 typedef void (*DBG_LOGGER)(const char *line);
 void dbg_logger(DBG_LOGGER logger);
 
@@ -1211,7 +1205,6 @@ typedef struct
 	int recv_packets;
 	int recv_bytes;
 } NETSTATS;
-
 
 void net_stats(NETSTATS *stats);
 

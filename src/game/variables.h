@@ -7,10 +7,10 @@
 // server
 MACRO_CONFIG_INT(SvWarmup, sv_warmup, 0, 0, 0, CFGFLAG_SERVER, "Number of seconds to do warmup before round starts")
 MACRO_CONFIG_STR(SvMotd, sv_motd, 900, "", CFGFLAG_SERVER, "Message of the day to display for the clients")
-MACRO_CONFIG_STR(SvMaprotation, sv_maprotation, 768, "infc_lunaroutpost infc_skull infc_warehouse infc_damascus infc_eidalfitr infc_newdust infc_olddust infc_halfdust infc_terraria infc_rminecraft infc_minecraft infc_nether infc_skyland infc_land infc_hardcorepit infc_normandie infc_deathdealer infc_bamboo3 infc_halfdust infc_warehouse2 infc_headquarter infc_darkcave infc_darkcave_v2 infc_toilet infc_toilet_v2 infc_half_provence infc_wonderlands_mini infc_canyon infc_k9f_small infc_malinalli_k9f infc_skull_mini infc_towers infc_floatingislands infc_the_end", CFGFLAG_SERVER, "Maps to rotate between")
+MACRO_CONFIG_STR(SvMaprotation, sv_maprotation, 1024, "", CFGFLAG_SERVER, "Maps to rotate between")
 MACRO_CONFIG_INT(SvRoundsPerMap, sv_rounds_per_map, 8, 1, 100, CFGFLAG_SERVER, "Number of rounds on each map before rotating")
 MACRO_CONFIG_INT(SvScorelimit, sv_scorelimit, 0, 0, 1000, CFGFLAG_SERVER, "Score limit (0 disables)")
-MACRO_CONFIG_INT(SvTimelimit, sv_timelimit, 3, 0, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
+MACRO_CONFIG_INT(SvTimelimit, sv_timelimit, 4, 0, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
 MACRO_CONFIG_STR(SvGametype, sv_gametype, 32, "mod", CFGFLAG_SERVER, "Game type (dm, tdm, ctf)")
 MACRO_CONFIG_INT(SvTournamentMode, sv_tournament_mode, 0, 0, 1, CFGFLAG_SERVER, "Tournament mode. When enabled, players join the server as spectators")
 MACRO_CONFIG_INT(SvSpamprotection, sv_spamprotection, 1, 0, 1, CFGFLAG_SERVER, "Spam protection")
@@ -33,6 +33,6 @@ MACRO_CONFIG_INT(SvSkinStealAction, sv_skinstealaction, 0, 0, 1, CFGFLAG_SERVER,
 
 // debug
 #ifdef CONF_DEBUG // this one can crash the server if not used correctly
-	MACRO_CONFIG_INT(DbgDummies, dbg_dummies, 0, 0, 15, CFGFLAG_SERVER, "")
+MACRO_CONFIG_INT(DbgDummies, dbg_dummies, 0, 0, 15, CFGFLAG_SERVER, "")
 #endif
 #endif

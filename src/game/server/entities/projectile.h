@@ -18,7 +18,7 @@ public:
 	virtual void Snap(int SnappingClient);
 
 	int GetOwner() const;
-	int GetType() const { return m_Type;}
+	int GetType() const { return m_Type; }
 
 	vec2 m_ActualPos;
 
@@ -33,17 +33,17 @@ private:
 	float m_Force;
 	int m_StartTick;
 	bool m_Explosive;
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 	bool m_IsFlashGrenade;
 	bool m_IsPortal;
 	vec2 m_StartPos;
 	bool m_TakeDamageMode;
-	
+
 public:
 	void FlashGrenade();
 	void Portal();
-/* INFECTION MODIFICATION END *****************************************/
+	/* INFECTION MODIFICATION END *****************************************/
 };
 
 #endif

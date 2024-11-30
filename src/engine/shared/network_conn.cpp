@@ -4,9 +4,9 @@
 #include "config.h"
 #include "network.h"
 
-SECURITY_TOKEN ToSecurityToken(const unsigned char* pData)
+SECURITY_TOKEN ToSecurityToken(const unsigned char *pData)
 {
-	return (int)pData[0] | (pData[1] << 8) | (pData[2] << 16) | (pData[3] << 24);
+	return (int) pData[0] | (pData[1] << 8) | (pData[2] << 16) | (pData[3] << 24);
 }
 
 void CNetConnection::ResetStats()
@@ -21,7 +21,7 @@ void CNetConnection::Reset(bool Rejoin)
 	m_PeerAck = 0;
 	m_RemoteClosed = 0;
 
-	if (!Rejoin)
+	if(!Rejoin)
 	{
 		m_TimeoutProtected = false;
 		m_TimeoutSituation = false;
@@ -33,9 +33,9 @@ void CNetConnection::Reset(bool Rejoin)
 
 	m_LastSendTime = 0;
 	m_LastRecvTime = 0;
-	//m_LastUpdateTime = 0;
+	// m_LastUpdateTime = 0;
 
-	//mem_zero(&m_PeerAddr, sizeof(m_PeerAddr));
+	// mem_zero(&m_PeerAddr, sizeof(m_PeerAddr));
 	m_UnknownSeq = false;
 
 	m_Buffer.Init();
@@ -106,7 +106,7 @@ int CNetConnection::QueueChunkEx(int Flags, int DataSize, const void *pData, int
 	unsigned char *pChunkData;
 
 	// check if we have space for it, if not, flush the connection
-	if(m_Construct.m_DataSize + DataSize + NET_MAX_CHUNKHEADERSIZE > (int)sizeof(m_Construct.m_aChunkData))
+	if(m_Construct.m_DataSize + DataSize + NET_MAX_CHUNKHEADERSIZE > (int) sizeof(m_Construct.m_aChunkData))
 		Flush();
 
 	// pack all the data
@@ -121,20 +121,20 @@ int CNetConnection::QueueChunkEx(int Flags, int DataSize, const void *pData, int
 
 	//
 	m_Construct.m_NumChunks++;
-	m_Construct.m_DataSize = (int)(pChunkData-m_Construct.m_aChunkData);
+	m_Construct.m_DataSize = (int) (pChunkData - m_Construct.m_aChunkData);
 
 	// set packet flags aswell
 
-	if(Flags&NET_CHUNKFLAG_VITAL && !(Flags&NET_CHUNKFLAG_RESEND))
+	if(Flags & NET_CHUNKFLAG_VITAL && !(Flags & NET_CHUNKFLAG_RESEND))
 	{
 		// save packet if we need to resend
-		CNetChunkResend *pResend = m_Buffer.Allocate(sizeof(CNetChunkResend)+DataSize);
+		CNetChunkResend *pResend = m_Buffer.Allocate(sizeof(CNetChunkResend) + DataSize);
 		if(pResend)
 		{
 			pResend->m_Sequence = Sequence;
 			pResend->m_Flags = Flags;
 			pResend->m_DataSize = DataSize;
-			pResend->m_pData = (unsigned char *)(pResend+1);
+			pResend->m_pData = (unsigned char *) (pResend + 1);
 			pResend->m_FirstSendTime = time_get();
 			pResend->m_LastSendTime = pResend->m_FirstSendTime;
 			mem_copy(pResend->m_pData, pData, DataSize);
@@ -169,8 +169,8 @@ void CNetConnection::DirectInit(NETADDR &Addr, SECURITY_TOKEN SecurityToken)
 
 int CNetConnection::QueueChunk(int Flags, int DataSize, const void *pData)
 {
-	if(Flags&NET_CHUNKFLAG_VITAL)
-		m_Sequence = (m_Sequence+1)%NET_MAX_SEQUENCE;
+	if(Flags & NET_CHUNKFLAG_VITAL)
+		m_Sequence = (m_Sequence + 1) % NET_MAX_SEQUENCE;
 	return QueueChunkEx(Flags, DataSize, pData, m_Sequence);
 }
 
@@ -183,7 +183,7 @@ void CNetConnection::SendControl(int ControlMsg, const void *pExtra, int ExtraSi
 
 void CNetConnection::ResendChunk(CNetChunkResend *pResend)
 {
-	QueueChunkEx(pResend->m_Flags|NET_CHUNKFLAG_RESEND, pResend->m_DataSize, pResend->m_pData, pResend->m_Sequence);
+	QueueChunkEx(pResend->m_Flags | NET_CHUNKFLAG_RESEND, pResend->m_DataSize, pResend->m_pData, pResend->m_Sequence);
 	pResend->m_LastSendTime = time_get();
 }
 
@@ -215,7 +215,7 @@ void CNetConnection::Disconnect(const char *pReason)
 	if(m_RemoteClosed == 0)
 	{
 		if(pReason)
-			SendControl(NET_CTRLMSG_CLOSE, pReason, str_length(pReason)+1);
+			SendControl(NET_CTRLMSG_CLOSE, pReason, str_length(pReason) + 1);
 		else
 			SendControl(NET_CTRLMSG_CLOSE, 0, 0);
 
@@ -251,26 +251,26 @@ int CNetConnection::SimulateConnexionWithInfo(NETADDR *pAddr)
 int CNetConnection::Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr)
 {
 	// check if actual ack value is valid(own sequence..latest peer ack)
- 	if(m_Sequence >= m_PeerAck)
- 	{
- 		if(pPacket->m_Ack < m_PeerAck || pPacket->m_Ack > m_Sequence)
- 			return 0;
- 	}
- 	else
- 	{
- 		if(pPacket->m_Ack < m_PeerAck && pPacket->m_Ack > m_Sequence)
- 			return 0;
- 	}
- 	m_PeerAck = pPacket->m_Ack;
+	if(m_Sequence >= m_PeerAck)
+	{
+		if(pPacket->m_Ack < m_PeerAck || pPacket->m_Ack > m_Sequence)
+			return 0;
+	}
+	else
+	{
+		if(pPacket->m_Ack < m_PeerAck && pPacket->m_Ack > m_Sequence)
+			return 0;
+	}
+	m_PeerAck = pPacket->m_Ack;
 
 	int64 Now = time_get();
 
 	// check if resend is requested
-	if(pPacket->m_Flags&NET_PACKETFLAG_RESEND)
+	if(pPacket->m_Flags & NET_PACKETFLAG_RESEND)
 		Resend();
 
 	//
-	if(pPacket->m_Flags&NET_PACKETFLAG_CONTROL)
+	if(pPacket->m_Flags & NET_PACKETFLAG_CONTROL)
 	{
 		int CtrlMsg = pPacket->m_aChunkData[0];
 
@@ -286,9 +286,9 @@ int CNetConnection::Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr)
 				{
 					// make sure to sanitize the error string form the other party
 					if(pPacket->m_DataSize < 128)
-						str_copy(Str, (char *)&pPacket->m_aChunkData[1], pPacket->m_DataSize);
+						str_copy(Str, (char *) &pPacket->m_aChunkData[1], pPacket->m_DataSize);
 					else
-						str_copy(Str, (char *)&pPacket->m_aChunkData[1], sizeof(Str));
+						str_copy(Str, (char *) &pPacket->m_aChunkData[1], sizeof(Str));
 					str_sanitize_strong(Str);
 				}
 
@@ -366,7 +366,7 @@ int CNetConnection::Update()
 	// check for timeout
 	if(State() != NET_CONNSTATE_OFFLINE &&
 		State() != NET_CONNSTATE_CONNECT &&
-		(Now-m_LastRecvTime) > time_freq()*10)
+		(Now - m_LastRecvTime) > time_freq() * 10)
 	{
 		m_State = NET_CONNSTATE_ERROR;
 		SetError("Timeout");
@@ -378,7 +378,7 @@ int CNetConnection::Update()
 		CNetChunkResend *pResend = m_Buffer.First();
 
 		// check if we have some really old stuff laying around and abort if not acked
-		if(Now-pResend->m_FirstSendTime > time_freq()*10)
+		if(Now - pResend->m_FirstSendTime > time_freq() * 10)
 		{
 			m_State = NET_CONNSTATE_ERROR;
 			SetError("Too weak connection (not acked for 10 seconds)");
@@ -386,7 +386,7 @@ int CNetConnection::Update()
 		else
 		{
 			// resend packet if we havn't got it acked in 1 second
-			if(Now-pResend->m_LastSendTime > time_freq())
+			if(Now - pResend->m_LastSendTime > time_freq())
 				ResendChunk(pResend);
 		}
 	}
@@ -394,24 +394,24 @@ int CNetConnection::Update()
 	// send keep alives if nothing has happend for 250ms
 	if(State() == NET_CONNSTATE_ONLINE)
 	{
-		if(time_get()-m_LastSendTime > time_freq()/2) // flush connection after 500ms if needed
+		if(time_get() - m_LastSendTime > time_freq() / 2) // flush connection after 500ms if needed
 		{
 			int NumFlushedChunks = Flush();
 			if(NumFlushedChunks && g_Config.m_Debug)
 				dbg_msg("connection", "flushed connection due to timeout. %d chunks.", NumFlushedChunks);
 		}
 
-		if(time_get()-m_LastSendTime > time_freq())
+		if(time_get() - m_LastSendTime > time_freq())
 			SendControl(NET_CTRLMSG_KEEPALIVE, 0, 0);
 	}
 	else if(State() == NET_CONNSTATE_CONNECT)
 	{
-		if(time_get()-m_LastSendTime > time_freq()/2) // send a new connect every 500ms
+		if(time_get() - m_LastSendTime > time_freq() / 2) // send a new connect every 500ms
 			SendControl(NET_CTRLMSG_CONNECT, 0, 0);
 	}
 	else if(State() == NET_CONNSTATE_PENDING)
 	{
-		if(time_get()-m_LastSendTime > time_freq()/2) // send a new connect/accept every 500ms
+		if(time_get() - m_LastSendTime > time_freq() / 2) // send a new connect/accept every 500ms
 			SendControl(NET_CTRLMSG_CONNECTACCEPT, 0, 0);
 	}
 

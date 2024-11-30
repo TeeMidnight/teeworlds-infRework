@@ -18,7 +18,7 @@ class CSnapIDPool
 {
 	enum
 	{
-		MAX_IDS = 16*2048,
+		MAX_IDS = 16 * 2048,
 	};
 
 	class CID
@@ -38,7 +38,6 @@ class CSnapIDPool
 	int m_InUsage;
 
 public:
-
 	CSnapIDPool();
 
 	void Reset();
@@ -50,17 +49,17 @@ public:
 	int GetMaxIDs() { return MAX_IDS; }
 };
 
-
 class CServerBan : public CNetBan
 {
 	class CServer *m_pServer;
 
-	template<class T> int BanExt(T *pBanPool, const typename T::CDataType *pData, int Seconds, const char *pReason);
+	template<class T>
+	int BanExt(T *pBanPool, const typename T::CDataType *pData, int Seconds, const char *pReason);
 
 public:
 	class CServer *Server() const { return m_pServer; }
 
-	void InitServerBan(class IConsole *pConsole, class IStorage *pStorage, class CServer* pServer);
+	void InitServerBan(class IConsole *pConsole, class IStorage *pStorage, class CServer *pServer);
 
 	virtual int BanAddr(const NETADDR *pAddr, int Seconds, const char *pReason);
 	virtual int BanRange(const CNetRange *pRange, int Seconds, const char *pReason);
@@ -70,7 +69,6 @@ public:
 	int m_BanID;
 };
 
-
 class CServer : public IServer
 {
 	class IGameServer *m_pGameServer;
@@ -79,24 +77,23 @@ class CServer : public IServer
 
 /* DDNET MODIFICATION START *******************************************/
 #ifdef CONF_SQL
-	CSqlServer* m_apSqlReadServers[MAX_SQLSERVERS];
-	CSqlServer* m_apSqlWriteServers[MAX_SQLSERVERS];
+	CSqlServer *m_apSqlReadServers[MAX_SQLSERVERS];
+	CSqlServer *m_apSqlWriteServers[MAX_SQLSERVERS];
 #endif
-/* DDNET MODIFICATION END *********************************************/
+	/* DDNET MODIFICATION END *********************************************/
 public:
 	class IGameServer *GameServer() { return m_pGameServer; }
 	class IConsole *Console() { return m_pConsole; }
 	class IStorage *Storage() { return m_pStorage; }
-	
+
 	enum
 	{
-		MAX_RCONCMD_SEND=16,
+		MAX_RCONCMD_SEND = 16,
 	};
 
 	class CClient
 	{
 	public:
-
 		enum
 		{
 			STATE_EMPTY = 0,
@@ -105,7 +102,7 @@ public:
 			STATE_READY,
 			STATE_INGAME,
 
-			SNAPRATE_INIT=0,
+			SNAPRATE_INIT = 0,
 			SNAPRATE_FULL,
 			SNAPRATE_RECOVER
 		};
@@ -139,11 +136,11 @@ public:
 		int m_NextMapChunk;
 
 		const IConsole::CCommandInfo *m_pRconCmdToSend;
-		
-		void Reset(bool ResetScore=true);
-		
+
+		void Reset(bool ResetScore = true);
+
 		int m_NbRound;
-		
+
 		int m_AntiPing;
 		int m_CustomSkin;
 		int m_AlwaysRandom;
@@ -151,12 +148,12 @@ public:
 		char m_aLanguage[16];
 		int m_WaitingTime;
 		int m_WasInfected;
-		
+
 		bool m_Memory[NUM_CLIENTMEMORIES];
 		IServer::CClientSession m_Session;
 		IServer::CClientAccusation m_Accusation;
-		
-		//Login
+
+		// Login
 		int m_LogInstance;
 		int m_UserID;
 #ifdef CONF_SQL
@@ -183,7 +180,7 @@ public:
 	IEngineMap *m_pMap;
 
 	int64 m_GameStartTime;
-	//int m_CurrentGameTick;
+	// int m_CurrentGameTick;
 	int m_RunServer;
 	int m_MapReload;
 	int m_RconClientID;
@@ -191,10 +188,10 @@ public:
 	int m_PrintCBIndex;
 
 	int64 m_Lastheartbeat;
-	//static NETADDR4 master_server;
+	// static NETADDR4 master_server;
 
 	char m_aCurrentMap[64];
-	
+
 	unsigned m_CurrentMapCrc;
 	unsigned char *m_pCurrentMapData;
 	unsigned int m_CurrentMapSize;
@@ -205,7 +202,6 @@ public:
 
 	CDemoRecorder m_DemoRecorder;
 	CRegister m_Register;
-	CMapChecker m_MapChecker;
 
 	CServer();
 	virtual ~CServer();
@@ -221,9 +217,9 @@ public:
 	void DemoRecorder_HandleAutoStart();
 	bool DemoRecorder_IsRecording();
 
-	//int Tick()
+	// int Tick()
 	int64 TickStartTime(int Tick);
-	//int TickSpeed()
+	// int TickSpeed()
 
 	int Init();
 
@@ -249,7 +245,7 @@ public:
 
 	void SendMap(int ClientID);
 	void SendMapData(int ClientID, int Chunk);
-	
+
 	void SendConnectionReady(int ClientID);
 	void SendRconLine(int ClientID, const char *pLine);
 	static void SendRconLineAuthed(const char *pLine, void *pUser);
@@ -288,24 +284,23 @@ public:
 	static bool ConMute(class IConsole::IResult *pResult, void *pUser);
 	static bool ConUnmute(class IConsole::IResult *pResult, void *pUser);
 	static bool ConWhisper(class IConsole::IResult *pResult, void *pUser);
-	
-/* DDNET MODIFICATION START *******************************************/
+
+	/* DDNET MODIFICATION START *******************************************/
 	static bool ConAddSqlServer(IConsole::IResult *pResult, void *pUserData);
 	static bool ConDumpSqlServers(IConsole::IResult *pResult, void *pUserData);
 	static bool ConGetIDCount(IConsole::IResult *pResult, void *pUser);
 
 	static void CreateTablesThread(void *pData);
-/* DDNET MODIFICATION END *********************************************/
-	
-	void RegisterCommands();
+	/* DDNET MODIFICATION END *********************************************/
 
+	void RegisterCommands();
 
 	virtual int SnapNewID();
 	virtual void SnapFreeID(int ID);
 	virtual void *SnapNewItem(int Type, int ID, int Size);
 	void SnapSetStaticsize(int ItemType, int Size);
-	
-/* INFECTION MODIFICATION START ***************************************/
+
+	/* INFECTION MODIFICATION START ***************************************/
 public:
 	int m_InfClassChooser;
 	int m_InfAmmoRegenTime[NB_INFWEAPON];
@@ -317,43 +312,43 @@ public:
 	virtual int IsClientInfectedBefore(int ClientID);
 	virtual void InfectClient(int ClientID);
 	virtual void UnInfectClient(int ClientID);
-	
+
 	virtual int GetClientAntiPing(int ClientID);
 	virtual void SetClientAntiPing(int ClientID, int Value);
-	
+
 	virtual int GetClientCustomSkin(int ClientID);
 	virtual void SetClientCustomSkin(int ClientID, int Value);
-	
+
 	virtual int GetClientAlwaysRandom(int ClientID);
 	virtual void SetClientAlwaysRandom(int ClientID, int Value);
-	
+
 	virtual int GetClientDefaultScoreMode(int ClientID);
 	virtual void SetClientDefaultScoreMode(int ClientID, int Value);
-	
-	virtual const char* GetClientLanguage(int ClientID);
-	virtual void SetClientLanguage(int ClientID, const char* pLanguage);
-	
+
+	virtual const char *GetClientLanguage(int ClientID);
+	virtual void SetClientLanguage(int ClientID, const char *pLanguage);
+
 	virtual int GetFireDelay(int WID);
 	virtual void SetFireDelay(int WID, int Time);
-	
+
 	virtual int GetAmmoRegenTime(int WID);
 	virtual void SetAmmoRegenTime(int WID, int Time);
-	
+
 	virtual int GetMaxAmmo(int WID);
 	virtual void SetMaxAmmo(int WID, int n);
-	
+
 	virtual int GetClassAvailability(int CID);
 	virtual void SetClassAvailability(int CID, int n);
-	
+
 	virtual int GetClientNbRound(int ClientID);
-	
+
 	virtual int IsClassChooserEnabled();
 	virtual bool IsClientLogged(int ClientID);
 #ifdef CONF_SQL
-	virtual void Login(int ClientID, const char* pUsername, const char* pPassword);
+	virtual void Login(int ClientID, const char *pUsername, const char *pPassword);
 	virtual void Logout(int ClientID);
-	virtual void SetEmail(int ClientID, const char* pEmail);
-	virtual void Register(int ClientID, const char* pUsername, const char* pPassword, const char* pEmail);
+	virtual void SetEmail(int ClientID, const char *pEmail);
+	virtual void Register(int ClientID, const char *pUsername, const char *pPassword, const char *pEmail);
 	virtual void ShowChallenge(int ClientID);
 	virtual void ShowTop10(int ClientID, int ScoreType);
 	virtual void ShowRank(int ClientID, int ScoreType);
@@ -362,16 +357,17 @@ public:
 	virtual void RefreshChallenge();
 	virtual int GetUserLevel(int ClientID);
 #endif
-	virtual void Ban(int ClientID, int Seconds, const char* pReason);
+	virtual void Ban(int ClientID, int Seconds, const char *pReason);
+
 private:
 	bool InitCaptcha();
-	
+
 public:
 	class CGameServerCmd
 	{
 	public:
 		virtual ~CGameServerCmd() {};
-		virtual void Execute(IGameServer* pGameServer) = 0;
+		virtual void Execute(IGameServer *pGameServer) = 0;
 	};
 
 private:
@@ -381,10 +377,10 @@ private:
 
 	IServer::CMapVote m_MapVotes[MAX_VOTE_OPTIONS];
 	int m_MapVotesCounter;
-	
+
 #ifdef CONF_SQL
 public:
-	array<CGameServerCmd*> m_lGameServerCmds;
+	array<CGameServerCmd *> m_lGameServerCmds;
 	LOCK m_GameServerCmdLock;
 	LOCK m_ChallengeLock;
 	char m_aChallengeWinner[16];
@@ -395,37 +391,37 @@ public:
 	int m_TimeShiftUnit;
 
 public:
-	void AddGameServerCmd(CGameServerCmd* pCmd);
-	
-	virtual CRoundStatistics* RoundStatistics() { return &m_RoundStatistics; }
+	void AddGameServerCmd(CGameServerCmd *pCmd);
+
+	virtual CRoundStatistics *RoundStatistics() { return &m_RoundStatistics; }
 	virtual void OnRoundStart();
 	virtual void OnRoundEnd();
-	
+
 	virtual void SetClientMemory(int ClientID, int Memory, bool Value = true);
 	virtual void ResetClientMemoryAboutGame(int ClientID);
 	virtual bool GetClientMemory(int ClientID, int Memory);
-	
-	virtual IServer::CClientSession* GetClientSession(int ClientID);
-	
-	virtual void AddAccusation(int From, int To, const char* pReason);
+
+	virtual IServer::CClientSession *GetClientSession(int ClientID);
+
+	virtual void AddAccusation(int From, int To, const char *pReason);
 	virtual bool ClientShouldBeBanned(int ClientID);
 	virtual void RemoveAccusations(int ClientID);
 
-	virtual void AddMapVote(int From, const char* pCommand, const char* pReason, const char* pDesc);
+	virtual void AddMapVote(int From, const char *pCommand, const char *pReason, const char *pDesc);
 	virtual void RemoveMapVotesForID(int ClientID);
 	virtual void ResetMapVotes();
-	virtual IServer::CMapVote* GetMapVote();
-	virtual int GetMinPlayersForMap(const char* pMapName);
-	virtual int GetMaxPlayersForMap(const char* pMapName);
-	virtual int GetTimeShiftUnit() const { return m_TimeShiftUnit; } //In ms
-/* INFECTION MODIFICATION END *****************************************/
+	virtual IServer::CMapVote *GetMapVote();
+	virtual int GetMinPlayersForMap(const char *pMapName);
+	virtual int GetMaxPlayersForMap(const char *pMapName);
+	virtual int GetTimeShiftUnit() const { return m_TimeShiftUnit; } // In ms
+	/* INFECTION MODIFICATION END *****************************************/
 
 	void GetClientAddr(int ClientID, NETADDR *pAddr);
 	int m_aPrevStates[MAX_CLIENTS];
 	char *GetAnnouncementLine(char const *FileName);
 	unsigned m_AnnouncementLastLine;
 
-	virtual int* GetIdMap(int ClientID);
+	virtual int *GetIdMap(int ClientID);
 	virtual void SetCustClt(int ClientID);
 };
 

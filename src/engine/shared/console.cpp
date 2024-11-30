@@ -5,8 +5,8 @@
 #include <base/math.h>
 #include <base/system.h>
 
-#include <engine/storage.h>
 #include <engine/shared/protocol.h>
+#include <engine/storage.h>
 
 #include "config.h"
 #include "console.h"
@@ -16,21 +16,21 @@
 
 const char *CConsole::CResult::GetString(unsigned Index)
 {
-	if (Index >= m_NumArgs)
+	if(Index >= m_NumArgs)
 		return "";
 	return m_apArgs[Index];
 }
 
 int CConsole::CResult::GetInteger(unsigned Index)
 {
-	if (Index >= m_NumArgs)
+	if(Index >= m_NumArgs)
 		return 0;
 	return str_toint(m_apArgs[Index]);
 }
 
 float CConsole::CResult::GetFloat(unsigned Index)
 {
-	if (Index >= m_NumArgs)
+	if(Index >= m_NumArgs)
 		return 0.0f;
 	return str_tofloat(m_apArgs[Index]);
 }
@@ -40,7 +40,7 @@ const IConsole::CCommandInfo *CConsole::CCommand::NextCommandInfo(int AccessLeve
 	const CCommand *pInfo = m_pNext;
 	while(pInfo)
 	{
-		if(pInfo->m_Flags&FlagMask && pInfo->m_AccessLevel >= AccessLevel)
+		if(pInfo->m_Flags & FlagMask && pInfo->m_AccessLevel >= AccessLevel)
 			break;
 		pInfo = pInfo->m_pNext;
 	}
@@ -51,7 +51,7 @@ const IConsole::CCommandInfo *CConsole::FirstCommandInfo(int AccessLevel, int Fl
 {
 	for(const CCommand *pCommand = m_pFirstCommand; pCommand; pCommand = pCommand->m_pNext)
 	{
-		if(pCommand->m_Flags&FlagMask && pCommand->GetAccessLevel() >= AccessLevel)
+		if(pCommand->m_Flags & FlagMask && pCommand->GetAccessLevel() >= AccessLevel)
 			return pCommand;
 	}
 
@@ -59,7 +59,6 @@ const IConsole::CCommandInfo *CConsole::FirstCommandInfo(int AccessLevel, int Fl
 }
 
 // the maximum number of tokens occurs in a string of length CONSOLE_MAX_STR_LENGTH with tokens size 1 separated by single spaces
-
 
 int CConsole::ParseStart(CResult *pResult, const char *pString, int Length)
 {
@@ -94,7 +93,7 @@ int CConsole::ParseArgs(CResult *pResult, const char *pFormat)
 	int Error = 0;
 
 	pStr = pResult->m_pArgsStart;
-				
+
 	while(1)
 	{
 		if(!Command)
@@ -151,7 +150,6 @@ int CConsole::ParseArgs(CResult *pResult, const char *pFormat)
 				// write null termination
 				*pDst = 0;
 
-
 				pStr++;
 			}
 			else
@@ -183,16 +181,16 @@ int CConsole::ParseArgs(CResult *pResult, const char *pFormat)
 /* DDNET MODIFICATION START *******************************************/
 char CConsole::NextParam(const char *&pFormat)
 {
-	if (*pFormat)
+	if(*pFormat)
 	{
 		pFormat++;
 
-		if (*pFormat == '<')
+		if(*pFormat == '<')
 		{
 			// skip bracket contents
-			for (; *pFormat != '>'; pFormat++)
+			for(; *pFormat != '>'; pFormat++)
 			{
-				if (!*pFormat)
+				if(!*pFormat)
 					return *pFormat;
 			}
 
@@ -200,7 +198,7 @@ char CConsole::NextParam(const char *&pFormat)
 			pFormat++;
 
 			// skip space if there is one
-			if (*pFormat == ' ')
+			if(*pFormat == ' ')
 				pFormat++;
 		}
 	}
@@ -213,7 +211,7 @@ int CConsole::RegisterPrintCallback(int OutputLevel, FPrintCallback pfnPrintCall
 	if(m_NumPrintCB == MAX_PRINT_CB)
 		return -1;
 
-	m_aPrintCB[m_NumPrintCB].m_OutputLevel = clamp(OutputLevel, (int)(OUTPUT_LEVEL_STANDARD), (int)(OUTPUT_LEVEL_DEBUG));
+	m_aPrintCB[m_NumPrintCB].m_OutputLevel = clamp(OutputLevel, (int) (OUTPUT_LEVEL_STANDARD), (int) (OUTPUT_LEVEL_DEBUG));
 	m_aPrintCB[m_NumPrintCB].m_pfnPrintCallback = pfnPrintCallback;
 	m_aPrintCB[m_NumPrintCB].m_pPrintCallbackUserdata = pUserData;
 	return m_NumPrintCB++;
@@ -222,12 +220,12 @@ int CConsole::RegisterPrintCallback(int OutputLevel, FPrintCallback pfnPrintCall
 void CConsole::SetPrintOutputLevel(int Index, int OutputLevel)
 {
 	if(Index >= 0 && Index < MAX_PRINT_CB)
-		m_aPrintCB[Index].m_OutputLevel = clamp(OutputLevel, (int)(OUTPUT_LEVEL_STANDARD), (int)(OUTPUT_LEVEL_DEBUG));
+		m_aPrintCB[Index].m_OutputLevel = clamp(OutputLevel, (int) (OUTPUT_LEVEL_STANDARD), (int) (OUTPUT_LEVEL_DEBUG));
 }
 
 void CConsole::Print(int Level, const char *pFrom, const char *pStr)
 {
-	dbg_msg(pFrom ,"%s", pStr);
+	dbg_msg(pFrom, "%s", pStr);
 	for(int i = 0; i < m_NumPrintCB; ++i)
 	{
 		if(Level <= m_aPrintCB[i].m_OutputLevel && m_aPrintCB[i].m_pfnPrintCallback)
@@ -264,7 +262,7 @@ bool CConsole::LineIsValid(const char *pStr)
 			{
 				if(*pEnd == ';') // command separator
 				{
-					pNextPart = pEnd+1;
+					pNextPart = pEnd + 1;
 					break;
 				}
 				else if(*pEnd == '#') // comment, no need to do anything more
@@ -274,7 +272,7 @@ bool CConsole::LineIsValid(const char *pStr)
 			pEnd++;
 		}
 
-		if(ParseStart(&Result, pStr, (pEnd-pStr) + 1) != 0)
+		if(ParseStart(&Result, pStr, (pEnd - pStr) + 1) != 0)
 			return false;
 
 		CCommand *pCommand = FindCommand(Result.m_pCommand, m_FlagMask);
@@ -282,8 +280,7 @@ bool CConsole::LineIsValid(const char *pStr)
 			return false;
 
 		pStr = pNextPart;
-	}
-	while(pStr && *pStr);
+	} while(pStr && *pStr);
 
 	return true;
 }
@@ -312,7 +309,7 @@ void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientID, bo
 			{
 				if(*pEnd == ';') // command separator
 				{
-					pNextPart = pEnd+1;
+					pNextPart = pEnd + 1;
 					break;
 				}
 				else if(*pEnd == '#') // comment, no need to do anything more
@@ -322,7 +319,7 @@ void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientID, bo
 			pEnd++;
 		}
 
-		if(ParseStart(&Result, pStr, (pEnd-pStr) + 1) != 0)
+		if(ParseStart(&Result, pStr, (pEnd - pStr) + 1) != 0)
 			return;
 
 		if(!*Result.m_pCommand)
@@ -347,13 +344,13 @@ void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientID, bo
 					if(ParseArgs(&Result, pCommand->m_pParams))
 					{
 						char aBuf[256];
-						
+
 						str_format(aBuf, sizeof(aBuf), "Usage: %s %s", pCommand->m_pName, pCommand->m_pUsage);
-						
+
 						Print(OUTPUT_LEVEL_STANDARD, "Console", "Invalid arguments.");
 						Print(OUTPUT_LEVEL_STANDARD, "Console", aBuf);
 					}
-					else if(m_StoreCommands && pCommand->m_Flags&CFGFLAG_STORE)
+					else if(m_StoreCommands && pCommand->m_Flags & CFGFLAG_STORE)
 					{
 						m_ExecutionQueue.AddEntry();
 						m_ExecutionQueue.m_pLast->m_pfnCommandCallback = pCommand->m_pfnCallback;
@@ -366,9 +363,9 @@ void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientID, bo
 						if(!ValideArguments)
 						{
 							char aBuf[256];
-							
+
 							str_format(aBuf, sizeof(aBuf), "Usage: %s %s", pCommand->m_pName, pCommand->m_pUsage);
-							
+
 							Print(OUTPUT_LEVEL_STANDARD, "Console", "Invalid arguments.");
 							Print(OUTPUT_LEVEL_STANDARD, "Console", aBuf);
 						}
@@ -397,7 +394,7 @@ void CConsole::PossibleCommands(const char *pStr, int FlagMask, bool Temp, FPoss
 {
 	for(CCommand *pCommand = m_pFirstCommand; pCommand; pCommand = pCommand->m_pNext)
 	{
-		if(pCommand->m_Flags&FlagMask && pCommand->m_Temp == Temp)
+		if(pCommand->m_Flags & FlagMask && pCommand->m_Temp == Temp)
 		{
 			if(str_find_nocase(pCommand->m_pName, pStr))
 				pfnCallback(pCommand->m_pName, pUser);
@@ -409,7 +406,7 @@ CConsole::CCommand *CConsole::FindCommand(const char *pName, int FlagMask)
 {
 	for(CCommand *pCommand = m_pFirstCommand; pCommand; pCommand = pCommand->m_pNext)
 	{
-		if(pCommand->m_Flags&FlagMask)
+		if(pCommand->m_Flags & FlagMask)
 		{
 			if(str_comp_nocase(pCommand->m_pName, pName) == 0)
 				return pCommand;
@@ -432,7 +429,6 @@ void CConsole::ExecuteLineFlag(const char *pStr, int ClientID, bool TeamChat, in
 	ExecuteLine(pStr, ClientID, TeamChat);
 	m_FlagMask = Temp;
 }
-
 
 void CConsole::ExecuteFile(const char *pFilename)
 {
@@ -482,21 +478,21 @@ void CConsole::ExecuteFile(const char *pFilename)
 
 bool CConsole::Con_Echo(IResult *pResult, void *pUserData)
 {
-	((CConsole*)pUserData)->Print(IConsole::OUTPUT_LEVEL_STANDARD, "Console", pResult->GetString(0));
-	
+	((CConsole *) pUserData)->Print(IConsole::OUTPUT_LEVEL_STANDARD, "Console", pResult->GetString(0));
+
 	return true;
 }
 
 bool CConsole::Con_Exec(IResult *pResult, void *pUserData)
 {
-	((CConsole*)pUserData)->ExecuteFile(pResult->GetString(0));
-	
+	((CConsole *) pUserData)->ExecuteFile(pResult->GetString(0));
+
 	return true;
 }
 
 bool CConsole::ConModCommandAccess(IResult *pResult, void *pUser)
 {
-	CConsole* pConsole = static_cast<CConsole *>(pUser);
+	CConsole *pConsole = static_cast<CConsole *>(pUser);
 	char aBuf[128];
 	CCommand *pCommand = pConsole->FindCommand(pResult->GetString(0), CFGFLAG_SERVER);
 	if(pCommand)
@@ -513,23 +509,23 @@ bool CConsole::ConModCommandAccess(IResult *pResult, void *pUser)
 		str_format(aBuf, sizeof(aBuf), "No such command: '%s'.", pResult->GetString(0));
 
 	pConsole->Print(OUTPUT_LEVEL_STANDARD, "Console", aBuf);
-	
+
 	return true;
 }
 
 bool CConsole::ConModCommandStatus(IResult *pResult, void *pUser)
 {
-	CConsole* pConsole = static_cast<CConsole *>(pUser);
+	CConsole *pConsole = static_cast<CConsole *>(pUser);
 	char aBuf[240];
 	mem_zero(aBuf, sizeof(aBuf));
 	int Used = 0;
 
 	for(CCommand *pCommand = pConsole->m_pFirstCommand; pCommand; pCommand = pCommand->m_pNext)
 	{
-		if(pCommand->m_Flags&pConsole->m_FlagMask && pCommand->GetAccessLevel() == ACCESS_LEVEL_MOD)
+		if(pCommand->m_Flags & pConsole->m_FlagMask && pCommand->GetAccessLevel() == ACCESS_LEVEL_MOD)
 		{
 			int Length = str_length(pCommand->m_pName);
-			if(Used + Length + 2 < (int)(sizeof(aBuf)))
+			if(Used + Length + 2 < (int) (sizeof(aBuf)))
 			{
 				if(Used > 0)
 				{
@@ -550,7 +546,7 @@ bool CConsole::ConModCommandStatus(IResult *pResult, void *pUser)
 	}
 	if(Used > 0)
 		pConsole->Print(OUTPUT_LEVEL_STANDARD, "Console", aBuf);
-	
+
 	return true;
 }
 
@@ -571,7 +567,7 @@ struct CStrVariableData
 
 static bool IntVariableCommand(IConsole::IResult *pResult, void *pUserData)
 {
-	CIntVariableData *pData = (CIntVariableData *)pUserData;
+	CIntVariableData *pData = (CIntVariableData *) pUserData;
 
 	if(pResult->NumArguments())
 	{
@@ -580,21 +576,21 @@ static bool IntVariableCommand(IConsole::IResult *pResult, void *pUserData)
 		// do clamping
 		if(pData->m_Min != pData->m_Max)
 		{
-			if (Val < pData->m_Min)
+			if(Val < pData->m_Min)
 				Val = pData->m_Min;
-			if (pData->m_Max != 0 && Val > pData->m_Max)
+			if(pData->m_Max != 0 && Val > pData->m_Max)
 				Val = pData->m_Max;
 		}
 
 		*(pData->m_pVariable) = Val;
 	}
-	
+
 	return true;
 }
 
 static bool StrVariableCommand(IConsole::IResult *pResult, void *pUserData)
 {
-	CStrVariableData *pData = (CStrVariableData *)pUserData;
+	CStrVariableData *pData = (CStrVariableData *) pUserData;
 
 	if(pResult->NumArguments())
 	{
@@ -606,9 +602,9 @@ static bool StrVariableCommand(IConsole::IResult *pResult, void *pUserData)
 			while(*pString)
 			{
 				int Size = str_utf8_encode(Temp, static_cast<const unsigned char>(*pString++));
-				if(Length+Size < pData->m_MaxSize)
+				if(Length + Size < pData->m_MaxSize)
 				{
-					mem_copy(pData->m_pStr+Length, &Temp, Size);
+					mem_copy(pData->m_pStr + Length, &Temp, Size);
 					Length += Size;
 				}
 				else
@@ -619,13 +615,13 @@ static bool StrVariableCommand(IConsole::IResult *pResult, void *pUserData)
 		else
 			str_copy(pData->m_pStr, pString, pData->m_MaxSize);
 	}
-	
+
 	return true;
 }
 
 bool CConsole::ConToggle(IConsole::IResult *pResult, void *pUser)
 {
-	CConsole* pConsole = static_cast<CConsole *>(pUser);
+	CConsole *pConsole = static_cast<CConsole *>(pUser);
 	char aBuf[128] = {0};
 	CCommand *pCommand = pConsole->FindCommand(pResult->GetString(0), pConsole->m_FlagMask);
 	if(pCommand)
@@ -644,7 +640,7 @@ bool CConsole::ConToggle(IConsole::IResult *pResult, void *pUser)
 		if(pfnCallback == IntVariableCommand)
 		{
 			CIntVariableData *pData = static_cast<CIntVariableData *>(pUserData);
-			int Val = *(pData->m_pVariable)==pResult->GetInteger(1) ? pResult->GetInteger(2) : pResult->GetInteger(1);
+			int Val = *(pData->m_pVariable) == pResult->GetInteger(1) ? pResult->GetInteger(2) : pResult->GetInteger(1);
 			str_format(aBuf, sizeof(aBuf), "%s %i", pResult->GetString(0), Val);
 			pConsole->ExecuteLine(aBuf, -1, false);
 			aBuf[0] = 0;
@@ -657,13 +653,13 @@ bool CConsole::ConToggle(IConsole::IResult *pResult, void *pUser)
 
 	if(aBuf[0] != 0)
 		pConsole->Print(OUTPUT_LEVEL_STANDARD, "Console", aBuf);
-	
+
 	return true;
 }
 
 bool CConsole::ConToggleStroke(IConsole::IResult *pResult, void *pUser)
 {
-	CConsole* pConsole = static_cast<CConsole *>(pUser);
+	CConsole *pConsole = static_cast<CConsole *>(pUser);
 	char aBuf[128] = {0};
 	CCommand *pCommand = pConsole->FindCommand(pResult->GetString(1), pConsole->m_FlagMask);
 	if(pCommand)
@@ -679,7 +675,7 @@ bool CConsole::ConToggleStroke(IConsole::IResult *pResult, void *pUser)
 
 		if(pfnCallback == IntVariableCommand)
 		{
-			int Val = pResult->GetInteger(0)==0 ? pResult->GetInteger(3) : pResult->GetInteger(2);
+			int Val = pResult->GetInteger(0) == 0 ? pResult->GetInteger(3) : pResult->GetInteger(2);
 			str_format(aBuf, sizeof(aBuf), "%s %i", pResult->GetString(1), Val);
 			pConsole->ExecuteLine(aBuf, -1, false);
 			aBuf[0] = 0;
@@ -692,7 +688,7 @@ bool CConsole::ConToggleStroke(IConsole::IResult *pResult, void *pUser)
 
 	if(aBuf[0] != 0)
 		pConsole->Print(OUTPUT_LEVEL_STANDARD, "Console", aBuf);
-	
+
 	return true;
 }
 
@@ -714,32 +710,32 @@ CConsole::CConsole(int FlagMask)
 	m_pStorage = 0;
 
 	// register some basic commands
-	Register("echo", "r", CFGFLAG_SERVER|CFGFLAG_CLIENT, Con_Echo, this, "Echo the text");
-	Register("exec", "r", CFGFLAG_SERVER|CFGFLAG_CLIENT, Con_Exec, this, "Execute the specified file");
+	Register("echo", "r", CFGFLAG_SERVER | CFGFLAG_CLIENT, Con_Echo, this, "Echo the text");
+	Register("exec", "r", CFGFLAG_SERVER | CFGFLAG_CLIENT, Con_Exec, this, "Execute the specified file");
 
-	Register("toggle", "sii", CFGFLAG_SERVER|CFGFLAG_CLIENT, ConToggle, this, "Toggle config value");
+	Register("toggle", "sii", CFGFLAG_SERVER | CFGFLAG_CLIENT, ConToggle, this, "Toggle config value");
 	Register("+toggle", "sii", CFGFLAG_CLIENT, ConToggleStroke, this, "Toggle config value via keypress");
 
 	Register("mod_command", "s?i", CFGFLAG_SERVER, ConModCommandAccess, this, "Specify command accessibility for moderators");
 	Register("mod_status", "", CFGFLAG_SERVER, ConModCommandStatus, this, "List all commands which are accessible for moderators");
 
-	// TODO: this should disappear
-	#define MACRO_CONFIG_INT(Name,ScriptName,Def,Min,Max,Flags,Desc) \
+// TODO: this should disappear
+#define MACRO_CONFIG_INT(Name, ScriptName, Def, Min, Max, Flags, Desc) \
 	{ \
-		static CIntVariableData Data = { this, &g_Config.m_##Name, Min, Max }; \
+		static CIntVariableData Data = {this, &g_Config.m_##Name, Min, Max}; \
 		Register(#ScriptName, "?i", Flags, IntVariableCommand, &Data, Desc); \
 	}
 
-	#define MACRO_CONFIG_STR(Name,ScriptName,Len,Def,Flags,Desc) \
+#define MACRO_CONFIG_STR(Name, ScriptName, Len, Def, Flags, Desc) \
 	{ \
-		static CStrVariableData Data = { this, g_Config.m_##Name, Len }; \
+		static CStrVariableData Data = {this, g_Config.m_##Name, Len}; \
 		Register(#ScriptName, "?r", Flags, StrVariableCommand, &Data, Desc); \
 	}
 
-	#include "config_variables.h"
+#include "config_variables.h"
 
-	#undef MACRO_CONFIG_INT
-	#undef MACRO_CONFIG_STR
+#undef MACRO_CONFIG_INT
+#undef MACRO_CONFIG_STR
 }
 
 void CConsole::ParseArguments(int NumArgs, const char **ppArguments)
@@ -750,7 +746,7 @@ void CConsole::ParseArguments(int NumArgs, const char **ppArguments)
 		if(ppArguments[i][0] == '-' && ppArguments[i][1] == 'f' && ppArguments[i][2] == 0)
 		{
 			if(NumArgs - i > 1)
-				ExecuteFile(ppArguments[i+1]);
+				ExecuteFile(ppArguments[i + 1]);
 			i++;
 		}
 		else if(!str_comp("-s", ppArguments[i]) || !str_comp("--silent", ppArguments[i]))
@@ -790,22 +786,22 @@ void CConsole::AddCommandSorted(CCommand *pCommand)
 	}
 }
 
-void CConsole::GenerateUsage(const char* pParam, char* pUsage)
+void CConsole::GenerateUsage(const char *pParam, char *pUsage)
 {
 	while(*pParam)
 	{
 		char ParamType = *pParam;
 		pParam++;
 
-		if (*pParam == '<')
+		if(*pParam == '<')
 		{
 			if(ParamType == 'i')
 			{
 				pParam++;
-				
-				for (; *pParam != '>'; pParam++)
+
+				for(; *pParam != '>'; pParam++)
 				{
-					if (*pParam)
+					if(*pParam)
 					{
 						*pUsage = *pParam;
 						pUsage++;
@@ -823,10 +819,10 @@ void CConsole::GenerateUsage(const char* pParam, char* pUsage)
 				*pUsage = '"';
 				pUsage++;
 				pParam++;
-				
-				for (; *pParam != '>'; pParam++)
+
+				for(; *pParam != '>'; pParam++)
 				{
-					if (*pParam)
+					if(*pParam)
 					{
 						*pUsage = *pParam;
 						pUsage++;
@@ -846,7 +842,7 @@ void CConsole::GenerateUsage(const char* pParam, char* pUsage)
 			}
 
 			// skip space if there is one
-			if (*pParam == ' ')
+			if(*pParam == ' ')
 				pParam++;
 		}
 		else if(ParamType == 's')
@@ -870,7 +866,7 @@ void CConsole::GenerateUsage(const char* pParam, char* pUsage)
 			pUsage++;
 		}
 	}
-	
+
 	*pUsage = 0;
 }
 
@@ -881,7 +877,7 @@ void CConsole::Register(const char *pName, const char *pParams,
 	bool DoAdd = false;
 	if(pCommand == 0)
 	{
-		pCommand = new(mem_alloc(sizeof(CCommand), sizeof(void*))) CCommand;
+		pCommand = new(mem_alloc(sizeof(CCommand), sizeof(void *))) CCommand;
 		DoAdd = true;
 	}
 	pCommand->m_pfnCallback = pfnFunc;
@@ -895,14 +891,14 @@ void CConsole::Register(const char *pName, const char *pParams,
 	pCommand->m_Flags = Flags;
 	pCommand->m_Temp = false;
 
-	if(pCommand->m_Flags&CFGFLAG_USER)
+	if(pCommand->m_Flags & CFGFLAG_USER)
 		pCommand->SetAccessLevel(ACCESS_LEVEL_USER);
-		
+
 	if(DoAdd)
 		AddCommandSorted(pCommand);
 }
 
-void CConsole::RegisterTemp(const char *pName, const char *pParams,	int Flags, const char *pHelp)
+void CConsole::RegisterTemp(const char *pName, const char *pParams, int Flags, const char *pHelp)
 {
 	CCommand *pCommand;
 	if(m_pRecycleList)
@@ -918,17 +914,17 @@ void CConsole::RegisterTemp(const char *pName, const char *pParams,	int Flags, c
 	else
 	{
 		pCommand = new(m_TempCommands.Allocate(sizeof(CCommand))) CCommand;
-		
+
 		char *pMem = static_cast<char *>(m_TempCommands.Allocate(TEMPCMD_NAME_LENGTH));
 		str_copy(pMem, pName, TEMPCMD_NAME_LENGTH);
 		pCommand->m_pName = pMem;
-		
+
 		GenerateUsage(pParams, pCommand->m_pUsage);
-		
+
 		pMem = static_cast<char *>(m_TempCommands.Allocate(TEMPCMD_HELP_LENGTH));
 		str_copy(pMem, pHelp, TEMPCMD_HELP_LENGTH);
 		pCommand->m_pHelp = pMem;
-		
+
 		pMem = static_cast<char *>(m_TempCommands.Allocate(TEMPCMD_PARAMS_LENGTH));
 		str_copy(pMem, pParams, TEMPCMD_PARAMS_LENGTH);
 		pCommand->m_pParams = pMem;
@@ -977,7 +973,8 @@ void CConsole::DeregisterTemp(const char *pName)
 void CConsole::DeregisterTempAll()
 {
 	// set non temp as first one
-	for(; m_pFirstCommand && m_pFirstCommand->m_Temp; m_pFirstCommand = m_pFirstCommand->m_pNext);
+	for(; m_pFirstCommand && m_pFirstCommand->m_Temp; m_pFirstCommand = m_pFirstCommand->m_pNext)
+		;
 
 	// remove temp entries from command list
 	for(CCommand *pCommand = m_pFirstCommand; pCommand && pCommand->m_pNext; pCommand = pCommand->m_pNext)
@@ -985,7 +982,8 @@ void CConsole::DeregisterTempAll()
 		CCommand *pNext = pCommand->m_pNext;
 		if(pNext->m_Temp)
 		{
-			for(; pNext && pNext->m_Temp; pNext = pNext->m_pNext);
+			for(; pNext && pNext->m_Temp; pNext = pNext->m_pNext)
+				;
 			pCommand->m_pNext = pNext;
 		}
 	}
@@ -996,7 +994,7 @@ void CConsole::DeregisterTempAll()
 
 bool CConsole::Con_Chain(IResult *pResult, void *pUserData)
 {
-	CChain *pInfo = (CChain *)pUserData;
+	CChain *pInfo = (CChain *) pUserData;
 	pInfo->m_pfnChainCallback(pResult, pInfo->m_pUserData, pInfo->m_pfnCallback, pInfo->m_pCallbackUserData);
 
 	return true;
@@ -1014,7 +1012,7 @@ void CConsole::Chain(const char *pName, FChainCommandCallback pfnChainFunc, void
 		return;
 	}
 
-	CChain *pChainInfo = (CChain *)mem_alloc(sizeof(CChain), sizeof(void*));
+	CChain *pChainInfo = (CChain *) mem_alloc(sizeof(CChain), sizeof(void *));
 
 	// store info
 	pChainInfo->m_pfnChainCallback = pfnChainFunc;
@@ -1038,12 +1036,11 @@ void CConsole::StoreCommands(bool Store)
 	m_StoreCommands = Store;
 }
 
-
 const IConsole::CCommandInfo *CConsole::GetCommandInfo(const char *pName, int FlagMask, bool Temp)
 {
 	for(CCommand *pCommand = m_pFirstCommand; pCommand; pCommand = pCommand->m_pNext)
 	{
-		if(pCommand->m_Flags&FlagMask && pCommand->m_Temp == Temp)
+		if(pCommand->m_Flags & FlagMask && pCommand->m_Temp == Temp)
 		{
 			if(str_comp_nocase(pCommand->m_pName, pName) == 0)
 				return pCommand;
@@ -1052,6 +1049,5 @@ const IConsole::CCommandInfo *CConsole::GetCommandInfo(const char *pName, int Fl
 
 	return 0;
 }
-
 
 extern IConsole *CreateConsole(int FlagMask) { return new CConsole(FlagMask); }

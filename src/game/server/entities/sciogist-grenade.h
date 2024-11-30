@@ -14,13 +14,14 @@ public:
 	virtual void Tick();
 	virtual void TickPaused();
 	virtual void Snap(int SnappingClient);
-	void Explode();	
+	void Explode();
 	int m_Owner;
-	
+
 protected:
 	bool HitCharacter(vec2 From, vec2 To);
 	void CreateElasticHole(vec2 CenterPos);
 	vec2 GetPos(float Time);
+
 private:
 	vec2 m_From;
 	vec2 m_Direction;

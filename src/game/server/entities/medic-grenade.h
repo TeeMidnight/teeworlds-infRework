@@ -5,7 +5,7 @@ class CMedicGrenade : public CEntity
 {
 public:
 	int m_Owner;
-	
+
 public:
 	CMedicGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir);
 

@@ -6,21 +6,21 @@
 
 class CEntityTimer
 {
-	public:
-		CEntityTimer(CGameWorld *pGameWorld, int Seconds, bool IsWarmUp = false);
-		
-		virtual void Reset();
-		virtual void Tick();
-		
-		bool HasReachedTarget();
+public:
+	CEntityTimer(CGameWorld *pGameWorld, int Seconds, bool IsWarmUp = false);
 
-	private:
-		bool m_IsWarmUp;
-		int m_CoolDownValue;
-		int m_WarmUpTarget;
-		
-		int m_WarmUpCounter;
-		int m_CoolDownCounter;
+	virtual void Reset();
+	virtual void Tick();
+
+	bool HasReachedTarget();
+
+private:
+	bool m_IsWarmUp;
+	int m_CoolDownValue;
+	int m_WarmUpTarget;
+
+	int m_WarmUpCounter;
+	int m_CoolDownCounter;
 };
 
 #endif

@@ -1,4 +1,4 @@
-CheckVersion("0.4")
+CheckVersion("0.5")
 
 Import("configure.lua")
 Import("other/mysql/mysql.lua")
@@ -11,7 +11,6 @@ config:Add(OptTestCompileC("minmacosxsdk", "int main(){return 0;}", "-mmacosx-ve
 config:Add(OptTestCompileC("macosxppc", "int main(){return 0;}", "-arch ppc"))
 config:Add(OptLibrary("zlib", "zlib.h", false))
 config:Add(Mysql.OptFind("mysql", false))
-config:Add(OptToggle("geolocation", true))
 config:Finalize("config.lua")
 
 -- data compiler
@@ -158,8 +157,8 @@ function build(settings)
 		settings.cc.flags:Add("/wd4244")
 	else
 		settings.cc.flags:Add("-Wall")
-		settings.cc.flags_cxx:Add("-std=c++11")
-		settings.cc.flags:Add("-Werror=format -fstack-protector-all -D_FORTIFY_SOURCE=1 -fPIE -pie")
+		settings.cc.flags_cxx:Add("-std=c++17")
+		settings.cc.flags:Add("-Werror=format -fstack-protector-all -fPIE -pie")
 		if family == "windows" then
 			-- disable visibility attribute support for gcc on windows
 			settings.cc.defines:Add("NO_VIZ")
@@ -201,10 +200,6 @@ function build(settings)
 
 			settings.cc.flags:Add("`pkg-config --cflags icu-uc icu-i18n`")
 			settings.link.flags:Add("`pkg-config --libs icu-uc icu-i18n`")
-		end
-		
-		if config.geolocation.value then
-			settings.link.libs:Add("maxminddb")  -- for ip geolocation
 		end
 
 		if platform == "solaris" then
@@ -288,43 +283,25 @@ function build(settings)
 	server = Compile(server_settings, Collect("src/engine/server/*.cpp"))
 	teeuniverses = Compile(server_settings, Collect("src/teeuniverses/*.cpp", "src/teeuniverses/components/*.cpp", "src/teeuniverses/system/*.cpp"))
 
-	versionserver = Compile(settings, Collect("src/versionsrv/*.cpp"))
-	masterserver = Compile(settings, Collect("src/mastersrv/*.cpp"))
 	game_shared = Compile(settings, Collect("src/game/*.cpp"), nethash, network_source)
 	game_server = Compile(settings, CollectRecursive("src/game/server/*.cpp"), server_content_source)
-	if config.geolocation.value then
-		infclassr = Compile(settings, Collect("src/infclassr/*.cpp", "src/infclassr/GeoLite2PP/*.cpp"))
-	end
-
 
 	-- build tools (TODO: fix this so we don't get double _d_d stuff)
 	tools_src = Collect("src/tools/*.cpp", "src/tools/*.c")
 
 	server_osxlaunch = {}
 	if platform == "macosx" then
-		server_osxlaunch = Compile(launcher_settings, "src/osxlaunch/server.m")
-	end
-
-	tools = {}
-	for i,v in ipairs(tools_src) do
-		toolname = PathFilename(PathBase(v))
-		tools[i] = Link(settings, toolname, Compile(settings, v), engine, zlib, pnglite, md5)
+		server_osxlaunch = Compile(launcher_settings, "src/macoslaunch/server.m")
 	end
 
 	-- build server, version server and master server
 	server_exe = Link(server_settings, "server", engine, server,
-		game_shared, game_server, infclassr, teeuniverses, zlib, server_link_other, md5, json)
+		game_shared, game_server, teeuniverses, zlib, server_link_other, md5, json)
 
 	serverlaunch = {}
 	if platform == "macosx" then
-		serverlaunch = Link(launcher_settings, "serverlaunch", server_osxlaunch)
+		serverlaunch = Link(launcher_settings, "macoslaunch", server_osxlaunch)
 	end
-
-	versionserver_exe = Link(server_settings, "versionsrv", versionserver,
-		engine, zlib, md5)
-
-	masterserver_exe = Link(server_settings, "mastersrv", masterserver,
-		engine, zlib, md5)
 
 	-- make targets
 	if string.find(settings.config_name, "sql") then
@@ -333,11 +310,7 @@ function build(settings)
 		s = PseudoTarget("server".."_"..settings.config_name, server_exe, serverlaunch, icu_depends)
 	end
 
-	v = PseudoTarget("versionserver".."_"..settings.config_name, versionserver_exe)
-	m = PseudoTarget("masterserver".."_"..settings.config_name, masterserver_exe)
-	t = PseudoTarget("tools".."_"..settings.config_name, tools)
-
-	all = PseudoTarget(settings.config_name, c, s, v, m, t)
+	all = PseudoTarget(settings.config_name, s)
 	return all
 end
 
@@ -372,13 +345,6 @@ release_sql_settings.cc.defines:Add("CONF_RELEASE", "CONF_SQL")
 
 config.mysql:Apply(debug_sql_settings)
 config.mysql:Apply(release_sql_settings)
-
-if config.geolocation.value then
-	debug_settings.cc.defines:Add("CONF_GEOLOCATION")
-	debug_sql_settings.cc.defines:Add("CONF_GEOLOCATION")
-	release_settings.cc.defines:Add("CONF_GEOLOCATION")
-	release_sql_settings.cc.defines:Add("CONF_GEOLOCATION")
-end
 
 if platform == "macosx" then
 	debug_settings_ppc = debug_settings:Copy()

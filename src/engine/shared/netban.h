@@ -11,8 +11,8 @@ protected:
 	{
 		enum
 		{
-			EXPIRES_NEVER=-1,
-			REASON_LENGTH=64,
+			EXPIRES_NEVER = -1,
+			REASON_LENGTH = 64,
 		};
 		int m_Expires;
 		char m_aReason[REASON_LENGTH];
@@ -23,10 +23,13 @@ protected:
 	typedef CNode<NETADDR, CBanInfo> CBanAddr;
 	typedef CNode<CNetRange, CBanInfo> CBanRange;
 
-	template<class DATATYPE> void MakeBanInfo(const CNode<DATATYPE, CBanInfo> *pBan, char *pBuf, unsigned BuffSize, int Type) const;
+	template<class DATATYPE>
+	void MakeBanInfo(const CNode<DATATYPE, CBanInfo> *pBan, char *pBuf, unsigned BuffSize, int Type) const;
 
-	template<class POOL> int Ban(POOL *pBanPool, const typename POOL::CDataType *pData, int Seconds, const char *pReason);
-	template<class POOL> int Unban(POOL *pBanPool, const typename POOL::CDataType *pData);
+	template<class POOL>
+	int Ban(POOL *pBanPool, const typename POOL::CDataType *pData, int Seconds, const char *pReason);
+	template<class POOL>
+	int Unban(POOL *pBanPool, const typename POOL::CDataType *pData);
 
 	class IConsole *m_pConsole;
 	class IStorage *m_pStorage;
@@ -37,7 +40,7 @@ protected:
 public:
 	enum
 	{
-		MSGTYPE_PLAYER=0,
+		MSGTYPE_PLAYER = 0,
 		MSGTYPE_LIST,
 		MSGTYPE_BANADD,
 		MSGTYPE_BANREM,
@@ -55,7 +58,11 @@ public:
 	int UnbanByAddr(const NETADDR *pAddr);
 	int UnbanByRange(const CNetRange *pRange);
 	int UnbanByIndex(int Index);
-	void UnbanAll() { m_BanAddrPool.Reset(); m_BanRangePool.Reset(); }
+	void UnbanAll()
+	{
+		m_BanAddrPool.Reset();
+		m_BanRangePool.Reset();
+	}
 	bool IsBanned(const NETADDR *pAddr, char *pBuf, unsigned BufferSize) const;
 
 	static bool ConBan(class IConsole::IResult *pResult, void *pUser);
@@ -86,21 +93,24 @@ void CNetBan::MakeBanInfo(const CNode<DATATYPE, CBanInfo> *pBan, char *pBuf, uns
 		char aTemp[256];
 		switch(Type)
 		{
-		case MSGTYPE_LIST:
-			str_format(aBuf, sizeof(aBuf), "%s banned", NetToString(&pBan->m_Data, aTemp, sizeof(aTemp))); break;
-		case MSGTYPE_BANADD:
-			str_format(aBuf, sizeof(aBuf), "banned %s", NetToString(&pBan->m_Data, aTemp, sizeof(aTemp))); break;
-		case MSGTYPE_BANREM:
-			str_format(aBuf, sizeof(aBuf), "unbanned %s", NetToString(&pBan->m_Data, aTemp, sizeof(aTemp))); break;
-		default:
-			aBuf[0] = 0;
+			case MSGTYPE_LIST:
+				str_format(aBuf, sizeof(aBuf), "%s banned", NetToString(&pBan->m_Data, aTemp, sizeof(aTemp)));
+				break;
+			case MSGTYPE_BANADD:
+				str_format(aBuf, sizeof(aBuf), "banned %s", NetToString(&pBan->m_Data, aTemp, sizeof(aTemp)));
+				break;
+			case MSGTYPE_BANREM:
+				str_format(aBuf, sizeof(aBuf), "unbanned %s", NetToString(&pBan->m_Data, aTemp, sizeof(aTemp)));
+				break;
+			default:
+				aBuf[0] = 0;
 		}
 	}
 
 	// add info part
 	if(pBan->m_Info.m_Expires != CBanInfo::EXPIRES_NEVER)
 	{
-		int Mins = ((pBan->m_Info.m_Expires-time_timestamp()) + 59) / 60;
+		int Mins = ((pBan->m_Info.m_Expires - time_timestamp()) + 59) / 60;
 		if(Mins <= 1)
 			str_format(pBuf, BuffSize, "%s for 1 minute (%s)", aBuf, pBan->m_Info.m_aReason);
 		else

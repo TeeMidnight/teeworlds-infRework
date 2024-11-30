@@ -172,10 +172,6 @@
 		"value": "弹射者"
 	},
 	{
-		"key": "Police",
-		"value": "警察"
-	},
-	{
 		"key": "Reviver",
 		"value": "归命师"
 	},
@@ -272,16 +268,16 @@
 		"value": "如果你的语言不存在,你可以帮助我们翻译 (输入 /help translate)."
 	},
 	{
-		"key": "InfectionClassChinaRank, by ErrorDreemurr",
-		"value": "InfectionClassChallengeRank 模组由 ErrorDreemurr 制作"
+		"key": "InfRework by Bamcane",
+		"value": "InfRework by 甘箨Bamcane"
 	},
 	{
-		"key": "Open source on \ngithub.com/TeeDreamStudio/teeworlds-infclassCR",
-		"value": "开源在\ngithub.com/TeeDreamStudio/teeworlds-infclassCR"
+		"key": "Open source on \ngithub.com/TeeMidnight/teeworlds-infRework",
+		"value": "开源在\ngithub.com/TeeMidnight/teeworlds-infRework"
 	},
 	{
-		"key": "Based on the concept of InfectionClass mod by necropotame",
-		"value": "源自 necropotame 所做的 InfectionClass mod"
+		"key": "Based on InfClassR (TeeworldsCN version)",
+		"value": "基于InfClassR (中文社区服版)"
 	},
 	{
 		"key": "Main contributors: {str:ListOfContributors}",
@@ -712,10 +708,6 @@
 		"value": "防空地雷已经激活"
 	},
 	{
-		"key": "Funround are start! Zombies are {str:Zombie}. Humans are {str:Human}",
-		"value": "有趣的一轮开始了! 僵尸是{str:Zombie}。人类是{str:Human}"
-	},
-	{
 		"key": "{str:PlayerName} is calling for Witch! ({int:NumCallers}/{int:NumCallersLimit}) To call witch write: /witch",
 		"value": "{str:PlayerName} 想要召唤女巫! ({int:NumCallers}/{int:NumCallersLimit}) 要召唤女巫输入: /witch"
 	},
@@ -838,22 +830,6 @@
 	{
 		"key": "it will create a can't explode small elatic hole",
 		"value": "它会创建一个不能爆炸的小弹射洞."
-	},
-	{
-		"key": "The Police can use hammer to use shield.",
-		"value": "警察可以使用锤子来触发盾牌."
-	},
-	{
-		"key": "He also has a laser-rifle that can freeze zombies.",
-		"value": "他还有一把激光枪，可以冻结僵尸."
-	},
-	{
-		"key": "He also has a laser-rifle that can freeze zombies.",
-		"value": "他还有一把激光枪，可以冻结僵尸."
-	},
-	{
-		"key": "And he has a gun, damage is very high.But ammo is scarce",
-		"value": "以及他有一把手枪,伤害十分的高.但是子弹量很少."
 	},
 	{
 		"key": "The Reviver can protect humans with his hammer by giving them health.",

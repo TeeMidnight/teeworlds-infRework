@@ -13,7 +13,7 @@ CJobPool::CJobPool()
 
 void CJobPool::WorkerThread(void *pUser)
 {
-	CJobPool *pPool = (CJobPool *)pUser;
+	CJobPool *pPool = (CJobPool *) pUser;
 
 	while(1)
 	{
@@ -42,7 +42,6 @@ void CJobPool::WorkerThread(void *pUser)
 		else
 			thread_sleep(10);
 	}
-
 }
 
 int CJobPool::Init(int NumThreads)
@@ -72,4 +71,3 @@ int CJobPool::Add(CJob *pJob, JOBFUNC pfnFunc, void *pData)
 	lock_release(m_Lock);
 	return 0;
 }
-

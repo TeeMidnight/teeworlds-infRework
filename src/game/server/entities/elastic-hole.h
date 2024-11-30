@@ -3,10 +3,10 @@
 #ifndef GAME_SERVER_ENTITIES_ELASTIC_HOLE_H
 #define GAME_SERVER_ENTITIES_ELASTIC_HOLE_H
 
-#include <game/server/entity.h>
 #include <base/math.h>
-#include <engine/shared/config.h>
 #include <base/tl/array.h>
+#include <engine/shared/config.h>
+#include <game/server/entity.h>
 
 class CElasticHole : public CEntity
 {
@@ -19,19 +19,20 @@ public:
 	};
 	enum
 	{
-		GROW_GROWING=0,
+		GROW_GROWING = 0,
 		GROW_STOPING,
 		GROW_ZOOMING,
 	};
+
 public:
-	CElasticHole(CGameWorld *pGameWorld, vec2 CenterPos, int OwnerClientID, bool IsExplode,float MaxRadius = g_Config.m_InfElasticHoleRadius);
+	CElasticHole(CGameWorld *pGameWorld, vec2 CenterPos, int OwnerClientID, bool IsExplode, float MaxRadius = g_Config.m_InfElasticHoleRadius);
 	virtual ~CElasticHole();
 	virtual void Tick();
 	virtual void Reset();
 	virtual void Snap(int SnappingClient);
 	int GetTick() { return m_LifeSpan; }
 
-	int GetOwner(){ return m_Owner; }
+	int GetOwner() { return m_Owner; }
 
 private:
 	int m_ParticleIDs[NUM_PARTICLES];
@@ -40,7 +41,6 @@ private:
 	void Explode();
 
 public:
-
 	int m_StartTick;
 	float m_DetectionRadius;
 
@@ -55,5 +55,3 @@ public:
 };
 
 #endif
-
-

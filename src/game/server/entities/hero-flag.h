@@ -32,7 +32,7 @@ public:
 	virtual void Tick();
 	virtual void FindPosition();
 	virtual void Snap(int SnappingClient);
-	void GiveGift(CCharacter* pHero);
+	void GiveGift(CCharacter *pHero);
 
 private:
 	void SetCoolDown();

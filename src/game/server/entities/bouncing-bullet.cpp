@@ -7,8 +7,8 @@
 
 #include "bouncing-bullet.h"
 
-CBouncingBullet::CBouncingBullet(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_BOUNCING_BULLET)
+CBouncingBullet::CBouncingBullet(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_BOUNCING_BULLET)
 {
 	m_Pos = Pos;
 	m_ActualPos = Pos;
@@ -16,10 +16,10 @@ CBouncingBullet::CBouncingBullet(CGameWorld *pGameWorld, int Owner, vec2 Pos, ve
 	m_Direction = Dir;
 	m_Owner = Owner;
 	m_StartTick = Server()->Tick();
-	m_LifeSpan = Server()->TickSpeed()*2;
+	m_LifeSpan = Server()->TickSpeed() * 2;
 	m_BounceLeft = 3; // the number of time that a bullet can bounce. It's usefull to remove bullets laying on the ground
 	m_DistanceLeft = 1200; // the max distance a bullet can travel
-	
+
 	GameWorld()->InsertEntity(this);
 }
 
@@ -43,24 +43,24 @@ void CBouncingBullet::TickPaused()
 
 void CBouncingBullet::Tick()
 {
-	float Pt = (Server()->Tick()-m_StartTick-1)/(float)Server()->TickSpeed();
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	float Pt = (Server()->Tick() - m_StartTick - 1) / (float) Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
-	
+
 	m_ActualPos = CurPos;
 	m_ActualDir = normalize(CurPos - PrevPos);
 
 	m_DistanceLeft -= distance(CurPos, PrevPos);
-	
+
 	if(GameLayerClipped(CurPos) || m_LifeSpan < 0 || m_BounceLeft < 0 || m_DistanceLeft < 0.0f)
 	{
 		GameServer()->m_World.DestroyEntity(this);
 		return;
 	}
-	
+
 	m_LifeSpan--;
-	
+
 	CCharacter *OwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	CCharacter *TargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
 	if(TargetChr)
@@ -80,8 +80,8 @@ void CBouncingBullet::Tick()
 		vec2 LastPos;
 		int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, NULL, &LastPos);
 		if(Collide)
-		{			
-			//Thanks to TeeBall 0.6
+		{
+			// Thanks to TeeBall 0.6
 			vec2 CollisionPos;
 			CollisionPos.x = LastPos.x;
 			CollisionPos.y = CurPos.y;
@@ -94,14 +94,14 @@ void CBouncingBullet::Tick()
 			m_ActualPos = m_Pos;
 			vec2 vel;
 			vel.x = m_Direction.x;
-			vel.y = m_Direction.y + 2*GameServer()->Tuning()->m_ShotgunCurvature/10000*Ct*GameServer()->Tuning()->m_ShotgunSpeed;
-			
-			if (CollideX && !CollideY)
+			vel.y = m_Direction.y + 2 * GameServer()->Tuning()->m_ShotgunCurvature / 10000 * Ct * GameServer()->Tuning()->m_ShotgunSpeed;
+
+			if(CollideX && !CollideY)
 			{
 				m_Direction.x = -vel.x;
 				m_Direction.y = vel.y;
 			}
-			else if (!CollideX && CollideY)
+			else if(!CollideX && CollideY)
 			{
 				m_Direction.x = vel.x;
 				m_Direction.y = -vel.y;
@@ -111,11 +111,11 @@ void CBouncingBullet::Tick()
 				m_Direction.x = -vel.x;
 				m_Direction.y = -vel.y;
 			}
-			
+
 			m_Direction.x *= (100 - 50) / 100.0;
 			m_Direction.y *= (100 - 50) / 100.0;
 			m_StartTick = Server()->Tick();
-			
+
 			m_ActualDir = normalize(m_Direction);
 			m_BounceLeft--;
 		}
@@ -124,17 +124,17 @@ void CBouncingBullet::Tick()
 
 void CBouncingBullet::FillInfo(CNetObj_Projectile *pProj)
 {
-	pProj->m_X = (int)m_Pos.x;
-	pProj->m_Y = (int)m_Pos.y;
-	pProj->m_VelX = (int)(m_Direction.x*100.0f);
-	pProj->m_VelY = (int)(m_Direction.y*100.0f);
+	pProj->m_X = (int) m_Pos.x;
+	pProj->m_Y = (int) m_Pos.y;
+	pProj->m_VelX = (int) (m_Direction.x * 100.0f);
+	pProj->m_VelY = (int) (m_Direction.y * 100.0f);
 	pProj->m_StartTick = m_StartTick;
 	pProj->m_Type = WEAPON_SHOTGUN;
 }
 
 void CBouncingBullet::Snap(int SnappingClient)
 {
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
 
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;

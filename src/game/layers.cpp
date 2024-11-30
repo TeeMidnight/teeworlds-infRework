@@ -33,11 +33,11 @@ void CLayers::Init(IMap *pMap)
 	for(int g = 0; g < NumGroups(); g++)
 	{
 		CMapItemGroup *pGroup = GetGroup(g);
-		
+
 		char aGroupName[12];
 		char aLayerName[12];
-		IntsToStr(pGroup->m_aName, sizeof(aGroupName)/sizeof(int), aGroupName);
-		
+		IntsToStr(pGroup->m_aName, sizeof(aGroupName) / sizeof(int), aGroupName);
+
 		if(str_comp(aGroupName, "#Zones") == 0)
 			m_pZoneGroup = pGroup;
 		else if(str_comp(aGroupName, "#Entities") == 0)
@@ -46,20 +46,20 @@ void CLayers::Init(IMap *pMap)
 		{
 			for(int l = 0; l < pGroup->m_NumLayers; l++)
 			{
-				CMapItemLayer *pLayer = GetLayer(pGroup->m_StartLayer+l);
+				CMapItemLayer *pLayer = GetLayer(pGroup->m_StartLayer + l);
 
 				if(pLayer->m_Type == LAYERTYPE_TILES)
 				{
 					CMapItemLayerTilemap *pTilemap = reinterpret_cast<CMapItemLayerTilemap *>(pLayer);
 					aLayerName[0] = 0;
-					IntsToStr(pTilemap->m_aName, sizeof(aLayerName)/sizeof(int), aLayerName);
+					IntsToStr(pTilemap->m_aName, sizeof(aLayerName) / sizeof(int), aLayerName);
 
 					if((str_comp(aGroupName, "Game") == 0) && str_comp(aLayerName, "Tele") == 0)
 					{
 						m_pTeleLayer = pTilemap;
 					}
 
-					if(pTilemap->m_Flags&TILESLAYERFLAG_PHYSICS)
+					if(pTilemap->m_Flags & TILESLAYERFLAG_PHYSICS)
 					{
 						m_pPhysicsLayer = pTilemap;
 						m_pGameGroup = pGroup;
@@ -83,17 +83,17 @@ void CLayers::Init(IMap *pMap)
 			}
 		}
 	}
-	
+
 	if(!m_pPhysicsLayer)
 		dbg_msg("InfClass", "CLayer::Init: no Game Layer found");
 }
 
 CMapItemGroup *CLayers::GetGroup(int Index) const
 {
-	return static_cast<CMapItemGroup *>(m_pMap->GetItem(m_GroupsStart+Index, 0, 0));
+	return static_cast<CMapItemGroup *>(m_pMap->GetItem(m_GroupsStart + Index, 0, 0));
 }
 
 CMapItemLayer *CLayers::GetLayer(int Index) const
 {
-	return static_cast<CMapItemLayer *>(m_pMap->GetItem(m_LayersStart+Index, 0, 0));
+	return static_cast<CMapItemLayer *>(m_pMap->GetItem(m_LayersStart + Index, 0, 0));
 }

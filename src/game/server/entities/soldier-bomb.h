@@ -3,8 +3,8 @@
 #ifndef GAME_SERVER_ENTITIES_SOLDIER_BOMB_H
 #define GAME_SERVER_ENTITIES_SOLDIER_BOMB_H
 
-#include <game/server/entity.h>
 #include <base/tl/array.h>
+#include <game/server/entity.h>
 
 class CSoldierBomb : public CEntity
 {
@@ -25,7 +25,7 @@ private:
 	array<int> m_IDBomb;
 	int m_nbBomb;
 	int m_nbMaxBomb;
-	
+
 public:
 	float m_DetectionRadius;
 	int m_Owner;

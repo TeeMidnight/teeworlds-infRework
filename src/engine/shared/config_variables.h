@@ -4,15 +4,15 @@
 #define ENGINE_SHARED_CONFIG_VARIABLES_H
 #undef ENGINE_SHARED_CONFIG_VARIABLES_H // this file will be included several times
 
-#include <game/variables.h>
 #include <game/server/infconfig.h>
+#include <game/variables.h>
 
 MACRO_CONFIG_STR(Password, password, 32, "", CFGFLAG_SERVER, "Password to the server")
 MACRO_CONFIG_STR(Logfile, logfile, 128, "", CFGFLAG_SERVER, "Filename to log all output to")
 MACRO_CONFIG_INT(ConsoleOutputLevel, console_output_level, 0, 0, 2, CFGFLAG_SERVER, "Adjusts the amount of information in the console")
 
-MACRO_CONFIG_STR(SvName, sv_name, 128, "infclassCR 服务器", CFGFLAG_SERVER, "Server name")
-MACRO_CONFIG_STR(Bindaddr, bindaddr, 128, "", CFGFLAG_SERVER|CFGFLAG_MASTER, "Address to bind the client/server to")
+MACRO_CONFIG_STR(SvName, sv_name, 128, "infRework", CFGFLAG_SERVER, "Server name")
+MACRO_CONFIG_STR(Bindaddr, bindaddr, 128, "", CFGFLAG_SERVER | CFGFLAG_MASTER, "Address to bind the client/server to")
 MACRO_CONFIG_INT(SvPort, sv_port, 8303, 0, 0, CFGFLAG_SERVER, "Port to use for the server")
 MACRO_CONFIG_INT(SvExternalPort, sv_external_port, 0, 0, 0, CFGFLAG_SERVER, "External port to report to the master servers")
 MACRO_CONFIG_STR(SvMap, sv_map, 128, "", CFGFLAG_SERVER, "Map to use on the server")
@@ -46,7 +46,7 @@ MACRO_CONFIG_INT(DbgStressNetwork, dbg_stress_network, 0, 0, 0, CFGFLAG_SERVER, 
 MACRO_CONFIG_INT(DbgPref, dbg_pref, 0, 0, 1, CFGFLAG_SERVER, "Performance outputs")
 MACRO_CONFIG_INT(DbgHitch, dbg_hitch, 0, 0, 0, CFGFLAG_SERVER, "Hitch warnings")
 
-MACRO_CONFIG_STR(SvBroadcast, sv_broadcast, 64, "InfclassCR", CFGFLAG_SERVER, "The broadcasting message")
+MACRO_CONFIG_STR(SvBroadcast, sv_broadcast, 64, "InfRework", CFGFLAG_SERVER, "The broadcasting message")
 
 MACRO_CONFIG_INT(SvConnlimit, sv_connlimit, 4, 0, 100, CFGFLAG_SERVER, "Connlimit: Number of connections an IP is allowed to do in a timespan")
 MACRO_CONFIG_INT(SvConnlimitTime, sv_connlimit_time, 20, 0, 1000, CFGFLAG_SERVER, "Connlimit: Time in which IP's connections are counted")

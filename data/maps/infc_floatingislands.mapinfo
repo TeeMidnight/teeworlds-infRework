@@ -1,4 +1,0 @@
-#minplayers 7
-#maxplayers 32
-sv_timelimit 4
-sv_rounds_per_map 3

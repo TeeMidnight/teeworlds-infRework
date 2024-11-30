@@ -3,13 +3,13 @@
 #include <base/math.h>
 #include <base/vmath.h>
 #include <game/generated/protocol.h>
-#include <game/server/gamecontext.h>
 #include <game/server/entities/growingexplosion.h>
+#include <game/server/gamecontext.h>
 
 #include "scatter-grenade.h"
 
-CScatterGrenade::CScatterGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_SCATTER_GRENADE)
+CScatterGrenade::CScatterGrenade(CGameWorld *pGameWorld, int Owner, vec2 Pos, vec2 Dir) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_SCATTER_GRENADE)
 {
 	m_Pos = Pos;
 	m_ActualPos = Pos;
@@ -42,41 +42,41 @@ void CScatterGrenade::TickPaused()
 
 void CScatterGrenade::Tick()
 {
-	float Pt = (Server()->Tick()-m_StartTick-1)/(float)Server()->TickSpeed();
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	float Pt = (Server()->Tick() - m_StartTick - 1) / (float) Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
 	vec2 CurPos = GetPos(Ct);
-	
+
 	m_ActualPos = CurPos;
 	m_ActualDir = normalize(CurPos - PrevPos);
-	
-	if(m_IsFlashGrenade) {
-		
+
+	if(m_IsFlashGrenade)
+	{
 		CCharacter *OwnerChar = GameServer()->GetPlayerChar(m_Owner);
 		CCharacter *TargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
-		
+
 		if(TargetChr)
 		{
 			Explode();
 		}
 	}
-	
+
 	if(GameLayerClipped(CurPos))
 	{
 		GameServer()->m_World.DestroyEntity(this);
 		return;
 	}
-	
+
 	vec2 LastPos;
 	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, NULL, &LastPos);
 	if(Collide)
 	{
-		
-		if(m_IsFlashGrenade) {
+		if(m_IsFlashGrenade)
+		{
 			Explode();
 		}
-		
-		//Thanks to TeeBall 0.6
+
+		// Thanks to TeeBall 0.6
 		vec2 CollisionPos;
 		CollisionPos.x = LastPos.x;
 		CollisionPos.y = CurPos.y;
@@ -84,19 +84,19 @@ void CScatterGrenade::Tick()
 		CollisionPos.x = CurPos.x;
 		CollisionPos.y = LastPos.y;
 		int CollideX = GameServer()->Collision()->IntersectLine(PrevPos, CollisionPos, NULL, NULL);
-		
+
 		m_Pos = LastPos;
 		m_ActualPos = m_Pos;
 		vec2 vel;
 		vel.x = m_Direction.x;
-		vel.y = m_Direction.y + 2*GameServer()->Tuning()->m_GrenadeCurvature/10000*Ct*GameServer()->Tuning()->m_GrenadeSpeed;
-		
-		if (CollideX && !CollideY)
+		vel.y = m_Direction.y + 2 * GameServer()->Tuning()->m_GrenadeCurvature / 10000 * Ct * GameServer()->Tuning()->m_GrenadeSpeed;
+
+		if(CollideX && !CollideY)
 		{
 			m_Direction.x = -vel.x;
 			m_Direction.y = vel.y;
 		}
-		else if (!CollideX && CollideY)
+		else if(!CollideX && CollideY)
 		{
 			m_Direction.x = vel.x;
 			m_Direction.y = -vel.y;
@@ -106,37 +106,37 @@ void CScatterGrenade::Tick()
 			m_Direction.x = -vel.x;
 			m_Direction.y = -vel.y;
 		}
-		
+
 		m_Direction.x *= (100 - 50) / 100.0;
 		m_Direction.y *= (100 - 50) / 100.0;
 		m_StartTick = Server()->Tick();
-		
+
 		m_ActualDir = normalize(m_Direction);
 	}
 }
 
 void CScatterGrenade::FillInfo(CNetObj_Projectile *pProj)
 {
-	pProj->m_X = (int)m_Pos.x;
-	pProj->m_Y = (int)m_Pos.y;
-	pProj->m_VelX = (int)(m_Direction.x*100.0f);
-	pProj->m_VelY = (int)(m_Direction.y*100.0f);
+	pProj->m_X = (int) m_Pos.x;
+	pProj->m_Y = (int) m_Pos.y;
+	pProj->m_VelX = (int) (m_Direction.x * 100.0f);
+	pProj->m_VelY = (int) (m_Direction.y * 100.0f);
 	pProj->m_StartTick = m_StartTick;
 	pProj->m_Type = WEAPON_GRENADE;
 }
 
 void CScatterGrenade::Snap(int SnappingClient)
 {
-	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
-	
+	float Ct = (Server()->Tick() - m_StartTick) / (float) Server()->TickSpeed();
+
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;
-	
+
 	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
 	if(pProj)
 		FillInfo(pProj);
 }
-	
+
 void CScatterGrenade::Explode()
 {
 	if(m_IsFlashGrenade)
@@ -147,9 +147,8 @@ void CScatterGrenade::Explode()
 	{
 		new CGrowingExplosion(GameWorld(), m_ActualPos, m_ActualDir, m_Owner, 4, GROWINGEXPLOSIONEFFECT_POISON_INFECTED);
 	}
-	
+
 	GameServer()->m_World.DestroyEntity(this);
-	
 }
 
 void CScatterGrenade::FlashGrenade()
