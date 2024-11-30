@@ -38,6 +38,7 @@
 #include "scatter-grenade.h"
 #include "scientist-laser.h"
 #include "scientist-mine.h"
+#include "siegrid-hammer.h"
 #include "slime-entity.h"
 #include "slug-slime.h"
 #include "soldier-bomb.h"
@@ -94,10 +95,6 @@ CCharacter::CCharacter(CGameWorld *pWorld, IConsole *pConsole) :
 	for(int i = 0; i < 2; i++)
 	{
 		m_BarrierHintIDs[i] = Server()->SnapNewID();
-	}
-	for(int i = 0; i < 2; i++)
-	{
-		m_HammerIDs[i] = Server()->SnapNewID();
 	}
 	m_AntiFireTick = 0;
 	m_IsFrozen = false;
@@ -289,15 +286,6 @@ void CCharacter::Destroy()
 		}
 	}
 
-	if(m_HammerIDs[0] >= 0)
-	{
-		for(int i = 0; i < 2; i++)
-		{
-			Server()->SnapFreeID(m_HammerIDs[i]);
-			m_HammerIDs[i] = -1;
-		}
-	}
-
 	/* INFECTION MODIFICATION END *****************************************/
 
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
@@ -401,7 +389,7 @@ void CCharacter::HandleNinja()
 
 			int Damage = min(g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage + m_NinjaStrengthBuff, 20);
 			if(GetClass() == PLAYERCLASS_SIEGRID)
-				Damage = 1;
+				Damage = 2;
 
 			for(int i = 0; i < Num; ++i)
 			{
@@ -1209,12 +1197,9 @@ void CCharacter::FireWeapon()
 			}
 			else if(GetClass() == PLAYERCLASS_SIEGRID)
 			{
-				if(m_LastHammerPhase == HAMMER_IDLE)
-				{
-					m_LastHammerSwingTick = Server()->Tick();
-					m_StartAngle = GetAngle(Direction);
-				}
-				m_HammerPhase = HAMMER_SWING;
+				if(!m_pHammer)
+					return;
+				m_pHammer->GiveForce(normalize(ProjStartPos - m_pHammer->GetPos()));
 				return;
 			}
 			else
@@ -2212,124 +2197,10 @@ void CCharacter::Tick()
 
 	if(GetClass() == PLAYERCLASS_SIEGRID)
 	{
-		if(GameServer()->GetHumanCount() == 1 && GameServer()->GetActivePlayerCount() > 2)
+		if(GameServer()->GetHumanCount() == 1 && GameServer()->GetActivePlayerCount() > 3)
 		{
 			Die(m_pPlayer->GetCID(), WEAPON_SELF);
 			return;
-		}
-
-		CTuningParams *pTuningParams = &m_pPlayer->m_NextTuningParams;
-		bool Grounded = false;
-		if(GameServer()->Collision()->CheckPoint(m_Pos.x + m_ProximityRadius / 2, m_Pos.y + m_ProximityRadius / 2 + 5))
-			Grounded = true;
-		if(GameServer()->Collision()->CheckPoint(m_Pos.x - m_ProximityRadius / 2, m_Pos.y + m_ProximityRadius / 2 + 5))
-			Grounded = true;
-		float Friction = Grounded ? pTuningParams->m_GroundFriction : pTuningParams->m_AirFriction;
-		m_HammerVel.x *= Friction;
-		m_HammerVel.y += pTuningParams->m_Gravity;
-
-		float MaxDistance = g_Config.m_InfSiegridHammerLength;
-		if(distance(m_Pos, m_HammerPos + m_HammerVel) > MaxDistance)
-		{
-			vec2 TargetPos = m_Pos + normalize(m_HammerPos + m_HammerVel - m_Pos) * clamp(distance(m_HammerPos + m_HammerVel, m_Pos), 0.f, MaxDistance);
-			m_HammerVel += TargetPos - m_HammerPos - m_HammerVel;
-		}
-
-		if(m_HammerPhase != HAMMER_BACK)
-		{
-			// check if we Hit anything along the way
-			CCharacter *aEnts[MAX_CLIENTS];
-			vec2 Dir = m_HammerVel;
-			float Radius = m_ProximityRadius * 2.0f;
-			vec2 Center = m_HammerPos + Dir * 0.5f;
-			int Num = GameServer()->m_World.FindEntities(Center, Radius, (CEntity **) aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-
-			int Damage = 3;
-			for(int i = 0; i < Num; ++i)
-			{
-				if(aEnts[i] == this)
-					continue;
-
-				// make sure we haven't Hit this object before
-				int Index = -1;
-				bool bAlreadyHit = false;
-				for(int j = 0; j < 10; j++)
-				{
-					if(Index == -1 && Server()->Tick() - m_HammerHitObjects[j].m_LastHitTick > 15)
-						Index = j;
-
-					if(m_HammerHitObjects[j].m_pEntity == aEnts[i] && Server()->Tick() - m_HammerHitObjects[j].m_LastHitTick < 15)
-						bAlreadyHit = true;
-				}
-				if(bAlreadyHit || Index == -1)
-					continue;
-
-				// check so we are sufficiently close
-				if(distance(aEnts[i]->m_Pos, m_Pos) > (m_ProximityRadius * 2.0f))
-					continue;
-
-				// Hit a player, give him damage and stuffs...
-				GameServer()->CreateSound(aEnts[i]->m_Pos, SOUND_NINJA_HIT);
-				// set his velocity to fast upward (for now)
-				m_HammerHitObjects[Index].m_pEntity = aEnts[i];
-				m_HammerHitObjects[Index].m_LastHitTick = Server()->Tick();
-
-				aEnts[i]->TakeDamage(vec2(0, -10.0f), Damage, m_pPlayer->GetCID(), WEAPON_HAMMER, TAKEDAMAGEMODE_NOINFECTION);
-			}
-		}
-
-		m_LastHammerPhase = m_HammerPhase;
-		switch (m_HammerPhase)
-		{
-			case HAMMER_SWING:
-			{
-				float time = (Server()->Tick() - m_LastHammerSwingTick) / (float) Server()->TickSpeed() * 4;
-				float distance = clamp((150.f - Server()->Tick() + m_LastHammerSwingTick) / 150.f * MaxDistance, 32.0f, MaxDistance);
-				float angle = m_StartAngle + fmodf(time * pi / 2, 2.0f * pi);
-				if((Server()->Tick() - m_LastHammerSwingTick) % 20 == 0)
-				{
-					GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE);
-				}
-
-				if(m_LastHammerSwingTick == Server()->Tick() - 1)
-				{
-					GameServer()->CreateDeath(m_HammerPos, m_pPlayer->GetCID());
-					m_HammerPos = vec2(m_Pos.x + distance * 0.95f * cos(angle), m_Pos.y + distance * 0.95f * sin(angle));
-					GameServer()->CreateDeath(m_HammerPos, m_pPlayer->GetCID());
-				}
-				else
-					m_HammerPos = vec2(m_Pos.x + distance * 0.95f * cos(angle), m_Pos.y + distance * 0.95f * sin(angle));
-				m_HammerPhase = HAMMER_BACK;
-				if(distance <= 32.5f)
-					m_ReloadTimer = round_to_int(((Server()->Tick() - m_LastHammerSwingTick) / 150.f) * (Server()->GetFireDelay(GetInfWeaponID(WEAPON_GUN)) * Server()->TickSpeed() / 1000));
-			}
-			break;
-			case HAMMER_BACK:
-			{
-				if(!m_ReloadTimer)
-					m_ReloadTimer = round_to_int(clamp((Server()->Tick() - m_LastHammerSwingTick) / 150.f, 0.1f, 1.f) * (Server()->GetFireDelay(GetInfWeaponID(WEAPON_GUN)) * Server()->TickSpeed() / 1000));
-
-				m_HammerVel = normalize(m_Pos - m_HammerPos) * 16.0f;
-				m_HammerPos += m_HammerVel;
-				if(distance(m_HammerPos, m_Pos) < 8.0f)
-				{
-					m_HammerPhase = HAMMER_IDLE;
-					GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH);
-				}
-			}
-			break;
-			default: // HAMMER_IDLE
-			{
-				GameServer()->Collision()->MoveBox(&m_HammerPos, &m_HammerVel, vec2(m_ProximityRadius, m_ProximityRadius), 0.f);
-			}
-			break;
-		}
-
-		if(distance(m_Pos, m_HammerPos) > MaxDistance * 1.2f)
-		{
-			GameServer()->CreateDeath(m_HammerPos, m_pPlayer->GetCID());
-			m_HammerPos = m_Pos;
-			GameServer()->CreateDeath(m_HammerPos, m_pPlayer->GetCID());
 		}
 	}
 
@@ -3598,34 +3469,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int Mode)
 
 void CCharacter::Snap(int SnappingClient)
 {
-	if(GetClass() == PLAYERCLASS_SIEGRID && m_ActiveWeapon == WEAPON_GUN)
-	{
-		if(!NetworkClipped(SnappingClient, m_HammerPos))
-		{
-			CNetObj_Pickup *pObj = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_HammerIDs[0], sizeof(CNetObj_Pickup)));
-			if(!pObj)
-				return;
-
-			pObj->m_X = (int) m_HammerPos.x;
-			pObj->m_Y = (int) m_HammerPos.y;
-			pObj->m_Type = POWERUP_ARMOR;
-			pObj->m_Subtype = 0;
-		}
-
-		if(!NetworkClipped(SnappingClient, m_Pos) || !NetworkClipped(SnappingClient, m_HammerPos))
-		{
-			CNetObj_Laser *pLaser = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_HammerIDs[1], sizeof(CNetObj_Laser)));
-			if(!pLaser)
-				return;
-
-			pLaser->m_X = (int) m_HammerPos.x;
-			pLaser->m_Y = (int) m_HammerPos.y;
-			pLaser->m_FromX = (int) m_Pos.x;
-			pLaser->m_FromY = (int) m_Pos.y;
-			pLaser->m_StartTick = Server()->Tick();
-		}
-	}
-
 	int id = m_pPlayer->GetCID();
 
 	if(SnappingClient != -1)
@@ -4143,14 +3986,11 @@ void CCharacter::ClassSpawnAttributes()
 			GiveWeapon(WEAPON_GUN, -1);
 			m_ActiveWeapon = WEAPON_GUN;
 
-			m_HammerPos = m_Pos;
-			m_LastHammerPhase = HAMMER_IDLE;
-			m_HammerPhase = HAMMER_IDLE;
-			m_HammerVel = vec2(0.f, 0.f);
+			m_pHammer = new CSiegridHammer(GameWorld(), m_pPlayer->GetCID(), m_Pos);
 			m_LastSprintTick = -1;
 			m_LastTapMoveTick = -1;
 			m_LastMoveDirection = 0;
-			mem_zero(m_HammerHitObjects, sizeof(m_HammerHitObjects));
+			mem_zero(m_aHammerHitObjects, sizeof(m_aHammerHitObjects));
 
 			GameServer()->SendBroadcast_ClassIntro(m_pPlayer->GetCID(), PLAYERCLASS_SIEGRID);
 			if(!m_pPlayer->IsKnownClass(PLAYERCLASS_SIEGRID))
@@ -4617,6 +4457,12 @@ void CCharacter::DestroyChildEntities()
 			continue;
 		GameServer()->m_World.DestroyEntity(pMine);
 	}
+	for(CSiegridHammer *pHammer = (CSiegridHammer *) GameWorld()->FindFirst(CGameWorld::ENTTYPE_SIEGRID_HAMMER); pHammer; pHammer = (CSiegridHammer *) pHammer->TypeNext())
+	{
+		if(pHammer->GetOwner() != m_pPlayer->GetCID())
+			continue;
+		GameServer()->m_World.DestroyEntity(pHammer);
+	}
 
 	m_FirstShot = true;
 	m_HookMode = 0;
@@ -4627,8 +4473,8 @@ void CCharacter::DestroyChildEntities()
 
 void CCharacter::SetClass(int ClassChoosed)
 {
-	ClassSpawnAttributes();
 	DestroyChildEntities();
+	ClassSpawnAttributes();
 	GiveArmorIfLonely();
 
 	m_QueuedWeapon = -1;

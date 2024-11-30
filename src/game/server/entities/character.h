@@ -194,19 +194,7 @@ private:
 	int m_AntiFireTick;
 
 	// Siegrid
-	enum
-	{
-		HAMMER_IDLE = 0,
-		HAMMER_SWING,
-		HAMMER_BACK
-	};
-	float m_StartAngle;
-	int m_LastHammerPhase;
-	int m_HammerPhase;
-	int m_LastHammerSwingTick;
-	int m_HammerIDs[2];
-	vec2 m_HammerPos;
-	vec2 m_HammerVel;
+	class CSiegridHammer *m_pHammer;
 	int m_LastSprintTick;
 	int m_LastTapMoveTick;
 	int m_LastMoveDirection;
@@ -215,7 +203,7 @@ private:
 	{
 		int m_LastHitTick;
 		CEntity *m_pEntity;
-	}m_HammerHitObjects[10];
+	}m_aHammerHitObjects[10];
 
 
 	bool m_IsFrozen;
@@ -304,6 +292,8 @@ public:
 	void SaturateVelocity(vec2 Force, float MaxSpeed);
 	void GiveGift(int GiftType);
 	int GetInfZoneTick();
+
+	vec2 GetPos() const { return m_Pos; }
 	/* INFECTION MODIFICATION END *****************************************/
 };
 
