@@ -59,7 +59,7 @@ void CSiegridHammer::Tick()
         bool bAlreadyHit = false;
         for(int j = 0; j < 10; j++)
         {
-            if(Index == -1 && Server()->Tick() - m_aHammerHitObjects[j].m_LastHitTick > 15)
+            if(Index == -1 && Server()->Tick() - m_aHammerHitObjects[j].m_LastHitTick > 10)
                 Index = j;
 
             if(m_aHammerHitObjects[j].m_pEntity == aEnts[i] && Server()->Tick() - m_aHammerHitObjects[j].m_LastHitTick < 15)
