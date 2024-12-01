@@ -47,7 +47,7 @@ void CSiegridHammer::Tick()
     float Radius = 128.f;
     int Num = GameServer()->m_World.FindEntities(m_Pos, Radius, (CEntity **) aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
     static const int MaxDamage = 10;
-    int Damage = max(3, round_to_int(length(m_Vel / dt) / 32.f * MaxDamage));
+    int Damage = clamp(round_to_int(length(m_Vel / dt) / 32.f * MaxDamage), 2, MaxDamage);
 
     for(int i = 0; i < Num; ++i)
     {
