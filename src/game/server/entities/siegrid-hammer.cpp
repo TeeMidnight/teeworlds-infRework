@@ -3,6 +3,7 @@
 #include <game/server/gamecontext.h>
 #include <game/gamecore.h>
 
+#include "growingexplosion.h"
 #include "siegrid-hammer.h"
 
 const float dt = 0.01f;
@@ -106,6 +107,7 @@ void CSiegridHammer::Tick()
         if(Collision && length(m_Vel * dt) > 24.f)
         {
             GameServer()->CreateHammerHit(m_Pos);
+            new CGrowingExplosion(GameWorld(), m_Pos, -normalize(m_Vel * dt), m_Owner, 2, GROWINGEXPLOSIONEFFECT_FREEZE_INFECTED);
         }
     }
 

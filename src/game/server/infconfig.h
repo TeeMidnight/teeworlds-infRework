@@ -96,7 +96,7 @@ MACRO_CONFIG_INT(InfHeroFlagIndicatorTime, inf_hero_flag_indicator_time, 3, 0, 1
 // class config
 
 MACRO_CONFIG_INT(InfSiegridHammerLength, inf_siegrid_hammer_length, 280, 160, 1000, CFGFLAG_SERVER, "hammer length")
-MACRO_CONFIG_INT(InfSiegridSprintTimer, inf_siegrid_sprint_timer, 150, 100, 1000, CFGFLAG_SERVER, "sprint timer (in tick)")
+MACRO_CONFIG_INT(InfSiegridSprintTimer, inf_siegrid_sprint_timer, 50, 0, 1000, CFGFLAG_SERVER, "sprint timer (in tick)")
 
 MACRO_CONFIG_INT(InfFreezerReslowlyTime, inf_freezer_reslowly_time, 200, 0, 1000, CFGFLAG_SERVER, "tick")
 
